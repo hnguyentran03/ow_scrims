@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { createTestDb, type Db } from "@/lib/db";
-import { createScrim, deleteMap, deleteScrim, getMap, getMapStats, getScrim, listScrims, setMapWinner } from "@/lib/db/queries";
+import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getKillfeedRows, getMap, getMapStats, getScrim, listScrims, setMapWinner } from "@/lib/db/queries";
 import { insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
@@ -42,6 +42,41 @@ describe("queries", () => {
     expect(playerStats).toHaveLength(40);
     expect(kills).toHaveLength(58);
     expect(kills[0].matchTime).toBeLessThanOrEqual(kills[1].matchTime);
+  });
+
+  it("returns ultimate ends alongside player stats and kills", async () => {
+    const { ultimateEnds } = await getMapStats(db, mapId);
+    expect(ultimateEnds).toHaveLength(28);
+  });
+
+  it("returns killfeed rows", async () => {
+    const rows = await getKillfeedRows(db, mapId);
+    expect(rows.kills).toHaveLength(58);
+    expect(rows.rezzes).toHaveLength(0);
+    expect(rows.roundEnds.map((r) => r.roundNumber)).toEqual([1, 2, 3]);
+  });
+
+  it("returns event rows", async () => {
+    const rows = await getEventRows(db, mapId);
+    expect(rows.matchStarts).toHaveLength(1);
+    expect(rows.matchEnds).toHaveLength(1);
+    expect(rows.roundStarts).toHaveLength(3);
+    expect(rows.roundEnds).toHaveLength(3);
+    expect(rows.captures).toHaveLength(9);
+    expect(rows.swaps).toHaveLength(6);
+    expect(rows.ultStarts).toHaveLength(28);
+    expect(rows.ultEnds).toHaveLength(28);
+    expect(rows.kills).toHaveLength(58);
+    expect(rows.ultStarts[0].matchTime).toBeLessThanOrEqual(rows.ultStarts[1].matchTime);
+  });
+
+  it("returns chart and compare rows", async () => {
+    const chart = await getChartRows(db, mapId);
+    expect(chart.kills).toHaveLength(58);
+    expect(chart.roundEnds).toHaveLength(3);
+    expect(chart.playerStats).toHaveLength(40);
+    const compare = await getCompareRows(db, mapId);
+    expect(compare.playerStats).toHaveLength(40);
   });
 
   it("sets a manual winner", async () => {
