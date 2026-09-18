@@ -4,6 +4,7 @@ import { getDb } from "@/lib/db";
 import { getScrim } from "@/lib/db/queries";
 import { resultLabel } from "@/lib/format";
 import { deleteMapAction, deleteScrimAction } from "@/app/actions";
+import { AddMapForm } from "./add-map-form";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,8 @@ export default async function ScrimPage({ params }: { params: Promise<{ scrimId:
           );
         })}
       </ul>
+
+      <AddMapForm scrimId={scrim.id} />
     </div>
   );
 }
