@@ -55,6 +55,12 @@ describe("deriveWinner rules", () => {
     expect(deriveWinner({ ...tie, captures: [] })).toBeNull();
   });
 
+  it("Escort with equal scores and unequal capture counts gives it to the team with more captures", () => {
+    const tie = { ...base, mapType: "Escort" as const, team1Score: 2, team2Score: 2 };
+    expect(deriveWinner({ ...tie, captures: [{ capturingTeam: "A", matchTimeRemaining: 280 }, { capturingTeam: "A", matchTimeRemaining: 200 }, { capturingTeam: "A", matchTimeRemaining: 50 }, { capturingTeam: "B", matchTimeRemaining: 100 }] })).toBe(1);
+    expect(deriveWinner({ ...tie, captures: [{ capturingTeam: "A", matchTimeRemaining: 100 }, { capturingTeam: "B", matchTimeRemaining: 280 }, { capturingTeam: "B", matchTimeRemaining: 200 }, { capturingTeam: "B", matchTimeRemaining: 50 }] })).toBe(2);
+  });
+
   it("Hybrid with differing scores uses the score", () => {
     expect(deriveWinner({ ...base, mapType: "Hybrid", team1Score: 0, team2Score: 3 })).toBe(2);
   });
