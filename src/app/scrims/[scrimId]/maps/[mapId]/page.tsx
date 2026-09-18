@@ -1,6 +1,7 @@
 import { getMapStats } from "@/lib/db/queries";
 import { formatDuration, formatInt } from "@/lib/format";
 import { findAjaxes } from "@/lib/stats/events";
+import { killKind } from "@/lib/stats/fights";
 import { buildOverview } from "@/lib/stats/overview";
 import { loadMap, type MapParams } from "./load-map";
 import { Stat } from "./stat";
@@ -17,7 +18,7 @@ export default async function MapPage({ params }: { params: MapParams }) {
   const ourScore = map.ourSide === 1 ? map.team1Score : map.team2Score;
   const theirScore = map.ourSide === 1 ? map.team2Score : map.team1Score;
   const pct = (n: number | undefined) => `${Math.round((n ?? 0) * 100)}%`;
-  const ultKills = (team: string) => kills.filter((k) => k.attackerTeam === team && k.eventAbility === "Ultimate").length;
+  const ultKills = (team: string) => kills.filter((k) => k.attackerTeam === team && k.eventAbility === "Ultimate" && killKind(k) === "kill").length;
   const ajaxes = findAjaxes(kills, ultimateEnds);
   const ajaxCount = (team: string) => ajaxes.filter((a) => a.team === team).length;
 

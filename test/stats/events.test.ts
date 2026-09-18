@@ -84,6 +84,37 @@ describe("buildEvents", () => {
     expect(totals).toEqual({ rounds: 1, fights: 2, ults: 2, ultKills: 1, multikills: 0, swaps: 0, captures: 0 });
   });
 
+  it("does not count suicides or environmental kills toward ult kills", () => {
+    const rows: EventRows = {
+      ...empty,
+      ultStarts: [ult(10, "a")],
+      ultEnds: [ult(20, "a")],
+      kills: [
+        kill(11, "a", "x"),
+        kill(12, "a", "a", { victimTeam: "Team 1" }),
+        kill(13, "a", "y", { isEnvironmental: "True" }),
+      ],
+    };
+    const { entries } = buildEvents(map, rows);
+    expect(entries.find((e) => e.kind === "ult")).toMatchObject({ kills: 1 });
+    const ultKills = entries.filter((e) => e.kind === "ult_kill");
+    expect(ultKills).toHaveLength(1);
+    expect(ultKills[0]).toMatchObject({ kills: 1 });
+  });
+
+  it("does not count suicides or environmental kills toward multikills", () => {
+    const kills = [
+      kill(1, "a", "x"),
+      kill(2, "a", "y"),
+      kill(3, "a", "z", { isEnvironmental: "True" }),
+      kill(4, "b", "x"),
+      kill(5, "b", "y"),
+      kill(6, "b", "z"),
+    ];
+    const multikills = findMultikills(groupFights(kills));
+    expect(multikills).toEqual([{ team: "Team 1", player: "b", hero: "Sombra", kills: 3, time: 4, fightIndex: 1 }]);
+  });
+
   it("matches the Busan sample", () => {
     const parsed = parseLog(readFileSync("test/samples/Log-2023-12-12-22-15-10.txt", "utf8"));
     const rows = parsed.events as unknown as Record<string, unknown[]>;

@@ -10,7 +10,7 @@ import { Axes, H, Legend, linear, M, svgPoint, ticks, Tooltip, W } from "./chart
 export function DamageByRoundChart({ points, sides }: { points: RoundPoint[]; sides: Sides }) {
   const [hover, setHover] = useState<{ x: number; y: number; point: RoundPoint } | null>(null);
   const max = Math.max(1, ...points.flatMap((p) => [p.ours, p.theirs]));
-  const x = linear(0, Math.max(1, points.length - 1), M.left, W - M.right);
+  const x = points.length <= 1 ? () => (M.left + W - M.right) / 2 : linear(0, points.length - 1, M.left, W - M.right);
   const y = linear(0, max, H - M.bottom, M.top);
   const area = (key: "ours" | "theirs") => {
     if (points.length === 0) return "";
