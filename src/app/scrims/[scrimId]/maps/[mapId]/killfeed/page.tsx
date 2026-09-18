@@ -14,6 +14,7 @@ export default async function KillfeedPage({ params }: { params: MapParams }) {
   const kf = buildKillfeed({ map, kills: rows.kills, rezzes: rows.rezzes, roundEnds: rows.roundEnds, durationSeconds: map.durationSeconds });
   const pair = (p: { ours: number; theirs: number }) => `${p.ours} / ${p.theirs}`;
   const hint = `${sides.ours} / ${sides.theirs}`;
+  const hasFights = kf.blocks.some((b) => b.kind === "fight");
 
   return (
     <div className="space-y-6">
@@ -24,7 +25,7 @@ export default async function KillfeedPage({ params }: { params: MapParams }) {
         <Stat label="Fight wins" value={pair(kf.header.fightWins)} hint={hint} />
       </section>
 
-      {kf.blocks.length === 0 ? (
+      {!hasFights ? (
         <p className="text-sm text-zinc-400">No fights recorded.</p>
       ) : (
         <div className="space-y-4">{kf.blocks.map((block, i) => <Block key={i} block={block} sides={sides} />)}</div>
