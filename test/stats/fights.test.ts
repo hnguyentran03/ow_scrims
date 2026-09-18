@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupFights, type KillLike } from "@/lib/stats/fights";
+import { groupFights, killKind, type KillLike } from "@/lib/stats/fights";
 
 const k = (matchTime: number, victimTeam: string, victimName: string): KillLike => ({
   matchTime,
@@ -28,5 +28,40 @@ describe("groupFights", () => {
   it("sorts kills by time before grouping", () => {
     const fights = groupFights([k(40, "B", "b"), k(0, "A", "a")]);
     expect(fights.map((f) => f.firstDeath.name)).toEqual(["a", "b"]);
+  });
+});
+
+describe("fight scoring", () => {
+  const kill = (matchTime: number, attackerTeam: string, attackerName: string, victimTeam: string, victimName: string, extra: Partial<KillLike> = {}): KillLike => ({
+    matchTime, attackerTeam, attackerName, victimTeam, victimName, ...extra,
+  });
+
+  it("numbers fights from 1 and counts kills per team", () => {
+    const [f] = groupFights([kill(1, "A", "a1", "B", "b1"), kill(2, "A", "a2", "B", "b2"), kill(3, "B", "b1", "A", "a1")]);
+    expect(f.index).toBe(1);
+    expect(f.killsByTeam).toEqual({ A: 2, B: 1 });
+    expect(f.winner).toBe("A");
+  });
+
+  it("returns null winner on a tie", () => {
+    const [f] = groupFights([kill(1, "A", "a1", "B", "b1"), kill(2, "B", "b1", "A", "a1")]);
+    expect(f.winner).toBeNull();
+  });
+
+  it("does not count suicides or environmental kills for anyone, but keeps both teams in the record", () => {
+    const [f] = groupFights([
+      kill(1, "A", "a1", "A", "a1"),
+      kill(2, "B", "b1", "B", "b1", { isEnvironmental: "True" }),
+      kill(3, "B", "b2", "A", "a2"),
+    ]);
+    expect(f.killsByTeam).toEqual({ A: 0, B: 1 });
+    expect(f.winner).toBe("B");
+  });
+
+  it("classifies kill kinds", () => {
+    expect(killKind(kill(1, "A", "a", "B", "b"))).toBe("kill");
+    expect(killKind(kill(1, "A", "a", "A", "a"))).toBe("suicide");
+    expect(killKind(kill(1, "A", "a", "A", "a", { isEnvironmental: "True" }))).toBe("environmental");
+    expect(killKind(kill(1, "A", "0", "B", "0"))).toBe("kill");
   });
 });
