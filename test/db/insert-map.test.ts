@@ -2,10 +2,11 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { count, eq } from "drizzle-orm";
 import { createTestDb, type Db } from "@/lib/db";
-import { healing, kill, maps, playerStat, scrims } from "@/lib/db/schema";
+import { EVENT_TABLES, healing, kill, maps, playerStat, scrims } from "@/lib/db/schema";
 import { DuplicateMapError, insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
+import { EVENT_TYPES } from "@/lib/parser/events";
 
 const sample = (name: string) => readFileSync(`test/samples/${name}.txt`, "utf8");
 
@@ -59,5 +60,18 @@ describe("insertParsedMap", () => {
     const mapId = await insertParsedMap(db, { scrimId, ourSide: 1, parsed, meta, originalFilename: "push.txt" });
     const [map] = await db.select({ winnerSide: maps.winnerSide, winnerSource: maps.winnerSource }).from(maps).where(eq(maps.id, mapId));
     expect(map).toEqual({ winnerSide: null, winnerSource: null });
+  });
+
+  it("inserts every event table's rows, including mercy_rez", async () => {
+    const parsed = parseLog(sample("Log-2024-02-05-20-07-38"));
+    const meta = deriveMapMeta(parsed);
+    const mapId = await insertParsedMap(db, { scrimId, ourSide: 1, parsed, meta, originalFilename: "lny.txt" });
+
+    expect(parsed.events.mercy_rez?.length ?? 0).toBeGreaterThan(0);
+
+    for (const type of EVENT_TYPES) {
+      const table = EVENT_TABLES[type] as unknown as typeof kill;
+      expect(await rowsIn(db, table, mapId), type).toBe(parsed.events[type]?.length ?? 0);
+    }
   });
 });

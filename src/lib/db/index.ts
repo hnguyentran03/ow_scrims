@@ -1,9 +1,9 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
-import type { PgliteDatabase } from "drizzle-orm/pglite";
+import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import * as schema from "./schema";
 
-export type Db = PgliteDatabase<typeof schema>;
+export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
 
 const MIGRATIONS_FOLDER = path.join(process.cwd(), "drizzle");
 
@@ -15,7 +15,7 @@ async function createPglite(dataDir: string): Promise<Db> {
   const client = new PGlite(dataDir);
   const db = drizzle({ client, schema });
   await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
-  return db as unknown as Db;
+  return db;
 }
 
 async function createPostgres(url: string): Promise<Db> {
@@ -23,7 +23,7 @@ async function createPostgres(url: string): Promise<Db> {
   const { migrate } = await import("drizzle-orm/node-postgres/migrator");
   const db = drizzle({ connection: url, schema });
   await migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
-  return db as unknown as Db;
+  return db;
 }
 
 function createDb(): Promise<Db> {
