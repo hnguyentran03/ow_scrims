@@ -29,7 +29,7 @@ export async function setMapWinnerAction(scrimId: number, mapId: number, side: 1
   if (side !== 1 && side !== 2) throw new Error("invalid id");
   await setMapWinner(await getDb(), mapId, side);
   revalidatePath(`/scrims/${scrimId}`);
-  revalidatePath(`/scrims/${scrimId}/maps/${mapId}`);
+  revalidatePath(`/scrims/${scrimId}/maps/${mapId}`, "layout");
 }
 
 export async function deleteMapAction(scrimId: number, mapId: number): Promise<void> {

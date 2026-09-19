@@ -1,6 +1,6 @@
 # ow-scrims
 
-A single-user Overwatch 2 scrim analytics app, modelled on Parsertime. Upload the per-map log files that the ScrimTime workshop code writes through the Workshop Inspector, and the app parses every event type into a local database and shows a map overview: score, winner, team damage and healing, and a per-player stat table with per-10-minute rates.
+A single-user Overwatch 2 scrim analytics app, modelled on Parsertime. Upload the per-map log files that the ScrimTime workshop code writes through the Workshop Inspector, and the app parses every event type into a local database and shows a map overview: score, winner, team damage and healing, and a per-player stat table with per-10-minute rates. Each map also has a fight-grouped killfeed, an events timeline, three charts (kills by fight, final blows by role, cumulative hero damage by round), and a two-player comparison.
 
 Built with Next.js (App Router, TypeScript), Drizzle ORM, and PGlite (embedded Postgres) with a swappable node-postgres driver for later deployment.
 
@@ -28,10 +28,10 @@ Only the lobby host's game writes the log, so only that player needs Workshop In
 ## Layout
 
 ```
-src/app/            Next.js pages, server actions, and the map upload route handler
+src/app/            Next.js pages (scrim list, scrim detail, map overview/killfeed/charts/events/compare), server actions, and the map upload route handler
 src/lib/parser/      Tokenizer, sanitizer, and descriptor-driven event coercion
 src/lib/db/          Drizzle schema, PGlite/Postgres connection, queries, and map insertion
-src/lib/stats/       Map overview, fight grouping, and hero role computation
+src/lib/stats/       Pure computation: fights, sides, rounds, overview, killfeed, events, charts, compare
 src/lib/logs.ts       Raw log file storage under LOG_DIR
 src/lib/format.ts     Display formatting helpers
 test/                Vitest specs, mirroring src/, plus sample ScrimTime logs in test/samples/
