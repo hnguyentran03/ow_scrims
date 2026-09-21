@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { resultLabel } from "@/lib/format";
 import { loadMap, type MapParams } from "./load-map";
 import { MapTabs } from "./map-tabs";
@@ -23,7 +24,9 @@ export default async function MapLayout({ children, params }: { children: React.
         <p className="text-sm text-zinc-400">{scrim.date} · {sides.ours} vs {sides.theirs}</p>
         <WinnerControl scrimId={scrim.id} mapId={map.id} team1Name={map.team1Name} team2Name={map.team2Name} winnerSide={map.winnerSide} winnerSource={map.winnerSource} />
       </header>
-      <MapTabs base={`/scrims/${scrim.id}/maps/${map.id}`} />
+      <Suspense fallback={null}>
+        <MapTabs base={`/scrims/${scrim.id}/maps/${map.id}`} />
+      </Suspense>
       {children}
     </div>
   );

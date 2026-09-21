@@ -5,7 +5,7 @@ import { TEAM_COLORS } from "@/lib/colors";
 import { formatDuration } from "@/lib/format";
 import type { StepPoint } from "@/lib/stats/charts";
 import type { Sides } from "@/lib/stats/sides";
-import { Axes, H, innerH, Legend, linear, M, svgPoint, ticks, Tooltip, W } from "./chart-utils";
+import { Axes, H, innerH, Legend, linear, M, svgPoint, ticks, Tooltip, W } from "@/components/chart-utils";
 
 export function KillsByFightChart({ points, sides }: { points: StepPoint[]; sides: Sides }) {
   const [hover, setHover] = useState<{ x: number; y: number; point: StepPoint } | null>(null);

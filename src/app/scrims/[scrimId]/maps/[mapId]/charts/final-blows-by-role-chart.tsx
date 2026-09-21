@@ -4,7 +4,7 @@ import { useState } from "react";
 import { TEAM_COLORS } from "@/lib/colors";
 import type { RoleBars } from "@/lib/stats/charts";
 import type { Sides } from "@/lib/stats/sides";
-import { Axes, H, innerW, Legend, linear, M, svgPoint, ticks, Tooltip, W } from "./chart-utils";
+import { Axes, H, innerW, Legend, linear, M, svgPoint, ticks, Tooltip, W } from "@/components/chart-utils";
 
 export function FinalBlowsByRoleChart({ bars, sides }: { bars: RoleBars[]; sides: Sides }) {
   const [hover, setHover] = useState<{ x: number; y: number; bar: RoleBars } | null>(null);

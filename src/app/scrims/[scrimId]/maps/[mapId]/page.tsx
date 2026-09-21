@@ -4,7 +4,7 @@ import { findAjaxes } from "@/lib/stats/events";
 import { killKind } from "@/lib/stats/fights";
 import { buildOverview } from "@/lib/stats/overview";
 import { loadMap, type MapParams } from "./load-map";
-import { Stat } from "./stat";
+import { Stat } from "@/components/stat";
 import { StatTable } from "./stat-table";
 
 export const dynamic = "force-dynamic";
