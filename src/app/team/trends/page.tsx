@@ -22,10 +22,10 @@ export default async function TrendsPage({ searchParams }: { searchParams: Searc
     <div className="space-y-8">
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Win rate by map">
-          <RecordTable rows={byMap.map((r) => ({ key: r.mapName, label: r.mapName, sub: r.mapType, ...r }))} />
+          <RecordTable head="Map" rows={byMap.map((r) => ({ key: r.mapName, label: r.mapName, sub: r.mapType, ...r }))} />
         </Card>
         <Card title="Win rate by map type">
-          <RecordTable rows={byType.map((r) => ({ key: r.mapType, label: r.mapType, ...r }))} />
+          <RecordTable head="Map type" rows={byType.map((r) => ({ key: r.mapType, label: r.mapType, ...r }))} />
         </Card>
       </div>
       <Card title="Hero picks" note="Pick % is over maps where the hero was not banned by either team.">
@@ -43,11 +43,11 @@ export default async function TrendsPage({ searchParams }: { searchParams: Searc
   );
 }
 
-function RecordTable({ rows }: { rows: Array<{ key: string; label: string; sub?: string; played: number; won: number; lost: number; undecided: number; winRate: number | null }> }) {
+function RecordTable({ rows, head }: { rows: Array<{ key: string; label: string; sub?: string; played: number; won: number; lost: number; undecided: number; winRate: number | null }>, head: string }) {
   return (
     <table className="w-full text-sm">
       <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-        <tr><th className="py-1">Map</th><th>Played</th><th>W</th><th>L</th><th>N/A</th><th>Win %</th></tr>
+        <tr><th className="py-1">{head}</th><th>Played</th><th>W</th><th>L</th><th>N/A</th><th>Win %</th></tr>
       </thead>
       <tbody>
         {rows.map((r) => (

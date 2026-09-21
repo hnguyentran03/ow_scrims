@@ -36,7 +36,7 @@ src/app/            Next.js pages (scrim list, scrim detail, map overview/killfe
 src/components/      Shared tab nav, stat cell, and SVG chart helpers
 src/lib/parser/      Tokenizer, sanitizer, and descriptor-driven event coercion
 src/lib/db/          Drizzle schema, PGlite/Postgres connection, queries, and map insertion
-src/lib/stats/       Pure computation: fights, heroes (role map), sides, rounds, overview, killfeed, events, charts, compare
+src/lib/stats/       Pure computation: fights, heroes (role map), sides, rounds, overview, killfeed, events, charts, compare, ultimates, team-rows, trends, teamfights, team-overview
 src/lib/logs.ts       Raw log file storage under LOG_DIR
 src/lib/format.ts     Display formatting helpers
 test/                Vitest specs, mirroring src/, plus sample ScrimTime logs in test/samples/
