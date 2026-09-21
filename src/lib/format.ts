@@ -13,3 +13,11 @@ export function resultLabel(map: { ourSide: number; winnerSide: number | null })
   if (map.winnerSide === null) return "N/A";
   return map.winnerSide === map.ourSide ? "Won" : "Lost";
 }
+
+export function formatPct(v: number | null): string {
+  return v === null ? "–" : `${Math.round(v * 100)}%`;
+}
+
+export function formatSeconds(v: number | null): string {
+  return v === null ? "–" : `${Math.round(v)}s`;
+}
