@@ -10,7 +10,7 @@ import { EmptyRange } from "./empty-range";
 export const dynamic = "force-dynamic";
 
 export default async function TeamOverviewPage({ searchParams }: { searchParams: SearchParams }) {
-  const rows = await getTeamRows(await getDb(), parseRange(await searchParams));
+  const rows = await getTeamRows(await getDb(), parseRange(await searchParams), { playerStats: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const o = buildTeamOverview(rows.maps, rows.playerStats);
 

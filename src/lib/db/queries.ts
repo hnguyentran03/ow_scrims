@@ -163,8 +163,19 @@ export async function recentOurRoster(db: Db, limit = 20): Promise<Set<string>> 
   return new Set(rows.map((r) => r.name));
 }
 
-/** Maps in the date range (scrim date, scrim id, map order) and, for those maps only, the rows the team pages need. */
-export async function getTeamRows(db: Db, range: DateRange = {}): Promise<TeamRows> {
+/** Which event tables a team page needs. Omitted tables come back as empty arrays and are never queried. */
+export interface TeamTables {
+  kills?: boolean;
+  ults?: boolean; // ultimate_start and ultimate_end
+  charged?: boolean; // ultimate_charged
+  playerStats?: boolean;
+  bans?: boolean;
+}
+
+export const ALL_TEAM_TABLES: TeamTables = { kills: true, ults: true, charged: true, playerStats: true, bans: true };
+
+/** Maps in the date range (scrim date, scrim id, map order) and, for those maps only, the rows requested in `tables`; omitted tables come back as empty arrays and are never queried. */
+export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTables = ALL_TEAM_TABLES): Promise<TeamRows> {
   const conditions: SQL[] = [];
   if (range.from) conditions.push(gte(scrims.date, range.from));
   if (range.to) conditions.push(lte(scrims.date, range.to));
@@ -176,12 +187,20 @@ export async function getTeamRows(db: Db, range: DateRange = {}): Promise<TeamRo
     .orderBy(asc(scrims.date), asc(scrims.id), asc(maps.order));
   const ids = mapRows.map((m) => m.id);
   if (ids.length === 0) return { maps: mapRows, kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [] };
-  const kills = await db.select().from(kill).where(inArray(kill.mapId, ids)).orderBy(asc(kill.matchTime), asc(kill.id));
-  const ultStarts = await db.select().from(ultimateStart).where(inArray(ultimateStart.mapId, ids)).orderBy(asc(ultimateStart.matchTime), asc(ultimateStart.id));
-  const ultEnds = await db.select().from(ultimateEnd).where(inArray(ultimateEnd.mapId, ids)).orderBy(asc(ultimateEnd.matchTime), asc(ultimateEnd.id));
-  const ultCharged = await db.select().from(ultimateCharged).where(inArray(ultimateCharged.mapId, ids)).orderBy(asc(ultimateCharged.matchTime), asc(ultimateCharged.id));
-  const playerStats = await db.select().from(playerStat).where(inArray(playerStat.mapId, ids)).orderBy(asc(playerStat.matchTime), asc(playerStat.id));
-  const bans = await db.select().from(mapBans).where(inArray(mapBans.mapId, ids)).orderBy(asc(mapBans.id));
+  const kills = tables.kills ? await db.select().from(kill).where(inArray(kill.mapId, ids)).orderBy(asc(kill.matchTime), asc(kill.id)) : [];
+  const ultStarts = tables.ults
+    ? await db.select().from(ultimateStart).where(inArray(ultimateStart.mapId, ids)).orderBy(asc(ultimateStart.matchTime), asc(ultimateStart.id))
+    : [];
+  const ultEnds = tables.ults
+    ? await db.select().from(ultimateEnd).where(inArray(ultimateEnd.mapId, ids)).orderBy(asc(ultimateEnd.matchTime), asc(ultimateEnd.id))
+    : [];
+  const ultCharged = tables.charged
+    ? await db.select().from(ultimateCharged).where(inArray(ultimateCharged.mapId, ids)).orderBy(asc(ultimateCharged.matchTime), asc(ultimateCharged.id))
+    : [];
+  const playerStats = tables.playerStats
+    ? await db.select().from(playerStat).where(inArray(playerStat.mapId, ids)).orderBy(asc(playerStat.matchTime), asc(playerStat.id))
+    : [];
+  const bans = tables.bans ? await db.select().from(mapBans).where(inArray(mapBans.mapId, ids)).orderBy(asc(mapBans.id)) : [];
   return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans };
 }
 

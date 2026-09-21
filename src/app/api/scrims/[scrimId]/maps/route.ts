@@ -9,10 +9,11 @@ export async function POST(request: Request, ctx: { params: Promise<{ scrimId: s
     return NextResponse.json({ error: "invalid scrim id" }, { status: 400 });
   }
 
-  const contentLength = Number(request.headers.get("content-length"));
-  if (Number.isFinite(contentLength) && contentLength > MAX_UPLOAD_BYTES) {
-    return NextResponse.json({ error: "file is larger than 50MB" }, { status: 413 });
-  }
+  const lengthHeader = request.headers.get("content-length");
+  if (lengthHeader === null) return NextResponse.json({ error: "content-length header required" }, { status: 411 });
+  const contentLength = Number(lengthHeader);
+  if (!Number.isFinite(contentLength) || contentLength < 0) return NextResponse.json({ error: "invalid content-length" }, { status: 400 });
+  if (contentLength > MAX_UPLOAD_BYTES) return NextResponse.json({ error: "file is larger than 50MB" }, { status: 413 });
 
   let file: FormDataEntryValue | null;
   let side: FormDataEntryValue | null;
@@ -34,7 +35,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ scrimId: s
     revalidatePath("/team", "layout");
     return NextResponse.json(result, { status: 201 });
   } catch (err) {
-    if (err instanceof UploadError) return NextResponse.json({ error: err.message, ...err.details }, { status: err.status });
+    if (err instanceof UploadError) return NextResponse.json({ ...err.details, error: err.message }, { status: err.status });
     console.error("upload failed", err);
     return NextResponse.json({ error: "upload failed" }, { status: 500 });
   }

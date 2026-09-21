@@ -10,7 +10,7 @@ import { UltEconomyChart } from "./ult-economy-chart";
 export const dynamic = "force-dynamic";
 
 export default async function TrendsPage({ searchParams }: { searchParams: SearchParams }) {
-  const rows = await getTeamRows(await getDb(), parseRange(await searchParams));
+  const rows = await getTeamRows(await getDb(), parseRange(await searchParams), { ults: true, charged: true, playerStats: true, bans: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const byMap = winRateByMap(rows.maps);
   const byType = winRateByType(rows.maps);

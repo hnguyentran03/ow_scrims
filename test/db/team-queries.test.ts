@@ -64,6 +64,20 @@ describe("team queries", () => {
     expect(latest).toEqual(new Set(["Doomfist", "Bastion", "Ashe", "Baptiste", "Ana"]));
   });
 
+  it("loads only the tables a page asks for", async () => {
+    const rows = await getTeamRows(db, {}, { kills: true });
+    expect(rows.maps).toHaveLength(2);
+    expect(rows.kills).toHaveLength(58 + 76);
+    expect(rows.ultStarts).toEqual([]);
+    expect(rows.ultEnds).toEqual([]);
+    expect(rows.ultCharged).toEqual([]);
+    expect(rows.playerStats).toEqual([]);
+    expect(rows.bans).toEqual([]);
+    const stats = await getTeamRows(db, {}, { playerStats: true, bans: true });
+    expect(stats.kills).toEqual([]);
+    expect(stats.playerStats).toHaveLength(40 + 50);
+  });
+
   it("drops bans with the map", async () => {
     await deleteMap(db, aatlis);
     expect((await getTeamRows(db)).bans).toEqual([]);
