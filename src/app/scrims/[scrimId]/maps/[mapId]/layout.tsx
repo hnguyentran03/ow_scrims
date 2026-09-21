@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 const BADGE: Record<"Won" | "Lost" | "N/A", string> = { Won: "bg-green-700", Lost: "bg-red-700", "N/A": "bg-zinc-700" };
 
 export default async function MapLayout({ children, params }: { children: React.ReactNode; params: MapParams }) {
-  const { map, scrim, sides } = await loadMap(params);
+  const { map, scrim, sides, bans } = await loadMap(params);
   const label = resultLabel(map);
   return (
     <div className="space-y-6">
@@ -22,6 +22,11 @@ export default async function MapLayout({ children, params }: { children: React.
           <span className={`rounded px-2 py-0.5 text-xs ${BADGE[label]}`}>{label}</span>
         </div>
         <p className="text-sm text-zinc-400">{scrim.date} · {sides.ours} vs {sides.theirs}</p>
+        {bans.length > 0 && (
+          <p className="text-sm text-zinc-400">
+            Bans: {bans.filter((b) => b.side === map.ourSide).map((b) => b.hero).join(", ") || "none"} / {bans.filter((b) => b.side !== map.ourSide).map((b) => b.hero).join(", ") || "none"}
+          </p>
+        )}
         <WinnerControl scrimId={scrim.id} mapId={map.id} team1Name={map.team1Name} team2Name={map.team2Name} winnerSide={map.winnerSide} winnerSource={map.winnerSource} />
       </header>
       <Suspense fallback={null}>
