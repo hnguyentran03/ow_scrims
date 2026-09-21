@@ -48,7 +48,7 @@ function Column({ title, color, stats: s }: { title: string; color: string; stat
       <div className="grid gap-3 sm:grid-cols-2">
         <Stat label="Fight win rate" value={formatPct(s.winRate)} hint={`${s.won}-${s.lost}, ${s.drawn} even of ${s.fights}`} />
         <Stat label="First pick win rate" value={formatPct(s.firstPick.rate)} hint={`${s.firstPick.won} of ${s.firstPick.count} fights`} />
-        <Stat label="First death win rate" value={formatPct(s.firstDeath.rate)} hint={`${s.reversals} reversals`} />
+        <Stat label="First death win rate" value={formatPct(s.firstDeath.rate)} hint={`${s.firstDeath.won} of ${s.firstDeath.count} fights, ${s.reversals} reversals`} />
         <Stat label="First ult win rate" value={formatPct(s.firstUlt.rate)} hint={`${s.firstUlt.won} of ${s.firstUlt.count} fights`} />
         <Stat label="Dry fight rate" value={formatPct(s.dry.rate)} hint={`${s.dry.count} fights with no ult`} />
         <Stat label="Dry fight win rate" value={formatPct(s.dry.winRate)} hint={`${s.dry.won} of ${s.dry.count}`} />
