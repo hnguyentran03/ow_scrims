@@ -1,6 +1,10 @@
 import { groupFights, killKind, type Fight, type KillLike } from "./fights";
 import { dedupeRounds, roundCapturer, type RoundEndLike, type RoundLike } from "./rounds";
 import { sideOf, sides, type SideKey } from "./sides";
+import { pairUltimates, DOUBLE_CAST_SECONDS, type UltLike } from "./ultimates";
+
+export { pairUltimates, DOUBLE_CAST_SECONDS };
+export type { UltLike };
 
 export interface EventMapLike {
   team1Name: string;
@@ -23,12 +27,6 @@ export interface SwapLike extends TimedRow {
   playerName: string;
   playerHero: string;
   previousHero: string;
-}
-
-export interface UltLike extends TimedRow {
-  playerTeam: string;
-  playerName: string;
-  playerHero: string | null;
 }
 
 export interface EventRows {
@@ -95,34 +93,13 @@ const KIND_PRIORITY: Record<EventKind, number> = {
   match_start: 0, round_start: 1, round_end: 2, match_end: 3, capture: 4, fight: 5, swap: 6, ult: 7, ult_kill: 8, multikill: 9, ajax: 10,
 };
 
-export const DOUBLE_CAST_SECONDS = 1;
 export const MULTIKILL_MIN = 3;
-
-const byTime = <T extends TimedRow>(a: T, b: T) => a.matchTime - b.matchTime;
-const samePlayer = (a: UltLike, b: UltLike) => a.playerTeam === b.playerTeam && a.playerName === b.playerName;
 
 /** The fight whose window contains `time`, else the next fight to start, else null. */
 export function fightIndexAt(time: number, fights: Fight[]): number | null {
   const inside = fights.find((f) => time >= f.start && time <= f.end);
   if (inside) return inside.index;
   return fights.find((f) => f.start > time)?.index ?? null;
-}
-
-/**
- * Pairs each ultimate_start with the first ultimate_end for the same player at or after it.
- * A start followed by another start from the same player within DOUBLE_CAST_SECONDS is a false cast and is dropped.
- */
-export function pairUltimates(starts: UltLike[], ends: UltLike[]): Array<{ start: UltLike; end: UltLike | null }> {
-  const sortedStarts = [...starts].sort(byTime);
-  const sortedEnds = [...ends].sort(byTime);
-  const kept = sortedStarts.filter((s, i) => {
-    const next = sortedStarts.slice(i + 1).find((n) => samePlayer(n, s));
-    return !(next && next.matchTime - s.matchTime <= DOUBLE_CAST_SECONDS);
-  });
-  return kept.map((start) => ({
-    start,
-    end: sortedEnds.find((e) => samePlayer(e, start) && e.matchTime >= start.matchTime) ?? null,
-  }));
 }
 
 export function findMultikills(fights: Fight[]): Array<{ team: string; player: string; hero: string; kills: number; time: number; fightIndex: number }> {
