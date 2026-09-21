@@ -23,6 +23,14 @@ describe("finalRoundRows", () => {
     ]);
     expect(rows.map((r) => [r.playerHero, r.eliminations])).toEqual([["Ana", 7], ["Kiriko", 1]]);
   });
+
+  it("keeps the later row when two snapshots share the same round number", () => {
+    const rows = finalRoundRows([
+      stat({ playerTeam: "A", playerName: "p", playerHero: "Ana", roundNumber: 5, eliminations: 2 }),
+      stat({ playerTeam: "A", playerName: "p", playerHero: "Ana", roundNumber: 5, eliminations: 3 }),
+    ]);
+    expect(rows.map((r) => r.eliminations)).toEqual([3]);
+  });
 });
 
 describe("buildOverview", () => {
