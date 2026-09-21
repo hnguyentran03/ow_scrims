@@ -24,15 +24,17 @@ export async function POST(request: Request, ctx: { params: Promise<{ scrimId: s
     return NextResponse.json({ error: "expected multipart form data" }, { status: 400 });
   }
   if (!(file instanceof File)) return NextResponse.json({ error: "missing file" }, { status: 400 });
-  if (side !== "1" && side !== "2") return NextResponse.json({ error: "choose which team was yours" }, { status: 400 });
+  if (side !== "1" && side !== "2" && side !== "auto") return NextResponse.json({ error: "choose which team was yours" }, { status: 400 });
 
   try {
-    const result = await handleUpload(await getDb(), { scrimId, file, ourSide: side === "1" ? 1 : 2 });
+    const ourSide = side === "auto" ? "auto" : side === "1" ? 1 : 2;
+    const result = await handleUpload(await getDb(), { scrimId, file, ourSide });
     revalidatePath(`/scrims/${scrimId}`);
     revalidatePath("/");
+    revalidatePath("/team", "layout");
     return NextResponse.json(result, { status: 201 });
   } catch (err) {
-    if (err instanceof UploadError) return NextResponse.json({ error: err.message }, { status: err.status });
+    if (err instanceof UploadError) return NextResponse.json({ error: err.message, ...err.details }, { status: err.status });
     console.error("upload failed", err);
     return NextResponse.json({ error: "upload failed" }, { status: 500 });
   }
