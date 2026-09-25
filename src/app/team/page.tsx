@@ -3,7 +3,7 @@ import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
 import { formatPct } from "@/lib/format";
 import { parseRange, type SearchParams } from "@/lib/range";
-import { buildTeamOverview, MIN_MAP_PLAYS } from "@/lib/stats/team-overview";
+import { buildTeamOverview, MIN_MAP_PLAYS, type ModeExtremes } from "@/lib/stats/team-overview";
 import type { MapRecord, TypeRecord } from "@/lib/stats/trends";
 import { EmptyRange } from "./empty-range";
 
@@ -33,6 +33,8 @@ export default async function TeamOverviewPage({ searchParams }: { searchParams:
         <MapCard title="Blind spot map" record={o.blindSpot} />
       </div>
 
+      <ByModeTable rows={o.byMode} />
+
       <section className="space-y-2">
         <h2 className="text-lg font-medium">Role balance</h2>
         <p className="text-xs text-zinc-500">Our share of team totals by role.</p>
@@ -50,6 +52,40 @@ export default async function TeamOverviewPage({ searchParams }: { searchParams:
         </table>
       </section>
     </div>
+  );
+}
+
+function ByModeTable({ rows }: { rows: ModeExtremes[] }) {
+  return (
+    <section className="space-y-2">
+      <h2 className="text-lg font-medium">By game mode</h2>
+      <p className="text-xs text-zinc-500">Strongest and blind-spot map within each mode, among maps played at least {MIN_MAP_PLAYS} times.</p>
+      <table className="w-full text-sm">
+        <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
+          <tr><th className="py-1">Mode</th><th>Played</th><th>Strongest map</th><th>Blind spot map</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.mapType} className="border-t border-zinc-800 tabular-nums">
+              <td className="py-1">{r.mapType}</td>
+              <td>{r.played}</td>
+              <ModeMapCell record={r.strongest} />
+              <ModeMapCell record={r.blindSpot} />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </section>
+  );
+}
+
+function ModeMapCell({ record }: { record: MapRecord | null }) {
+  if (!record) return <td className="text-zinc-500">Needs {MIN_MAP_PLAYS} plays of a map</td>;
+  return (
+    <td>
+      <span className="font-medium">{record.mapName}</span>
+      <span className="text-zinc-400"> · {record.won}-{record.lost} · {formatPct(record.winRate)}</span>
+    </td>
   );
 }
 

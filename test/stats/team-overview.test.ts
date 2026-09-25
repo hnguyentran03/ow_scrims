@@ -13,7 +13,7 @@ const stat = (mapId: number, playerTeam: string, playerHero: string, finalBlows:
 describe("buildTeamOverview", () => {
   it("is empty-safe", () => {
     expect(buildTeamOverview([], [])).toEqual({
-      record: { won: 0, lost: 0, undecided: 0, maps: 0, scrims: 0 }, lastTen: { won: 0, lost: 0 }, strongest: null, blindSpot: null, strongestType: null, blindSpotType: null,
+      record: { won: 0, lost: 0, undecided: 0, maps: 0, scrims: 0 }, lastTen: { won: 0, lost: 0 }, strongest: null, blindSpot: null, strongestType: null, blindSpotType: null, byMode: [],
       roleBalance: [
         { role: "Tank", finalBlows: null, deaths: null, heroDamage: null, healing: null },
         { role: "Damage", finalBlows: null, deaths: null, heroDamage: null, healing: null },
@@ -89,5 +89,34 @@ describe("strongest and blind-spot game modes", () => {
     expect(o.strongestType?.mapType).toBe("Control");
     expect(o.blindSpotType?.mapType).toBe("Control");
     expect(buildTeamOverview(maps.slice(0, 2), []).strongestType).toBeNull();
+  });
+});
+
+describe("strongest and blind-spot maps per game mode", () => {
+  const typed = (id: number, mapName: string, mapType: string, winnerSide: number | null): TeamMapLike => ({ ...map(id, mapName, winnerSide, id), mapType });
+
+  it("lists every mode in the range in MAP_TYPE_ORDER with that mode's strongest and blind-spot map", () => {
+    const maps = [
+      typed(1, "Kings Row", "Hybrid", 1), typed(2, "Kings Row", "Hybrid", 1), typed(3, "Kings Row", "Hybrid", 2),
+      typed(4, "Numbani", "Hybrid", 2), typed(5, "Numbani", "Hybrid", 2), typed(6, "Numbani", "Hybrid", 1),
+      typed(7, "Busan", "Control", 1), typed(8, "Busan", "Control", 1), typed(9, "Busan", "Control", 1),
+      typed(10, "Ilios", "Control", 2),
+      typed(11, "Colosseo", "Push", 1), typed(12, "Esperanca", "Push", 2),
+    ];
+    const o = buildTeamOverview(maps, []);
+    expect(o.byMode.map((m) => m.mapType)).toEqual(["Control", "Hybrid", "Push"]);
+    expect(o.byMode[0]).toMatchObject({ mapType: "Control", played: 4, strongest: { mapName: "Busan", winRate: 1 }, blindSpot: { mapName: "Busan", winRate: 1 } });
+    expect(o.byMode[1]).toMatchObject({ mapType: "Hybrid", played: 6, strongest: { mapName: "Kings Row", winRate: 2 / 3 }, blindSpot: { mapName: "Numbani", winRate: 1 / 3 } });
+    expect(o.byMode[2]).toEqual({ mapType: "Push", played: 2, strongest: null, blindSpot: null });
+  });
+
+  it("ignores maps from other modes when ranking within a mode", () => {
+    const maps = [
+      typed(1, "Busan", "Control", 2), typed(2, "Busan", "Control", 2), typed(3, "Busan", "Control", 2),
+      typed(4, "Colosseo", "Push", 1), typed(5, "Colosseo", "Push", 1), typed(6, "Colosseo", "Push", 1),
+    ];
+    const o = buildTeamOverview(maps, []);
+    expect(o.blindSpot?.mapName).toBe("Busan");
+    expect(o.byMode.find((m) => m.mapType === "Push")?.blindSpot?.mapName).toBe("Colosseo");
   });
 });
