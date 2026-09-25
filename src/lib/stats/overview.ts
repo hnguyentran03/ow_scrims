@@ -63,13 +63,18 @@ export function per10(value: number, seconds: number): number {
 
 const KEY_SEP = "|";
 
-/** player_stat rows are cumulative per round; keep the highest round for each team/player/hero. */
+/**
+ * player_stat rows are cumulative per round; keep the highest round for each team/player/hero.
+ * Rows arrive in log order, and a round can log more than one cumulative snapshot (e.g. a
+ * mid-round checkpoint and a match-end summary sharing the last round number) — on a tie, the
+ * later row in log order is the more complete one, so it wins.
+ */
 export function finalRoundRows<T extends PlayerStatLike>(rows: T[]): T[] {
   const best = new Map<string, T>();
   for (const row of rows) {
     const key = [row.playerTeam, row.playerName, row.playerHero].join(KEY_SEP);
     const prev = best.get(key);
-    if (!prev || row.roundNumber > prev.roundNumber) best.set(key, row);
+    if (!prev || row.roundNumber >= prev.roundNumber) best.set(key, row);
   }
   return [...best.values()];
 }

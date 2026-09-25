@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { parseLog } from "@/lib/parser/parse";
-import { deriveMapMeta, deriveWinner } from "@/lib/parser/derive";
+import { baseMapName, deriveMapMeta, deriveWinner } from "@/lib/parser/derive";
 
 const sample = (name: string) => readFileSync(`test/samples/${name}.txt`, "utf8");
 
@@ -11,7 +11,7 @@ const CASES: Array<[string, string, string, number, number, number, 1 | 2]> = [
   ["Log-2024-01-22-20-02-45", "Lijiang Tower", "Control", 0, 3, 727.37, 2],
   ["Log-2024-01-22-20-21-43", "Watchpoint: Gibraltar", "Escort", 2, 3, 947.39, 2],
   ["Log-2024-01-22-21-35-38", "Ilios", "Control", 2, 1, 707.48, 1],
-  ["Log-2024-02-05-20-07-38", "Lijiang Tower (Lunar New Year)", "Control", 2, 1, 744.01, 1],
+  ["Log-2024-02-05-20-07-38", "Lijiang Tower", "Control", 2, 1, 744.01, 1],
   ["Log-2024-05-03-20-06-06", "Lijiang Tower", "Control", 3, 0, 598.41, 1],
   ["Log-2024-06-16-22-24-33", "King's Row", "Hybrid", 2, 3, 938.92, 2],
   ["Log-2026-04-02-17-21-48", "Lijiang Tower", "Control", 1, 2, 744.21, 2],
@@ -63,5 +63,15 @@ describe("deriveWinner rules", () => {
 
   it("Hybrid with differing scores uses the score", () => {
     expect(deriveWinner({ ...base, mapType: "Hybrid", team1Score: 0, team2Score: 3 })).toBe(2);
+  });
+});
+
+describe("baseMapName", () => {
+  it("strips a trailing parenthesised variant and keeps everything else", () => {
+    expect(baseMapName("Lijiang Tower (Lunar New Year)")).toBe("Lijiang Tower");
+    expect(baseMapName("Eichenwalde (Halloween)")).toBe("Eichenwalde");
+    expect(baseMapName("King's Row (Winter) ")).toBe("King's Row");
+    expect(baseMapName("Watchpoint: Gibraltar")).toBe("Watchpoint: Gibraltar");
+    expect(baseMapName("Lijiang Tower")).toBe("Lijiang Tower");
   });
 });

@@ -52,6 +52,13 @@ export function deriveWinner(input: WinnerInput): Side | null {
   return last1 > last2 ? 1 : 2;
 }
 
+const VARIANT_SUFFIX = /\s*\([^)]*\)\s*$/;
+
+/** Seasonal variants are the same map: "Lijiang Tower (Lunar New Year)" is stored as "Lijiang Tower". */
+export function baseMapName(name: string): string {
+  return name.replace(VARIANT_SUFFIX, "").trim();
+}
+
 function isMapType(s: unknown): s is MapType {
   return typeof s === "string" && (MAP_TYPES as readonly string[]).includes(s);
 }
@@ -75,7 +82,7 @@ export function deriveMapMeta(parsed: ParsedLog): MapMeta {
   }));
 
   return {
-    mapName: String(start.mapName),
+    mapName: baseMapName(String(start.mapName)),
     mapType,
     team1Name,
     team2Name,

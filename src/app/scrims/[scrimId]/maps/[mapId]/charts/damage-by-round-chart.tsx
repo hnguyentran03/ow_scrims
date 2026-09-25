@@ -5,7 +5,7 @@ import { TEAM_COLORS } from "@/lib/colors";
 import { formatInt } from "@/lib/format";
 import type { RoundPoint } from "@/lib/stats/charts";
 import type { Sides } from "@/lib/stats/sides";
-import { Axes, H, Legend, linear, M, svgPoint, ticks, Tooltip, W } from "./chart-utils";
+import { Axes, H, Legend, linear, M, svgPoint, ticks, Tooltip, W } from "@/components/chart-utils";
 
 export function DamageByRoundChart({ points, sides }: { points: RoundPoint[]; sides: Sides }) {
   const [hover, setHover] = useState<{ x: number; y: number; point: RoundPoint } | null>(null);

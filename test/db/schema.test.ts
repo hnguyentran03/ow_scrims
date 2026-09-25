@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getTableColumns, sql } from "drizzle-orm";
 import { EVENTS, EVENT_TYPES, type EventColumn } from "@/lib/parser/events";
-import { EVENT_TABLES, maps, scrims } from "@/lib/db/schema";
+import { EVENT_TABLES, mapBans, maps, scrims } from "@/lib/db/schema";
 import { createTestDb } from "@/lib/db";
 
 describe("schema", () => {
@@ -19,13 +19,20 @@ describe("schema", () => {
     }
   });
 
-  it("migrates an in-memory database with 29 public tables", async () => {
+  it("migrates an in-memory database with 30 public tables", async () => {
     const db = await createTestDb();
     const result = (await db.execute(sql`select count(*)::int as n from information_schema.tables where table_schema = 'public'`)) as unknown as {
       rows: Array<{ n: number }>;
     };
-    expect(result.rows[0].n).toBe(29);
+    expect(result.rows[0].n).toBe(30);
     expect(getTableColumns(scrims).opponentName.name).toBe("opponent_name");
     expect(getTableColumns(maps).ourSide.name).toBe("our_side");
+  });
+
+  it("has a map_ban table keyed by map and side", () => {
+    const cols = getTableColumns(mapBans);
+    expect(cols.mapId.name).toBe("map_id");
+    expect(cols.side.name).toBe("side");
+    expect(cols.hero.name).toBe("hero");
   });
 });

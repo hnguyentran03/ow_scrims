@@ -1,8 +1,8 @@
-import { asc, count, desc, eq, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, gte, inArray, lte, sql, type SQL } from "drizzle-orm";
 import type { Db } from "./index";
 import {
-  heroSwap, kill, maps, matchEnd, matchStart, mercyRez, objectiveCaptured, playerStat, roundEnd, roundStart, scrims,
-  ultimateEnd, ultimateStart,
+  heroSwap, kill, mapBans, maps, matchEnd, matchStart, mercyRez, objectiveCaptured, playerStat, roundEnd, roundStart, scrims,
+  ultimateCharged, ultimateEnd, ultimateStart,
 } from "./schema";
 
 export type ScrimRow = typeof scrims.$inferSelect;
@@ -18,6 +18,29 @@ export type CaptureRow = typeof objectiveCaptured.$inferSelect;
 export type SwapRow = typeof heroSwap.$inferSelect;
 export type UltStartRow = typeof ultimateStart.$inferSelect;
 export type UltEndRow = typeof ultimateEnd.$inferSelect;
+export type MapBanRow = typeof mapBans.$inferSelect;
+export type UltChargedRow = typeof ultimateCharged.$inferSelect;
+
+/** Inclusive YYYY-MM-DD bounds on the scrim date; either may be absent. */
+export interface DateRange {
+  from?: string;
+  to?: string;
+}
+
+export interface TeamMapRow extends MapRow {
+  scrimName: string;
+  scrimDate: string;
+}
+
+export interface TeamRows {
+  maps: TeamMapRow[];
+  kills: KillRow[];
+  ultStarts: UltStartRow[];
+  ultEnds: UltEndRow[];
+  ultCharged: UltChargedRow[];
+  playerStats: PlayerStatRow[];
+  bans: MapBanRow[];
+}
 
 export interface ScrimSummary {
   id: number;
@@ -63,16 +86,19 @@ export async function listScrims(db: Db): Promise<ScrimSummary[]> {
     .orderBy(desc(scrims.date), desc(scrims.id));
 }
 
-export async function getScrim(db: Db, id: number): Promise<{ scrim: ScrimRow; maps: MapRow[] } | null> {
+export async function getScrim(db: Db, id: number): Promise<{ scrim: ScrimRow; maps: MapRow[]; bans: MapBanRow[] } | null> {
   const [scrim] = await db.select().from(scrims).where(eq(scrims.id, id));
   if (!scrim) return null;
   const mapRows = await db.select().from(maps).where(eq(maps.scrimId, id)).orderBy(asc(maps.order));
-  return { scrim, maps: mapRows };
+  const bans = mapRows.length === 0 ? [] : await db.select().from(mapBans).where(inArray(mapBans.mapId, mapRows.map((m) => m.id))).orderBy(asc(mapBans.id));
+  return { scrim, maps: mapRows, bans };
 }
 
-export async function getMap(db: Db, id: number): Promise<{ map: MapRow; scrim: ScrimRow } | null> {
+export async function getMap(db: Db, id: number): Promise<{ map: MapRow; scrim: ScrimRow; bans: MapBanRow[] } | null> {
   const [row] = await db.select({ map: maps, scrim: scrims }).from(maps).innerJoin(scrims, eq(scrims.id, maps.scrimId)).where(eq(maps.id, id));
-  return row ?? null;
+  if (!row) return null;
+  const bans = await db.select().from(mapBans).where(eq(mapBans.mapId, id)).orderBy(asc(mapBans.id));
+  return { ...row, bans };
 }
 
 const killsFor = (db: Db, mapId: number) => db.select().from(kill).where(eq(kill.mapId, mapId)).orderBy(asc(kill.matchTime), asc(kill.id));
@@ -116,6 +142,66 @@ export async function getChartRows(db: Db, mapId: number): Promise<{ kills: Kill
 
 export async function getCompareRows(db: Db, mapId: number): Promise<{ playerStats: PlayerStatRow[] }> {
   return { playerStats: await playerStatsFor(db, mapId) };
+}
+
+export async function setMapBans(db: Db, mapId: number, side: 1 | 2, heroes: string[]): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx.delete(mapBans).where(and(eq(mapBans.mapId, mapId), eq(mapBans.side, side)));
+    if (heroes.length > 0) await tx.insert(mapBans).values(heroes.map((hero) => ({ mapId, side, hero })));
+  });
+}
+
+/** Distinct player names on our side over the `limit` most recently uploaded maps. Feeds side inference for bulk upload. */
+export async function recentOurRoster(db: Db, limit = 20): Promise<Set<string>> {
+  const recent = db.select({ id: maps.id }).from(maps).orderBy(desc(maps.uploadedAt), desc(maps.id)).limit(limit);
+  const ourTeam = sql`case when ${maps.ourSide} = 1 then ${maps.team1Name} else ${maps.team2Name} end`;
+  const rows = await db
+    .selectDistinct({ name: playerStat.playerName })
+    .from(playerStat)
+    .innerJoin(maps, eq(maps.id, playerStat.mapId))
+    .where(and(inArray(playerStat.mapId, recent), eq(playerStat.playerTeam, ourTeam)));
+  return new Set(rows.map((r) => r.name));
+}
+
+/** Which event tables a team page needs. Omitted tables come back as empty arrays and are never queried. */
+export interface TeamTables {
+  kills?: boolean;
+  ults?: boolean; // ultimate_start and ultimate_end
+  charged?: boolean; // ultimate_charged
+  playerStats?: boolean;
+  bans?: boolean;
+}
+
+export const ALL_TEAM_TABLES: TeamTables = { kills: true, ults: true, charged: true, playerStats: true, bans: true };
+
+/** Maps in the date range (scrim date, scrim id, map order) and, for those maps only, the rows requested in `tables`; omitted tables come back as empty arrays and are never queried. */
+export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTables = ALL_TEAM_TABLES): Promise<TeamRows> {
+  const conditions: SQL[] = [];
+  if (range.from) conditions.push(gte(scrims.date, range.from));
+  if (range.to) conditions.push(lte(scrims.date, range.to));
+  const mapRows: TeamMapRow[] = await db
+    .select({ ...getTableColumns(maps), scrimName: scrims.name, scrimDate: scrims.date })
+    .from(maps)
+    .innerJoin(scrims, eq(scrims.id, maps.scrimId))
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(asc(scrims.date), asc(scrims.id), asc(maps.order));
+  const ids = mapRows.map((m) => m.id);
+  if (ids.length === 0) return { maps: mapRows, kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [] };
+  const kills = tables.kills ? await db.select().from(kill).where(inArray(kill.mapId, ids)).orderBy(asc(kill.matchTime), asc(kill.id)) : [];
+  const ultStarts = tables.ults
+    ? await db.select().from(ultimateStart).where(inArray(ultimateStart.mapId, ids)).orderBy(asc(ultimateStart.matchTime), asc(ultimateStart.id))
+    : [];
+  const ultEnds = tables.ults
+    ? await db.select().from(ultimateEnd).where(inArray(ultimateEnd.mapId, ids)).orderBy(asc(ultimateEnd.matchTime), asc(ultimateEnd.id))
+    : [];
+  const ultCharged = tables.charged
+    ? await db.select().from(ultimateCharged).where(inArray(ultimateCharged.mapId, ids)).orderBy(asc(ultimateCharged.matchTime), asc(ultimateCharged.id))
+    : [];
+  const playerStats = tables.playerStats
+    ? await db.select().from(playerStat).where(inArray(playerStat.mapId, ids)).orderBy(asc(playerStat.matchTime), asc(playerStat.id))
+    : [];
+  const bans = tables.bans ? await db.select().from(mapBans).where(inArray(mapBans.mapId, ids)).orderBy(asc(mapBans.id)) : [];
+  return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans };
 }
 
 export async function setMapWinner(db: Db, mapId: number, side: 1 | 2): Promise<void> {

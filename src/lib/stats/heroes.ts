@@ -19,3 +19,8 @@ const HERO_ROLES: Record<string, Role> = {
 export function roleOf(hero: string): Role {
   return HERO_ROLES[hero] ?? "Unknown";
 }
+
+/** Every known hero, ordered by role then name. The bans editor's option list and the validation set for bans. */
+export const HEROES: readonly string[] = Object.keys(HERO_ROLES).sort(
+  (a, b) => ROLE_ORDER.indexOf(HERO_ROLES[a]) - ROLE_ORDER.indexOf(HERO_ROLES[b]) || a.localeCompare(b),
+);

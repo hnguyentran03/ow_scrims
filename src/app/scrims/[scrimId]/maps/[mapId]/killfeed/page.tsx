@@ -4,7 +4,7 @@ import { TEAM_COLORS } from "@/lib/colors";
 import { buildKillfeed, type KillfeedBlock, type KillfeedEntry } from "@/lib/stats/killfeed";
 import { sideOf, type Sides } from "@/lib/stats/sides";
 import { loadMap, type MapParams } from "../load-map";
-import { Stat } from "../stat";
+import { Stat } from "@/components/stat";
 
 export const dynamic = "force-dynamic";
 

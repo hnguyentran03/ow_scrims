@@ -1,4 +1,4 @@
-import { date, doublePrecision, index, integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { date, doublePrecision, index, integer, pgTable, serial, text, timestamp, unique } from "drizzle-orm/pg-core";
 import type { EventType } from "@/lib/parser/events";
 
 export const scrims = pgTable("scrim", {
@@ -31,6 +31,18 @@ export const maps = pgTable(
     uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("map_scrim_id_idx").on(t.scrimId)],
+);
+
+export const mapBans = pgTable(
+  "map_ban",
+  {
+    id: serial("id").primaryKey(),
+    mapId: integer("map_id").notNull().references(() => maps.id, { onDelete: "cascade" }),
+    /** 1 or 2: the map's team slot, same convention as ourSide and winnerSide. */
+    side: integer("side").notNull(),
+    hero: text("hero").notNull(),
+  },
+  (t) => [index("map_ban_map_id_idx").on(t.mapId), unique("map_ban_map_side_hero").on(t.mapId, t.side, t.hero)],
 );
 
 const base = () => ({

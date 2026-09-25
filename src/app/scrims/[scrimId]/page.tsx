@@ -5,6 +5,7 @@ import { getScrim } from "@/lib/db/queries";
 import { resultLabel } from "@/lib/format";
 import { deleteMapAction, deleteScrimAction } from "@/app/actions";
 import { AddMapForm } from "./add-map-form";
+import { BansEditor } from "./bans-editor";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export default async function ScrimPage({ params }: { params: Promise<{ scrimId:
   if (!Number.isInteger(scrimId)) notFound();
   const data = await getScrim(await getDb(), scrimId);
   if (!data) notFound();
-  const { scrim, maps } = data;
+  const { scrim, maps, bans } = data;
 
   return (
     <div className="space-y-6">
@@ -48,6 +49,7 @@ export default async function ScrimPage({ params }: { params: Promise<{ scrimId:
                 <span className={`rounded px-2 py-0.5 text-xs ${BADGE[label]}`}>{label}</span>
               </div>
               <p className="text-sm text-zinc-400">{m.mapType} · {m.mapType === "Push" ? "score N/A" : `${ours} - ${theirs}`}</p>
+              <BansEditor scrimId={scrim.id} mapId={m.id} ourSide={m.ourSide} bans={bans.filter((b) => b.mapId === m.id)} />
               <form action={deleteMapAction.bind(null, scrim.id, m.id)} className="mt-2">
                 <button type="submit" className="text-xs text-red-400 hover:underline">Delete map</button>
               </form>
