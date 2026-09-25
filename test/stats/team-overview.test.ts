@@ -13,7 +13,7 @@ const stat = (mapId: number, playerTeam: string, playerHero: string, finalBlows:
 describe("buildTeamOverview", () => {
   it("is empty-safe", () => {
     expect(buildTeamOverview([], [])).toEqual({
-      record: { won: 0, lost: 0, undecided: 0, maps: 0, scrims: 0 }, lastTen: { won: 0, lost: 0 }, strongest: null, blindSpot: null,
+      record: { won: 0, lost: 0, undecided: 0, maps: 0, scrims: 0 }, lastTen: { won: 0, lost: 0 }, strongest: null, blindSpot: null, strongestType: null, blindSpotType: null,
       roleBalance: [
         { role: "Tank", finalBlows: null, deaths: null, heroDamage: null, healing: null },
         { role: "Damage", finalBlows: null, deaths: null, heroDamage: null, healing: null },
@@ -66,5 +66,28 @@ describe("buildTeamOverview", () => {
     const o = buildTeamOverview([map(1, "Busan", 1)], [stat(1, "A", "Mystery", 1, 1, 1, 1)]);
     expect(o.roleBalance.map((r) => r.role)).toEqual(["Tank", "Damage", "Support", "Unknown"]);
     expect(o.roleBalance[3].finalBlows).toBe(1);
+  });
+});
+
+describe("strongest and blind-spot game modes", () => {
+  const typed = (id: number, mapName: string, mapType: string, winnerSide: number | null): TeamMapLike => ({ ...map(id, mapName, winnerSide, id), mapType });
+
+  it("applies the same 3-play guard per map type and orders by win rate", () => {
+    const maps = [
+      typed(1, "Busan", "Control", 1), typed(2, "Ilios", "Control", 1), typed(3, "Nepal", "Control", 2),
+      typed(4, "Kings Row", "Hybrid", 2), typed(5, "Eichenwalde", "Hybrid", 2), typed(6, "Numbani", "Hybrid", 1),
+      typed(7, "Colosseo", "Push", 1), typed(8, "Esperanca", "Push", 1),
+    ];
+    const o = buildTeamOverview(maps, []);
+    expect(o.strongestType).toMatchObject({ mapType: "Control", played: 3, winRate: 2 / 3 });
+    expect(o.blindSpotType).toMatchObject({ mapType: "Hybrid", played: 3, winRate: 1 / 3 });
+  });
+
+  it("uses the only qualifying type for both and nulls when none qualifies", () => {
+    const maps = [typed(1, "Busan", "Control", 1), typed(2, "Ilios", "Control", 2), typed(3, "Nepal", "Control", 2), typed(4, "Colosseo", "Push", 1)];
+    const o = buildTeamOverview(maps, []);
+    expect(o.strongestType?.mapType).toBe("Control");
+    expect(o.blindSpotType?.mapType).toBe("Control");
+    expect(buildTeamOverview(maps.slice(0, 2), []).strongestType).toBeNull();
   });
 });

@@ -1,7 +1,7 @@
 import { ROLE_ORDER, roleOf, type Role } from "./heroes";
 import { sides } from "./sides";
 import { finalsByMap, outcome, rate, type StatLike, type TeamMapLike } from "./team-rows";
-import { winRateByMap, type MapRecord } from "./trends";
+import { winRateByMap, winRateByType, type MapRecord, type TypeRecord } from "./trends";
 
 export const MIN_MAP_PLAYS = 3;
 export const LAST_N = 10;
@@ -20,12 +20,29 @@ export interface TeamOverview {
   lastTen: { won: number; lost: number };
   strongest: MapRecord | null;
   blindSpot: MapRecord | null;
+  /** Same guard as strongest/blindSpot, applied to map types (game modes). */
+  strongestType: TypeRecord | null;
+  blindSpotType: TypeRecord | null;
   roleBalance: RoleShare[];
 }
 
-const qualifies = (m: MapRecord) => m.played >= MIN_MAP_PLAYS && m.winRate !== null;
-const byRateThenPlays = (dir: 1 | -1) => (a: MapRecord, b: MapRecord) =>
-  dir * ((b.winRate ?? 0) - (a.winRate ?? 0)) || b.played - a.played || a.mapName.localeCompare(b.mapName);
+interface Ranked {
+  played: number;
+  winRate: number | null;
+}
+
+const qualifies = (r: Ranked) => r.played >= MIN_MAP_PLAYS && r.winRate !== null;
+const byRateThenPlays = <T extends Ranked>(dir: 1 | -1, name: (r: T) => string) => (a: T, b: T) =>
+  dir * ((b.winRate ?? 0) - (a.winRate ?? 0)) || b.played - a.played || name(a).localeCompare(name(b));
+
+/** Highest and lowest win rate among records with at least MIN_MAP_PLAYS plays and a decided result. */
+function extremes<T extends Ranked>(records: T[], name: (r: T) => string): { strongest: T | null; blindSpot: T | null } {
+  const candidates = records.filter(qualifies);
+  return {
+    strongest: [...candidates].sort(byRateThenPlays(1, name))[0] ?? null,
+    blindSpot: [...candidates].sort(byRateThenPlays(-1, name))[0] ?? null,
+  };
+}
 
 export function buildTeamOverview(maps: TeamMapLike[], playerStats: StatLike[]): TeamOverview {
   const record = { won: 0, lost: 0, undecided: 0, maps: maps.length, scrims: new Set(maps.map((m) => m.scrimId)).size };
@@ -34,9 +51,8 @@ export function buildTeamOverview(maps: TeamMapLike[], playerStats: StatLike[]):
   const lastTen = { won: 0, lost: 0 };
   for (const m of maps.filter((m) => outcome(m) !== "undecided").slice(-LAST_N)) lastTen[outcome(m) as "won" | "lost"] += 1;
 
-  const candidates = winRateByMap(maps).filter(qualifies);
-  const strongest = [...candidates].sort(byRateThenPlays(1))[0] ?? null;
-  const blindSpot = [...candidates].sort(byRateThenPlays(-1))[0] ?? null;
+  const { strongest, blindSpot } = extremes(winRateByMap(maps), (m) => m.mapName);
+  const types = extremes(winRateByType(maps), (t) => t.mapType);
 
   const sums = new Map<Role, { finalBlows: number; deaths: number; heroDamage: number; healing: number }>();
   const total = { finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0 };
@@ -58,5 +74,5 @@ export function buildTeamOverview(maps: TeamMapLike[], playerStats: StatLike[]):
     return { role, finalBlows: rate(s.finalBlows, total.finalBlows), deaths: rate(s.deaths, total.deaths), heroDamage: rate(s.heroDamage, total.heroDamage), healing: rate(s.healing, total.healing) };
   });
 
-  return { record, lastTen, strongest, blindSpot, roleBalance };
+  return { record, lastTen, strongest, blindSpot, strongestType: types.strongest, blindSpotType: types.blindSpot, roleBalance };
 }

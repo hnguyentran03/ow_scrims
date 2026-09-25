@@ -4,7 +4,7 @@ import { getTeamRows } from "@/lib/db/queries";
 import { formatPct } from "@/lib/format";
 import { parseRange, type SearchParams } from "@/lib/range";
 import { buildTeamOverview, MIN_MAP_PLAYS } from "@/lib/stats/team-overview";
-import type { MapRecord } from "@/lib/stats/trends";
+import type { MapRecord, TypeRecord } from "@/lib/stats/trends";
 import { EmptyRange } from "./empty-range";
 
 export const dynamic = "force-dynamic";
@@ -24,8 +24,13 @@ export default async function TeamOverviewPage({ searchParams }: { searchParams:
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <TypeCard title="Strongest game mode" record={o.strongestType} />
+        <TypeCard title="Blind spot game mode" record={o.blindSpotType} />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <MapCard title="Strongest map" record={o.strongest} />
-        <MapCard title="Blind spot" record={o.blindSpot} />
+        <MapCard title="Blind spot map" record={o.blindSpot} />
       </div>
 
       <section className="space-y-2">
@@ -45,6 +50,22 @@ export default async function TeamOverviewPage({ searchParams }: { searchParams:
         </table>
       </section>
     </div>
+  );
+}
+
+function TypeCard({ title, record }: { title: string; record: TypeRecord | null }) {
+  return (
+    <section className="rounded border border-zinc-800 p-4">
+      <h2 className="text-xs uppercase tracking-wide text-zinc-500">{title}</h2>
+      {record ? (
+        <>
+          <div className="text-lg font-semibold">{record.mapType}</div>
+          <div className="text-sm text-zinc-400">{record.played} played · {record.won}-{record.lost} · {formatPct(record.winRate)}</div>
+        </>
+      ) : (
+        <p className="text-sm text-zinc-400">Play a game mode at least {MIN_MAP_PLAYS} times to see this.</p>
+      )}
+    </section>
   );
 }
 
