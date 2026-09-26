@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { TEAM_COLORS } from "@/lib/colors";
 import { FILTER_KEYS, FILTERS, type EventEntry, type Events, type FilterKey } from "@/lib/stats/events";
 import { formatDuration } from "@/lib/format";
+import { CONVERSION_WINDOW_SECONDS } from "@/lib/stats/ult-analysis";
 import type { Sides } from "@/lib/stats/sides";
 
 const LABELS: Record<FilterKey, string> = { all: "All", highlights: "Highlights", ultimates: "Ultimates", fights: "Fights", swaps: "Swaps", objectives: "Objectives" };
@@ -59,7 +60,14 @@ function describe(e: EventEntry, sides: Sides): string {
     case "round_end": return e.capturingTeam ? `Round ${e.roundNumber} ended, captured by ${e.capturingTeam}` : `Round ${e.roundNumber} ended`;
     case "capture": return `${e.teamName} ${e.isPoint ? "took the point" : "captured the objective"}`;
     case "swap": return `${e.player} swapped ${e.from} → ${e.to}`;
-    case "ult": return `${e.player} (${e.hero}) used ultimate${e.kills ? `, ${e.kills} kills` : ""}${e.fightIndex ? ` · fight ${e.fightIndex}` : ""}`;
+    case "ult": {
+      const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+      const parts = [`${e.player} (${e.hero}) used ultimate${e.kills ? `, ${plural(e.kills, "kill")}` : ""}`];
+      if (e.conversionKills) parts.push(`${plural(e.conversionKills, "team kill")} in ${CONVERSION_WINDOW_SECONDS} s`);
+      if (e.diedDuringUlt) parts.push("died during ult");
+      if (e.fightIndex) parts.push(`fight ${e.fightIndex}`);
+      return parts.join(" · ");
+    }
     case "ult_kill": return `${e.player} (${e.hero}) got ${e.kills} kill${e.kills === 1 ? "" : "s"} with ultimate`;
     case "fight": return `Fight ${e.fightIndex} · ${e.winner ? `won by ${e.winner}` : "even"} (${sides.ours} ${e.ours} – ${e.theirs} ${sides.theirs})`;
     case "multikill": return `${e.player} (${e.hero}) multikill, ${e.kills} kills in fight ${e.fightIndex}`;

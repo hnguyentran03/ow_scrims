@@ -1,9 +1,11 @@
-import { groupFights, killKind, type Fight, type KillLike } from "./fights";
+import { fightIndexAt, groupFights, killKind, type Fight, type KillLike } from "./fights";
 import { dedupeRounds, roundCapturer, type RoundEndLike, type RoundLike } from "./rounds";
 import { sideOf, sides, type SideKey } from "./sides";
 import { pairUltimates, DOUBLE_CAST_SECONDS, type UltLike } from "./ultimates";
+import { ultDetails } from "./ult-analysis";
 
 export { pairUltimates, DOUBLE_CAST_SECONDS };
+export { fightIndexAt };
 export type { UltLike };
 
 export interface EventMapLike {
@@ -52,7 +54,7 @@ export type EventEntry =
   | (Base & { kind: "round_end"; roundNumber: number; capturingTeam: string | null })
   | (Base & { kind: "capture"; teamName: string; isPoint: boolean })
   | (Base & { kind: "swap"; player: string; from: string; to: string })
-  | (Base & { kind: "ult"; player: string; hero: string; fightIndex: number | null; kills: number })
+  | (Base & { kind: "ult"; player: string; hero: string; fightIndex: number | null; kills: number; conversionKills: number; diedDuringUlt: boolean })
   | (Base & { kind: "ult_kill"; player: string; hero: string; kills: number })
   | (Base & { kind: "fight"; fightIndex: number; winner: string | null; ours: number; theirs: number })
   | (Base & { kind: "multikill"; player: string; hero: string; kills: number; fightIndex: number })
@@ -94,13 +96,6 @@ const KIND_PRIORITY: Record<EventKind, number> = {
 };
 
 export const MULTIKILL_MIN = 3;
-
-/** The fight whose window contains `time`, else the next fight to start, else null. */
-export function fightIndexAt(time: number, fights: Fight[]): number | null {
-  const inside = fights.find((f) => time >= f.start && time <= f.end);
-  if (inside) return inside.index;
-  return fights.find((f) => f.start > time)?.index ?? null;
-}
 
 export function findMultikills(fights: Fight[]): Array<{ team: string; player: string; hero: string; kills: number; time: number; fightIndex: number }> {
   const out: Array<{ team: string; player: string; hero: string; kills: number; time: number; fightIndex: number }> = [];
@@ -154,22 +149,12 @@ export function buildEvents(map: EventMapLike, rows: EventRows): Events {
   const swaps = rows.swaps.filter((w) => w.matchTime > 0);
   for (const w of swaps) entries.push({ kind: "swap", time: w.matchTime, team: team(w.playerTeam), player: w.playerName, from: w.previousHero, to: w.playerHero });
 
-  const ults = pairUltimates(rows.ultStarts, rows.ultEnds);
+  const ults = ultDetails(rows.ultStarts, rows.ultEnds, rows.kills);
   let ultKills = 0;
-  for (const { start, end } of ults) {
-    const kills = end
-      ? rows.kills.filter(
-          (k) =>
-            k.attackerTeam === start.playerTeam &&
-            k.attackerName === start.playerName &&
-            k.matchTime >= start.matchTime &&
-            k.matchTime <= end.matchTime &&
-            killKind(k) === "kill",
-        ).length
-      : 0;
+  for (const { start, casterKills: kills, conversionKills, diedDuringUlt } of ults) {
     const hero = start.playerHero ?? "";
     const side = team(start.playerTeam);
-    entries.push({ kind: "ult", time: start.matchTime, team: side, player: start.playerName, hero, fightIndex: fightIndexAt(start.matchTime, fights), kills });
+    entries.push({ kind: "ult", time: start.matchTime, team: side, player: start.playerName, hero, fightIndex: fightIndexAt(start.matchTime, fights), kills, conversionKills, diedDuringUlt });
     if (kills > 0) {
       ultKills += 1;
       entries.push({ kind: "ult_kill", time: start.matchTime, team: side, player: start.playerName, hero, kills });
