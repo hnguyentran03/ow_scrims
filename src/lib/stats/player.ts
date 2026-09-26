@@ -42,6 +42,7 @@ export interface PlayerOverview {
   timePlayed: number;
   record: { won: number; lost: number; undecided: number };
   winRate: number | null;
+  /** Per 10 minutes of this player's hero time — unlike the Trends ult economy, which is per 10 minutes of map duration. */
   per10: Record<ChartStat, number>;
 }
 
@@ -104,7 +105,13 @@ export interface PlayerCards {
   firstPick: FightShare;
   firstDeath: FightShare;
   /** Fights our side won after this player died first, over fights where they died first. */
-  reversal: { count: number; won: number; rate: number | null };
+  reversal: {
+    /** Fights where the player died first. */
+    count: number;
+    /** Of those, the ones our side still won — the reversals. */
+    won: number;
+    rate: number | null;
+  };
   killsPerUlt: { ults: number; kills: number; perUlt: number | null };
   avgChargeSeconds: number | null;
   avgHoldSeconds: number | null;
@@ -153,16 +160,16 @@ function heroTimes(rows: StatLike[]): Map<string, number> {
   return out;
 }
 
-const byTimeDesc = (a: [string, number], b: [string, number]) => b[1] - a[1] || a[0].localeCompare(b[0]);
+const byValueDesc = (a: [string, number], b: [string, number]) => b[1] - a[1] || a[0].localeCompare(b[0]);
 
 /** The heroes our player `name` played in range, most time first; empty when they are not on the roster. */
 export function playerHeroes(maps: TeamMapLike[], playerStats: StatLike[], name: string): string[] {
   const rows = [...ourRowsByMap(maps, playerStats, name, null).values()].flat();
-  return [...heroTimes(rows)].sort(byTimeDesc).map(([hero]) => hero);
+  return [...heroTimes(rows)].sort(byValueDesc).map(([hero]) => hero);
 }
 
 function topCounts(counts: Map<string, number>, limit: number): HeroCount[] {
-  return [...counts].sort(byTimeDesc).slice(0, limit).map(([hero, count]) => ({ hero, count }));
+  return [...counts].sort(byValueDesc).slice(0, limit).map(([hero, count]) => ({ hero, count }));
 }
 
 function buildCards(
@@ -232,7 +239,7 @@ export function buildPlayerPage(maps: TeamMapLike[], rows: PlayerRows, name: str
   const record = { won: 0, lost: 0, undecided: 0 };
   for (const m of playerMaps) record[outcome(m)] += 1;
 
-  const times = [...heroTimes(playerRows)].sort(byTimeDesc);
+  const times = [...heroTimes(playerRows)].sort(byValueDesc);
   const mostPlayed: HeroTime[] = times.slice(0, MOST_PLAYED_LIMIT).map(([h, playtime]) => ({ hero: h, role: roleOf(h), playtime, share: rate(playtime, timePlayed) }));
   const roleTime = new Map<Role, number>();
   for (const [h, t] of times) roleTime.set(roleOf(h), (roleTime.get(roleOf(h)) ?? 0) + t);
@@ -268,7 +275,7 @@ export function buildPlayerPage(maps: TeamMapLike[], rows: PlayerRows, name: str
     }
   }
   const methodTotal = [...methods.values()].reduce((n, c) => n + c, 0);
-  const finalBlowsByMethod: MethodCount[] = [...methods].sort(byTimeDesc).map(([method, count]) => ({ method, count, share: rate(count, methodTotal) }));
+  const finalBlowsByMethod: MethodCount[] = [...methods].sort(byValueDesc).map(([method, count]) => ({ method, count, share: rate(count, methodTotal) }));
 
   const byScrim = new Map<number, { name: string; date: string; maps: number; rows: StatLike[] }>();
   for (const m of playerMaps) {

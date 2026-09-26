@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
+import type { TeamRows } from "@/lib/db/queries";
 import { buildPlayerPage, playerHeroes, type PlayerRows } from "@/lib/stats/player";
 import type { KillLike } from "@/lib/stats/fights";
 import type { MapKeyed, StatLike, TeamMapLike } from "@/lib/stats/team-rows";
 import type { UltLike } from "@/lib/stats/ultimates";
+
+// Compile-time check: a TeamRows value (what the player page is actually fed) must satisfy
+// PlayerRows, so a schema nullability change fails typecheck here rather than in a page.
+const _teamRowsSatisfyPlayerRows: PlayerRows = {} as TeamRows;
+void _teamRowsSatisfyPlayerRows;
 
 type Kill = KillLike & MapKeyed;
 type Ult = UltLike & MapKeyed;
@@ -50,7 +56,10 @@ const kills: Kill[] = [
   // Fight 2 at 60–70: A wins; p1 (Genji) dies first; the opponent named p1 lands a kill that must not count for us.
   kill(2, 60, "A", "r1", "Tracer", "B", "p1", "Genji", "Primary Fire"),
   kill(2, 70, "A", "p1", "Ana", "B", "p2", "Reinhardt", "Primary Fire"),
-  // Map 3 (ours A). One fight at 20–24: A wins 2–1, first pick p1 (Genji).
+  // Map 3 (ours A). One fight at 19–24: A wins 2–1. p1 dies to the environment at t=19, before
+  // the fight's first counted kill at t=20 — it counts toward diedToMost and as a first death
+  // (any kill row), but never as a first pick or a final blow (those use only counted kills).
+  { ...kill(3, 19, "A", "p1", "Genji", "A", "p1", "Genji", "0"), isEnvironmental: "True" },
   kill(3, 20, "A", "p1", "Genji", "B", "s1", "Ana", "Ultimate"),
   kill(3, 22, "A", "p1", "Genji", "B", "s2", "Kiriko", "Ultimate"),
   kill(3, 24, "B", "s1", "Ana", "A", "p1", "Genji", "Primary Fire"),
@@ -101,7 +110,7 @@ describe("buildPlayerPage", () => {
     expect(buildPlayerPage(maps, rows, "nobody").bestPerformance).toBeNull();
   });
 
-  it("buckets final blows by method with 0 as Other", () => {
+  it("buckets final blows by method with 0 as Other, excluding the map-3 environmental kill (only counted kills are final blows)", () => {
     expect(p.finalBlowsByMethod).toEqual([
       { method: "Primary Fire", count: 2, share: 1 / 3 }, { method: "Ultimate", count: 2, share: 1 / 3 },
       { method: "Ability 1", count: 1, share: 1 / 6 }, { method: "Other", count: 1, share: 1 / 6 },
@@ -113,8 +122,8 @@ describe("buildPlayerPage", () => {
     expect(p.winRateByType.map((r) => [r.mapType, r.played])).toEqual([["Control", 2], ["Hybrid", 1]]);
   });
 
-  it("ranks heroes died to and final blows on, capped at five", () => {
-    expect(p.diedToMost).toEqual([{ hero: "Tracer", count: 2 }, { hero: "Ana", count: 1 }, { hero: "Genji", count: 1 }, { hero: "Widowmaker", count: 1 }]);
+  it("ranks heroes died to and final blows on, capped at five (diedToMost counts any kill row, so the environmental row's copied attacker hero, Genji, counts too)", () => {
+    expect(p.diedToMost).toEqual([{ hero: "Genji", count: 2 }, { hero: "Tracer", count: 2 }, { hero: "Ana", count: 1 }, { hero: "Widowmaker", count: 1 }]);
     expect(p.finalBlowsOnMost.map((h) => h.hero)).toEqual(["Ana", "Genji", "Kiriko", "Lúcio", "Tracer"]);
     expect(ana.finalBlowsOnMost.map((h) => h.hero)).toEqual(["Genji", "Lúcio", "Tracer", "Widowmaker"]);
   });
@@ -132,16 +141,25 @@ describe("buildPlayerPage", () => {
     expect(none.overview).toEqual({ maps: 0, timePlayed: 0, record: { won: 0, lost: 0, undecided: 0 }, winRate: null, per10: { eliminations: 0, finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0, damageTaken: 0, damageBlocked: 0, ultsEarned: 0, ultsUsed: 0 } });
   });
 
-  it("counts first picks and first deaths against fights on the player's maps, and reversals among first deaths", () => {
+  it("counts first picks (first counted kill) and first deaths (any kill row) against fights on the player's maps, and reversals among first deaths", () => {
+    // firstPick uses the fight's first counted kill: map 3's environmental row at t=19 is skipped,
+    // so the first pick there is still p1's counted kill at t=20 — unchanged from before that row existed.
     expect(p.cards.firstPick).toEqual({ count: 3, fights: 6, won: 3, rate: 0.5 });
-    expect(p.cards.firstDeath).toEqual({ count: 2, fights: 6, won: 1, rate: 1 / 3 });
-    expect(p.cards.reversal).toEqual({ count: 2, won: 1, rate: 0.5 });
+    // firstDeath uses the fight's first kill row of any kind: map 3's environmental row at t=19 is
+    // p1's first death on that fight, adding one more count and one more win (A, ours, still wins it).
+    expect(p.cards.firstDeath).toEqual({ count: 3, fights: 6, won: 2, rate: 0.5 });
+    expect(p.cards.reversal).toEqual({ count: 3, won: 2, rate: 2 / 3 });
   });
 
   it("restricts the fight cards by hero on the kill row under a filter", () => {
     expect(ana.cards.firstPick).toEqual({ count: 2, fights: 5, won: 2, rate: 0.4 });
     expect(ana.cards.firstDeath).toEqual({ count: 1, fights: 5, won: 1, rate: 0.2 });
     expect(ana.cards.reversal).toEqual({ count: 1, won: 1, rate: 1 });
+    // Under the Genji filter, playerMaps are maps 2 and 3 (genji has hero-time on both), so fights = 2 + 1 = 3.
+    // Genji's first deaths are map 2's second fight (t=60, A wins, not ours) and map 3's environmental
+    // row (t=19, copied attacker/victim hero Genji, A wins, ours) — count 2, won 1 (map 3 only).
+    expect(genji.cards.firstDeath).toEqual({ count: 2, fights: 3, won: 1, rate: 2 / 3 });
+    expect(genji.cards.reversal).toEqual({ count: 2, won: 1, rate: 0.5 });
   });
 
   it("counts kills per ult by the events rule, zero for an ult without an end", () => {

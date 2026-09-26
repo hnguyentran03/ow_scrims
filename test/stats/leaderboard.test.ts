@@ -89,3 +89,29 @@ describe("buildLeaderboard", () => {
     expect(empty).toMatchObject({ mostPlayedHeroes: [], eligibleCount: 0 });
   });
 });
+
+describe("buildLeaderboard ordering", () => {
+  // Four players on our side (A) on one map, all past the 600s playtime floor. p1 and p2 tie on
+  // eliminations (10 each); p3 (8) makes the top three; p4 (6) is cut by the slice. Rows are
+  // listed p3, p2, p1, p4 so a first-seen tiebreak (p2 before p1) reads differently from an
+  // alphabetical one (which would put p1 before p2) — Array.sort is stable, so first-seen wins.
+  const orderMaps = [map(1)];
+  const orderStats = [
+    stat(1, "A", "p3", "Genji", 600, { eliminations: 8 }),
+    stat(1, "A", "p2", "Mercy", 600, { eliminations: 10 }),
+    stat(1, "A", "p1", "Reinhardt", 600, { eliminations: 10 }),
+    stat(1, "A", "p4", "Ana", 600, { eliminations: 6 }),
+  ];
+
+  it("truncates a board to the top three and keeps a tie in first-seen order", () => {
+    const lb = buildLeaderboard(orderMaps, orderStats, [], []);
+    expect(lb.eligibleCount).toBe(4);
+    const elims = lb.boards.find((b) => b.key === "eliminations")!;
+    expect(elims.entries).toEqual([{ name: "p2", value: 10 }, { name: "p1", value: 10 }, { name: "p3", value: 8 }]);
+    expect(elims.entries.map((e) => e.name)).not.toContain("p4");
+  });
+
+  it("orders the roster by name when timePlayed ties", () => {
+    expect(buildRoster(orderMaps, orderStats).map((r) => r.name)).toEqual(["p1", "p2", "p3", "p4"]);
+  });
+});
