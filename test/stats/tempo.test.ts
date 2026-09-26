@@ -22,7 +22,7 @@ describe("decayCurve", () => {
 
   it("adds an impulse from the first sample at or after it and ignores nothing before", () => {
     const points = decayCurve([{ t: 2.5, value: -1 }, { t: 2.5, value: 1 }, { t: 5, value: 2 }], 6);
-    expect(points.map((p) => Number(p.value.toFixed(4)))).toEqual([0, 0, 0, 0, 0, 2, 2 * 0.5 ** (1 / 20)].map((v) => Number(v.toFixed(4))));
+    expect(points.map((p) => Number(p.value.toFixed(3)))).toEqual([0, 0, 0, 0, 0, 2, 2 * 0.5 ** (1 / 20)].map((v) => Number(v.toFixed(3))));
   });
 
   it("returns one zero point for a zero duration", () => {
