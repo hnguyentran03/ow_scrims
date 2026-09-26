@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatInt, formatPct, formatSeconds, resultLabel } from "@/lib/format";
+import { formatDuration, formatInt, formatPct, formatPer10, formatSeconds, resultLabel } from "@/lib/format";
 
 describe("format", () => {
   it("formats seconds as mm:ss", () => {
@@ -8,6 +8,10 @@ describe("format", () => {
   });
   it("formats integers with thousands separators", () => {
     expect(formatInt(14991.42)).toBe("14,991");
+  });
+  it("formats a per-10 rate with one decimal below 100 and a rounded integer at or above", () => {
+    expect(formatPer10(6.04)).toBe("6.0");
+    expect(formatPer10(6500)).toBe("6,500");
   });
   it("labels results from our perspective", () => {
     expect(resultLabel({ ourSide: 1, winnerSide: 1 })).toBe("Won");

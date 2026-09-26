@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { TeamRows } from "@/lib/db/queries";
-import { buildPlayerPage, playerHeroes, type PlayerRows } from "@/lib/stats/player";
+import { buildPlayerPage, playerHeroes, resolvePlayerName, type PlayerRows } from "@/lib/stats/player";
 import type { KillLike } from "@/lib/stats/fights";
 import type { MapKeyed, StatLike, TeamMapLike } from "@/lib/stats/team-rows";
 import type { UltLike } from "@/lib/stats/ultimates";
@@ -74,6 +74,18 @@ describe("playerHeroes", () => {
     expect(playerHeroes(maps, playerStats, "p1")).toEqual(["Ana", "Genji"]);
     expect(playerHeroes(maps, playerStats, "q1")).toEqual([]);
     expect(playerHeroes(maps, playerStats, "nobody")).toEqual([]);
+  });
+});
+
+describe("resolvePlayerName", () => {
+  const spacedStat = stat(1, "A", "4head Dog", "Ana", 600);
+  const spacedPlayerStats = [...playerStats, spacedStat];
+
+  it("resolves a plain roster name, decodes a name with an encoded space, and returns undefined for a name off the roster", () => {
+    expect(resolvePlayerName(maps, playerStats, "p1")).toBe("p1");
+    expect(resolvePlayerName(maps, spacedPlayerStats, "4head%20Dog")).toBe("4head Dog");
+    expect(resolvePlayerName(maps, playerStats, "100%")).toBeUndefined();
+    expect(resolvePlayerName(maps, playerStats, "nobody")).toBeUndefined();
   });
 });
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
-import { formatDuration, formatInt } from "@/lib/format";
+import { formatDuration, formatPer10 } from "@/lib/format";
 import { parseRange, rangeQuery, type SearchParams } from "@/lib/range";
 import { buildLeaderboard, buildRoster, type Board } from "@/lib/stats/leaderboard";
 import { EmptyRange } from "../empty-range";
@@ -66,7 +66,7 @@ export default async function PlayersPage({ searchParams }: { searchParams: Sear
 function formatBoard(unit: Board["unit"], v: number): string {
   if (unit === "seconds") return formatDuration(v);
   if (unit === "count") return String(v);
-  return v >= 100 ? formatInt(v) : v.toFixed(1);
+  return formatPer10(v);
 }
 
 function BoardCard({ board, href }: { board: Board; href: (name: string) => string }) {

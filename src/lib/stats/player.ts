@@ -1,3 +1,4 @@
+import { nameCandidates } from "@/lib/player-name";
 import { groupFights, killKind, type KillLike } from "./fights";
 import { ROLE_ORDER, roleOf, type Role } from "./heroes";
 import { per10, type PlayerStatLike } from "./overview";
@@ -166,6 +167,11 @@ const byValueDesc = (a: [string, number], b: [string, number]) => b[1] - a[1] ||
 export function playerHeroes(maps: TeamMapLike[], playerStats: StatLike[], name: string): string[] {
   const rows = [...ourRowsByMap(maps, playerStats, name, null).values()].flat();
   return [...heroTimes(rows)].sort(byValueDesc).map(([hero]) => hero);
+}
+
+/** The roster name a dynamic route segment refers to: the decoded form first, then the raw segment; undefined when neither is on our roster in range. */
+export function resolvePlayerName(maps: TeamMapLike[], playerStats: StatLike[], raw: string): string | undefined {
+  return nameCandidates(raw).find((n) => playerHeroes(maps, playerStats, n).length > 0);
 }
 
 function topCounts(counts: Map<string, number>, limit: number): HeroCount[] {
