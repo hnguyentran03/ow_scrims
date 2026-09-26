@@ -9,16 +9,14 @@ export function HeroSelect({ action, hidden, heroes, hero }: { action: string; h
       ))}
       <label className="flex items-center gap-2">
         Hero
-        <select name="hero" defaultValue={hero ?? ""} onChange={(e) => e.currentTarget.form?.requestSubmit()} className="rounded bg-zinc-900 px-2 py-1">
+        <select name="hero" defaultValue={hero ?? ""} className="rounded bg-zinc-900 px-2 py-1">
           <option value="">All heroes</option>
           {heroes.map((h) => (
             <option key={h} value={h}>{h}</option>
           ))}
         </select>
       </label>
-      <noscript>
-        <button type="submit" className="rounded bg-orange-500 px-3 py-1 font-medium text-black">Apply</button>
-      </noscript>
+      <button type="submit" className="rounded bg-orange-500 px-3 py-1 font-medium text-black">Apply</button>
     </form>
   );
 }
