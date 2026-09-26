@@ -1,9 +1,10 @@
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
-import { formatPct } from "@/lib/format";
 import { parseRange, type SearchParams } from "@/lib/range";
 import { heroPicks, ultEconomyByScrim, winRateByMap, winRateByType } from "@/lib/stats/trends";
+import { Card } from "../card";
 import { EmptyRange } from "../empty-range";
+import { RecordTable } from "../record-table";
 import { HeroPicksTable } from "./hero-picks-table";
 import { UltEconomyChart } from "./ult-economy-chart";
 
@@ -40,35 +41,5 @@ export default async function TrendsPage({ searchParams }: { searchParams: Searc
         </Card>
       </div>
     </div>
-  );
-}
-
-function RecordTable({ rows, head }: { rows: Array<{ key: string; label: string; sub?: string; played: number; won: number; lost: number; undecided: number; winRate: number | null }>, head: string }) {
-  return (
-    <table className="w-full text-sm">
-      <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-        <tr><th className="py-1">{head}</th><th>Played</th><th>W</th><th>L</th><th>N/A</th><th>Win %</th></tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.key} className="border-t border-zinc-800 tabular-nums">
-            <td className="py-1">{r.label}{r.sub && <span className="ml-2 text-xs text-zinc-500">{r.sub}</span>}</td>
-            <td>{r.played}</td><td>{r.won}</td><td>{r.lost}</td><td>{r.undecided}</td><td>{formatPct(r.winRate)}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-function Card({ title, note, children }: { title: string; note?: string; children: React.ReactNode }) {
-  return (
-    <section className="space-y-2 rounded border border-zinc-800 p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-medium">{title}</h2>
-        {note && <span className="text-xs text-zinc-500">{note}</span>}
-      </div>
-      {children}
-    </section>
   );
 }
