@@ -1,4 +1,6 @@
 import { formatPct } from "@/lib/format";
+import type { MapRecord, TypeRecord } from "@/lib/stats/trends";
+import { Empty } from "./empty";
 
 export interface RecordRow {
   key: string;
@@ -11,8 +13,11 @@ export interface RecordRow {
   winRate: number | null;
 }
 
+export const mapRecordRows = (rows: MapRecord[]): RecordRow[] => rows.map((r) => ({ ...r, key: r.mapName, label: r.mapName, sub: r.mapType }));
+export const typeRecordRows = (rows: TypeRecord[]): RecordRow[] => rows.map((r) => ({ ...r, key: r.mapType, label: r.mapType }));
+
 export function RecordTable({ rows, head }: { rows: RecordRow[]; head: string }) {
-  if (rows.length === 0) return <p className="text-sm text-zinc-500">Nothing in range.</p>;
+  if (rows.length === 0) return <Empty />;
   return (
     <table className="w-full text-sm">
       <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">

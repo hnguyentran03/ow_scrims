@@ -4,7 +4,7 @@ import { parseRange, type SearchParams } from "@/lib/range";
 import { heroPicks, ultEconomyByScrim, winRateByMap, winRateByType } from "@/lib/stats/trends";
 import { Card } from "../card";
 import { EmptyRange } from "../empty-range";
-import { RecordTable } from "../record-table";
+import { mapRecordRows, RecordTable, typeRecordRows } from "../record-table";
 import { HeroPicksTable } from "./hero-picks-table";
 import { UltEconomyChart } from "./ult-economy-chart";
 
@@ -23,10 +23,10 @@ export default async function TrendsPage({ searchParams }: { searchParams: Searc
     <div className="space-y-8">
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Win rate by map">
-          <RecordTable head="Map" rows={byMap.map((r) => ({ key: r.mapName, label: r.mapName, sub: r.mapType, ...r }))} />
+          <RecordTable head="Map" rows={mapRecordRows(byMap)} />
         </Card>
         <Card title="Win rate by map type">
-          <RecordTable head="Map type" rows={byType.map((r) => ({ key: r.mapType, label: r.mapType, ...r }))} />
+          <RecordTable head="Map type" rows={typeRecordRows(byType)} />
         </Card>
       </div>
       <Card title="Hero picks" note="Pick % is over maps where the hero was not banned by either team.">

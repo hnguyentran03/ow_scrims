@@ -3,10 +3,8 @@
 import { useState } from "react";
 import { Axes, H, linear, M, svgPoint, ticks, Tooltip, W } from "@/components/chart-utils";
 import { TEAM_COLORS } from "@/lib/colors";
-import { formatInt } from "@/lib/format";
+import { formatPer10 } from "@/lib/format";
 import { CHART_STAT_KEYS, CHART_STATS, type ChartPoint, type ChartStat } from "@/lib/stats/player";
-
-const fmt = (v: number) => (v >= 100 ? formatInt(v) : v.toFixed(1));
 
 /** One line, one point per scrim, of the chosen stat per 10 minutes. */
 export function StatChart({ points }: { points: ChartPoint[] }) {
@@ -39,7 +37,7 @@ export function StatChart({ points }: { points: ChartPoint[] }) {
         <p className="text-sm text-zinc-500">Need at least two scrims in range to draw a trend.</p>
       ) : (
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`${CHART_STATS[stat]} per 10 minutes by scrim`} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
-          <Axes yTicks={ticks(0, max, 5)} yScale={y} yFormat={fmt} />
+          <Axes yTicks={ticks(0, max, 5)} yScale={y} yFormat={formatPer10} />
           <path d={path} fill="none" stroke={TEAM_COLORS.ours} strokeWidth={2} />
           {points.map((p, i) => (
             <g key={p.scrimId}>
@@ -48,7 +46,7 @@ export function StatChart({ points }: { points: ChartPoint[] }) {
             </g>
           ))}
           {hover && (
-            <Tooltip x={hover.x} y={hover.y} lines={[`${hover.point.name} · ${hover.point.date}`, `${CHART_STATS[stat]}: ${fmt(value(hover.point))} per 10`, `${hover.point.maps} map${hover.point.maps === 1 ? "" : "s"}`]} />
+            <Tooltip x={hover.x} y={hover.y} lines={[`${hover.point.name} · ${hover.point.date}`, `${CHART_STATS[stat]}: ${formatPer10(value(hover.point))} per 10`, `${hover.point.maps} map${hover.point.maps === 1 ? "" : "s"}`]} />
           )}
         </svg>
       )}

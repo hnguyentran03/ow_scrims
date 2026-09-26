@@ -9,6 +9,11 @@ export function formatInt(n: number): string {
   return Math.round(n).toLocaleString("en-US");
 }
 
+/** A per-10-minute rate: one decimal for small values, a rounded integer once it reaches damage scale. */
+export function formatPer10(v: number): string {
+  return v >= 100 ? formatInt(v) : v.toFixed(1);
+}
+
 export function resultLabel(map: { ourSide: number; winnerSide: number | null }): "Won" | "Lost" | "N/A" {
   if (map.winnerSide === null) return "N/A";
   return map.winnerSide === map.ourSide ? "Won" : "Lost";

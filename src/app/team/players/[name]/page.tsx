@@ -3,19 +3,18 @@ import { notFound } from "next/navigation";
 import { Stat } from "@/components/stat";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
-import { formatDuration, formatInt, formatPct, formatSeconds } from "@/lib/format";
-import { nameCandidates } from "@/lib/player-name";
+import { formatDuration, formatPct, formatPer10, formatSeconds } from "@/lib/format";
 import { parseHero, parseRange, type SearchParams } from "@/lib/range";
-import { BEST_PERFORMANCE_MIN_SECONDS, buildPlayerPage, playerHeroes, type BestPerformance, type HeroCount, type MethodCount, type PlayerCards } from "@/lib/stats/player";
+import { BEST_PERFORMANCE_MIN_SECONDS, buildPlayerPage, playerHeroes, resolvePlayerName, type BestPerformance, type HeroCount, type MethodCount, type PlayerCards } from "@/lib/stats/player";
 import { Card } from "../../card";
+import { Empty } from "../../empty";
 import { EmptyRange } from "../../empty-range";
-import { RecordTable } from "../../record-table";
+import { mapRecordRows, RecordTable, typeRecordRows } from "../../record-table";
 import { HeroSelect } from "./hero-select";
 import { StatChart } from "./stat-chart";
 
 export const dynamic = "force-dynamic";
 
-const one = (v: number) => v.toFixed(1);
 const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
 const OUTCOME_LABEL = { won: "Won", lost: "Lost", undecided: "N/A" } as const;
 
@@ -25,7 +24,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
   const range = parseRange(query);
   const rows = await getTeamRows(await getDb(), range, { playerStats: true, kills: true, ults: true, charged: true });
   if (rows.maps.length === 0) return <EmptyRange />;
-  const name = nameCandidates(raw).find((n) => playerHeroes(rows.maps, rows.playerStats, n).length > 0);
+  const name = resolvePlayerName(rows.maps, rows.playerStats, raw);
   if (name === undefined) notFound();
   const heroes = playerHeroes(rows.maps, rows.playerStats, name);
   const p = buildPlayerPage(rows.maps, rows, name, parseHero(query, heroes));
@@ -52,13 +51,13 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">
-        <Stat label="Elims / 10" value={one(o.per10.eliminations)} />
-        <Stat label="Final blows / 10" value={one(o.per10.finalBlows)} />
-        <Stat label="Deaths / 10" value={one(o.per10.deaths)} />
-        <Stat label="Hero damage / 10" value={formatInt(o.per10.heroDamage)} />
-        <Stat label="Healing / 10" value={formatInt(o.per10.healing)} />
-        <Stat label="Damage taken / 10" value={formatInt(o.per10.damageTaken)} />
-        <Stat label="Damage blocked / 10" value={formatInt(o.per10.damageBlocked)} />
+        <Stat label="Elims / 10" value={formatPer10(o.per10.eliminations)} />
+        <Stat label="Final blows / 10" value={formatPer10(o.per10.finalBlows)} />
+        <Stat label="Deaths / 10" value={formatPer10(o.per10.deaths)} />
+        <Stat label="Hero damage / 10" value={formatPer10(o.per10.heroDamage)} />
+        <Stat label="Healing / 10" value={formatPer10(o.per10.healing)} />
+        <Stat label="Damage taken / 10" value={formatPer10(o.per10.damageTaken)} />
+        <Stat label="Damage blocked / 10" value={formatPer10(o.per10.damageBlocked)} />
       </div>
 
       <Cards c={p.cards} />
@@ -104,10 +103,10 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Win rate by map">
-          <RecordTable head="Map" rows={p.winRateByMap.map((r) => ({ key: r.mapName, label: r.mapName, sub: r.mapType, ...r }))} />
+          <RecordTable head="Map" rows={mapRecordRows(p.winRateByMap)} />
         </Card>
         <Card title="Win rate by map type">
-          <RecordTable head="Map type" rows={p.winRateByType.map((r) => ({ key: r.mapType, label: r.mapType, ...r }))} />
+          <RecordTable head="Map type" rows={typeRecordRows(p.winRateByType)} />
         </Card>
       </div>
 
@@ -122,10 +121,6 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
       </Card>
     </div>
   );
-}
-
-function Empty() {
-  return <p className="text-sm text-zinc-500">Nothing in range.</p>;
 }
 
 function Cards({ c }: { c: PlayerCards }) {
@@ -149,7 +144,7 @@ function Best({ best }: { best: BestPerformance | null }) {
       <span className="text-zinc-400">{best.scrimName} · {best.scrimDate}</span>
       <span>{best.hero}</span>
       <span className="tabular-nums">{formatDuration(best.timePlayed)}</span>
-      <span className="tabular-nums">{one(best.fbPer10)} final blows / 10 ({best.finalBlows})</span>
+      <span className="tabular-nums">{formatPer10(best.fbPer10)} final blows / 10 ({best.finalBlows})</span>
       <span>{OUTCOME_LABEL[best.outcome]}</span>
     </div>
   );
