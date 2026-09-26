@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONVERSION_WINDOW_SECONDS, casterKills, ultDetails, COMBO_WINDOW_SECONDS, COUNTER_WINDOW_SECONDS, ultCombos, counterUlts, ultAdvantageByFight } from "@/lib/stats/ult-analysis";
+import { CONVERSION_WINDOW_SECONDS, casterKills, ultDetails, COMBO_WINDOW_SECONDS, COUNTER_WINDOW_SECONDS, ultCombos, counterUlts, ultAdvantageByFight, keptCasts } from "@/lib/stats/ult-analysis";
 import type { KillLike } from "@/lib/stats/fights";
 import type { UltLike } from "@/lib/stats/ultimates";
 import { groupFights } from "@/lib/stats/fights";
@@ -135,5 +135,20 @@ describe("ultAdvantageByFight", () => {
     const result = ultAdvantageByFight(charged, [ult(50, "x", "Team 2")], [], groupFights(kills), s)!;
     expect(result.fights.map((f) => [f.advantage, f.winner])).toEqual([[0, null], [1, "ours"], [1, "theirs"]]);
     expect(result.summary).toEqual({ ahead: { fights: 2, won: 1 }, even: { fights: 0, won: 0 }, behind: { fights: 0, won: 0 } });
+  });
+
+  it("pins the Antarctic sample, where Team 2 holds ults they never spend", () => {
+    const { starts, ends, kills, charged } = sampleRows("Log-2026-04-15-21-12-58");
+    const fights = groupFights(kills);
+    const result = ultAdvantageByFight(charged, starts, ends, fights, s)!;
+    expect(result.fights[2]).toEqual({ index: 3, ours: 0, theirs: 1, advantage: -1, winner: "ours" });
+    expect(result.summary).toEqual({ ahead: { fights: 1, won: 1 }, even: { fights: 7, won: 5 }, behind: { fights: 7, won: 7 } });
+
+    const chargedCount = (team: string) => charged.filter((c) => c.playerTeam === team).length;
+    const keptCount = (team: string) => keptCasts(starts, ends).filter((c) => c.team === team).length;
+    expect(chargedCount("Team 1")).toBe(14);
+    expect(chargedCount("Team 2")).toBe(15);
+    expect(keptCount("Team 1")).toBe(17);
+    expect(keptCount("Team 2")).toBe(11);
   });
 });

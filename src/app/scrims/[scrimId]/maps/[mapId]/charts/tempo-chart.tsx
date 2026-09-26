@@ -4,7 +4,7 @@ import { useState } from "react";
 import { TEAM_COLORS } from "@/lib/colors";
 import { formatDuration } from "@/lib/format";
 import type { Sides } from "@/lib/stats/sides";
-import type { Tempo, TempoPoint } from "@/lib/stats/tempo";
+import { TEMPO_STEP_SECONDS, type Tempo, type TempoPoint } from "@/lib/stats/tempo";
 import { Axes, H, innerH, Legend, linear, M, svgPoint, ticks, Tooltip, W } from "@/components/chart-utils";
 
 type Variant = keyof Tempo["series"];
@@ -33,7 +33,7 @@ export function TempoChart({ tempo, sides }: { tempo: Tempo; sides: Sides }) {
     setHover({ x: mx, y: my, point: nearest(t) });
   }
 
-  const fight = hover ? tempo.fights.find((f) => hover.point.t >= f.start && hover.point.t <= f.end) : undefined;
+  const fight = hover ? tempo.fights.find((f) => Math.floor(f.start) <= hover.point.t && hover.point.t <= Math.ceil(f.end)) : undefined;
   const inFight = hover && fight ? tempo.markers.filter((m) => m.kind === "kill" && m.t >= fight.start && m.t <= hover.point.t) : [];
   const ours = inFight.filter((m) => m.team === "ours").length;
   const theirs = inFight.filter((m) => m.team === "theirs").length;
@@ -74,7 +74,7 @@ export function TempoChart({ tempo, sides }: { tempo: Tempo; sides: Sides }) {
           <circle
             key={i}
             cx={x(m.t)}
-            cy={y(nearest(m.t).value)}
+            cy={y(points[Math.min(points.length - 1, Math.max(0, Math.round(m.t / TEMPO_STEP_SECONDS)))].value)}
             r={m.kind === "ult" ? 4 : 3}
             fill={m.kind === "ult" ? "#18181b" : TEAM_COLORS[m.team]}
             stroke={TEAM_COLORS[m.team]}
@@ -92,7 +92,7 @@ export function TempoChart({ tempo, sides }: { tempo: Tempo; sides: Sides }) {
               y={hover.y}
               lines={[
                 `${formatDuration(hover.point.t)} · score ${hover.point.value.toFixed(1)}`,
-                fight ? `Fight ${fight.index} · ${sides.ours} ${ours} – ${theirs} ${sides.theirs}` : "Between fights",
+                fight ? `Fight ${fight.index} · ${sides.ours} ${ours} – ${theirs} ${sides.theirs} so far` : "Between fights",
               ]}
             />
           </>

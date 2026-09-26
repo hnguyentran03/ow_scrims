@@ -2,11 +2,10 @@ import { fightIndexAt, groupFights, killKind, type Fight, type KillLike } from "
 import { dedupeRounds, roundCapturer, type RoundEndLike, type RoundLike } from "./rounds";
 import { sideOf, sides, type SideKey } from "./sides";
 import { pairUltimates, DOUBLE_CAST_SECONDS, type UltLike } from "./ultimates";
-import { casterKills, ultDetails } from "./ult-analysis";
+import { ultDetails } from "./ult-analysis";
 
 export { pairUltimates, DOUBLE_CAST_SECONDS };
 export { fightIndexAt };
-export { casterKills };
 export type { UltLike };
 
 export interface EventMapLike {
