@@ -6,7 +6,17 @@ import { damageByRound, finalBlowsByRole, killsByFight } from "@/lib/stats/chart
 import { groupFights } from "@/lib/stats/fights";
 import { sideOf, type Sides } from "@/lib/stats/sides";
 import { buildTempo } from "@/lib/stats/tempo";
-import { counterUlts, keptCasts, ultAdvantageByFight, ultCombos, type CounterUlt, type UltCombo } from "@/lib/stats/ult-analysis";
+import {
+  COMBO_WINDOW_SECONDS,
+  COUNTER_WINDOW_SECONDS,
+  counterUlts,
+  keptCasts,
+  ultAdvantageByFight,
+  ultCombos,
+  type CounterUlt,
+  type UltCast,
+  type UltCombo,
+} from "@/lib/stats/ult-analysis";
 import { loadMap, type MapParams } from "../load-map";
 import { DamageByRoundChart } from "./damage-by-round-chart";
 import { FinalBlowsByRoleChart } from "./final-blows-by-role-chart";
@@ -37,14 +47,14 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
       </Card>
       <h2 className="text-lg font-medium">Ultimates</h2>
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card title="Ult advantage per fight" note="Held ults at each fight's first kill">
+        <Card title="Ult advantage per fight" note="Held ults at each fight's first kill; a cast with no logged charge counts as not held">
           <UltAdvantageTable advantage={advantage} sides={sides} />
         </Card>
-        <Card title="Ult combos" note="Same-team casts within 5 s">
+        <Card title="Ult combos" note={`Same-team casts within ${COMBO_WINDOW_SECONDS} s`}>
           <ComboList combos={combos} sides={sides} />
         </Card>
-        <Card title="Counter-ult response" note="Enemy cast within 5 s of an ult">
-          <CounterList counters={counters} casts={casts.length} sides={sides} />
+        <Card title="Counter-ult response" note={`Enemy cast within ${COUNTER_WINDOW_SECONDS} s of an ult`}>
+          <CounterList counters={counters} casts={casts} sides={sides} />
         </Card>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
@@ -63,7 +73,8 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
 }
 
 function teamColor(team: string, sides: Sides): string {
-  return TEAM_COLORS[sideOf(team, sides) ?? "ours"];
+  const side = sideOf(team, sides);
+  return side ? TEAM_COLORS[side] : "#71717a";
 }
 
 function ComboList({ combos, sides }: { combos: UltCombo[]; sides: Sides }) {
@@ -81,13 +92,15 @@ function ComboList({ combos, sides }: { combos: UltCombo[]; sides: Sides }) {
   );
 }
 
-function CounterList({ counters, casts, sides }: { counters: CounterUlt[]; casts: number; sides: Sides }) {
+function CounterList({ counters, casts, sides }: { counters: CounterUlt[]; casts: UltCast[]; sides: Sides }) {
   const answeredBy = (side: "ours" | "theirs") => counters.filter((c) => sideOf(c.answer.team, sides) === side);
+  const castsBy = (side: "ours" | "theirs") => casts.filter((c) => sideOf(c.team, sides) === side).length;
   const mean = (list: CounterUlt[]) => (list.length ? `${(list.reduce((n, c) => n + c.delaySeconds, 0) / list.length).toFixed(1)} s` : "–");
   return (
     <div className="space-y-2 text-sm">
       <p className="text-xs text-zinc-500">
-        {sides.ours} answered {answeredBy("ours").length}, avg {mean(answeredBy("ours"))} · {sides.theirs} answered {answeredBy("theirs").length}, avg {mean(answeredBy("theirs"))} · {casts} ults total
+        {sides.ours} answered {answeredBy("ours").length} of {castsBy("theirs")} enemy ults, avg {mean(answeredBy("ours"))} · {sides.theirs} answered{" "}
+        {answeredBy("theirs").length} of {castsBy("ours")} enemy ults, avg {mean(answeredBy("theirs"))} · {casts.length} ults total
       </p>
       {counters.length === 0 ? (
         <p className="text-zinc-400">None on this map.</p>

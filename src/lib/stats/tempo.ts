@@ -55,7 +55,7 @@ export function decayCurve(impulses: Impulse[], durationSeconds: number): TempoP
       value += sorted[next].value * decay(t - sorted[next].t);
       next += 1;
     }
-    points.push({ t, value });
+    points.push({ t, value: Number(value.toFixed(3)) });
     prevT = t;
   }
   return points;
