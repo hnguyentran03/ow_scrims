@@ -1,7 +1,7 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, inArray, lte, sql, type SQL } from "drizzle-orm";
 import type { Db } from "./index";
 import {
-  heroSwap, kill, mapBans, maps, matchEnd, matchStart, mercyRez, objectiveCaptured, playerStat, roundEnd, roundStart, scrims,
+  damage, heroSwap, kill, mapBans, maps, matchEnd, matchStart, mercyRez, objectiveCaptured, playerStat, roundEnd, roundStart, scrims,
   ultimateCharged, ultimateEnd, ultimateStart,
 } from "./schema";
 
@@ -20,6 +20,7 @@ export type UltStartRow = typeof ultimateStart.$inferSelect;
 export type UltEndRow = typeof ultimateEnd.$inferSelect;
 export type MapBanRow = typeof mapBans.$inferSelect;
 export type UltChargedRow = typeof ultimateCharged.$inferSelect;
+export type DamageRow = typeof damage.$inferSelect;
 
 /** Inclusive YYYY-MM-DD bounds on the scrim date; either may be absent. */
 export interface DateRange {
@@ -156,6 +157,12 @@ export async function getChartRows(db: Db, mapId: number): Promise<ChartRows> {
 
 export async function getCompareRows(db: Db, mapId: number): Promise<{ playerStats: PlayerStatRow[] }> {
   return { playerStats: await playerStatsFor(db, mapId) };
+}
+
+export async function getTelemetryRows(db: Db, mapId: number): Promise<{ damage: DamageRow[]; playerStats: PlayerStatRow[] }> {
+  const damageRows = await db.select().from(damage).where(eq(damage.mapId, mapId)).orderBy(asc(damage.matchTime), asc(damage.id));
+  const playerStats = await playerStatsFor(db, mapId);
+  return { damage: damageRows, playerStats };
 }
 
 export async function setMapBans(db: Db, mapId: number, side: 1 | 2, heroes: string[]): Promise<void> {

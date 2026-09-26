@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { createTestDb, type Db } from "@/lib/db";
-import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getKillfeedRows, getMap, getMapStats, getScrim, listScrims, setMapWinner } from "@/lib/db/queries";
+import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getKillfeedRows, getMap, getMapStats, getScrim, getTelemetryRows, listScrims, setMapWinner } from "@/lib/db/queries";
 import { insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
@@ -81,6 +81,12 @@ describe("queries", () => {
     expect(chart.ultCharged[0].matchTime).toBeLessThanOrEqual(chart.ultCharged[1].matchTime);
     const compare = await getCompareRows(db, mapId);
     expect(compare.playerStats).toHaveLength(40);
+  });
+
+  it("returns telemetry rows, with no damage for a map logged without damage events", async () => {
+    const rows = await getTelemetryRows(db, mapId);
+    expect(rows.damage).toHaveLength(0);
+    expect(rows.playerStats).toHaveLength(40);
   });
 
   it("sets a manual winner", async () => {
