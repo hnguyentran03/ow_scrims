@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { createTestDb, type Db } from "@/lib/db";
-import { createScrim, deleteMap, getMap, getScrim, getTeamRows, recentOurRoster, setMapBans } from "@/lib/db/queries";
+import { createScrim, deleteMap, getMap, getScrim, getTelemetryRows, getTeamRows, recentOurRoster, setMapBans } from "@/lib/db/queries";
 import { insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
@@ -76,6 +76,13 @@ describe("team queries", () => {
     const stats = await getTeamRows(db, {}, { playerStats: true, bans: true });
     expect(stats.kills).toEqual([]);
     expect(stats.playerStats).toHaveLength(40 + 50);
+  });
+
+  it("returns the damage rows of a map that logged them, in time order", async () => {
+    const rows = await getTelemetryRows(db, aatlis);
+    expect(rows.damage).toHaveLength(2690);
+    expect(rows.damage[0].matchTime).toBeLessThanOrEqual(rows.damage[1].matchTime);
+    expect(rows.damage[0]).toMatchObject({ attackerTeam: "Team 1", attackerHero: "Doomfist", victimHero: "Junker Queen" });
   });
 
   it("drops bans with the map", async () => {
