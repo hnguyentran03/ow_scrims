@@ -14,6 +14,13 @@ export interface RoleShare {
   healing: number | null;
 }
 
+export interface ModeExtremes {
+  mapType: string;
+  played: number;
+  strongest: MapRecord | null;
+  blindSpot: MapRecord | null;
+}
+
 export interface TeamOverview {
   record: { won: number; lost: number; undecided: number; maps: number; scrims: number };
   /** Record over the last LAST_N decided maps in scrim date, scrim id, map order. */
@@ -23,6 +30,8 @@ export interface TeamOverview {
   /** Same guard as strongest/blindSpot, applied to map types (game modes). */
   strongestType: TypeRecord | null;
   blindSpotType: TypeRecord | null;
+  /** Every game mode in the range in MAP_TYPE_ORDER, with the same map guard applied within that mode only. */
+  byMode: ModeExtremes[];
   roleBalance: RoleShare[];
 }
 
@@ -51,8 +60,11 @@ export function buildTeamOverview(maps: TeamMapLike[], playerStats: StatLike[]):
   const lastTen = { won: 0, lost: 0 };
   for (const m of maps.filter((m) => outcome(m) !== "undecided").slice(-LAST_N)) lastTen[outcome(m) as "won" | "lost"] += 1;
 
-  const { strongest, blindSpot } = extremes(winRateByMap(maps), (m) => m.mapName);
-  const types = extremes(winRateByType(maps), (t) => t.mapType);
+  const byMap = winRateByMap(maps);
+  const byType = winRateByType(maps);
+  const { strongest, blindSpot } = extremes(byMap, (m) => m.mapName);
+  const types = extremes(byType, (t) => t.mapType);
+  const byMode = byType.map(({ mapType, played }) => ({ mapType, played, ...extremes(byMap.filter((m) => m.mapType === mapType), (m) => m.mapName) }));
 
   const sums = new Map<Role, { finalBlows: number; deaths: number; heroDamage: number; healing: number }>();
   const total = { finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0 };
@@ -74,5 +86,5 @@ export function buildTeamOverview(maps: TeamMapLike[], playerStats: StatLike[]):
     return { role, finalBlows: rate(s.finalBlows, total.finalBlows), deaths: rate(s.deaths, total.deaths), heroDamage: rate(s.heroDamage, total.heroDamage), healing: rate(s.healing, total.healing) };
   });
 
-  return { record, lastTen, strongest, blindSpot, strongestType: types.strongest, blindSpotType: types.blindSpot, roleBalance };
+  return { record, lastTen, strongest, blindSpot, strongestType: types.strongest, blindSpotType: types.blindSpot, byMode, roleBalance };
 }
