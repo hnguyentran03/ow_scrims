@@ -131,4 +131,35 @@ describe("buildPlayerPage", () => {
     expect(none).toMatchObject({ heroes: [], mostPlayed: [], timeByRole: [], finalBlowsByMethod: [], winRateByMap: [], diedToMost: [], finalBlowsOnMost: [], chart: [] });
     expect(none.overview).toEqual({ maps: 0, timePlayed: 0, record: { won: 0, lost: 0, undecided: 0 }, winRate: null, per10: { eliminations: 0, finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0, damageTaken: 0, damageBlocked: 0, ultsEarned: 0, ultsUsed: 0 } });
   });
+
+  it("counts first picks and first deaths against fights on the player's maps, and reversals among first deaths", () => {
+    expect(p.cards.firstPick).toEqual({ count: 3, fights: 6, won: 3, rate: 0.5 });
+    expect(p.cards.firstDeath).toEqual({ count: 2, fights: 6, won: 1, rate: 1 / 3 });
+    expect(p.cards.reversal).toEqual({ count: 2, won: 1, rate: 0.5 });
+  });
+
+  it("restricts the fight cards by hero on the kill row under a filter", () => {
+    expect(ana.cards.firstPick).toEqual({ count: 2, fights: 5, won: 2, rate: 0.4 });
+    expect(ana.cards.firstDeath).toEqual({ count: 1, fights: 5, won: 1, rate: 0.2 });
+    expect(ana.cards.reversal).toEqual({ count: 1, won: 1, rate: 1 });
+  });
+
+  it("counts kills per ult by the events rule, zero for an ult without an end", () => {
+    expect(p.cards.killsPerUlt).toEqual({ ults: 4, kills: 3, perUlt: 0.75 });
+    expect(ana.cards.killsPerUlt).toEqual({ ults: 3, kills: 1, perUlt: 1 / 3 });
+    expect(genji.cards.killsPerUlt).toEqual({ ults: 1, kills: 2, perUlt: 2 });
+  });
+
+  it("averages charge and hold seconds over timings that have a charge moment", () => {
+    expect(p.cards).toMatchObject({ avgChargeSeconds: 40, avgHoldSeconds: 7.5 });
+    expect(ana.cards).toMatchObject({ avgChargeSeconds: 40, avgHoldSeconds: 7.5 });
+    expect(genji.cards).toMatchObject({ avgChargeSeconds: null, avgHoldSeconds: null });
+  });
+
+  it("gives zero counts and null rates for a stranger", () => {
+    expect(buildPlayerPage(maps, rows, "nobody").cards).toEqual({
+      firstPick: { count: 0, fights: 0, won: 0, rate: null }, firstDeath: { count: 0, fights: 0, won: 0, rate: null }, reversal: { count: 0, won: 0, rate: null },
+      killsPerUlt: { ults: 0, kills: 0, perUlt: null }, avgChargeSeconds: null, avgHoldSeconds: null,
+    });
+  });
 });
