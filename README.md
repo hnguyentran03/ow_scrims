@@ -2,7 +2,7 @@
 
 A single-user Overwatch 2 scrim analytics app, modelled on Parsertime. Upload the per-map log files that the ScrimTime workshop code writes through the Workshop Inspector, and the app parses every event type into a local database and shows a map overview: score, winner, team damage and healing, and a per-player stat table with per-10-minute rates. Each map also has a fight-grouped killfeed, an events timeline, three charts (kills by fight, final blows by role, cumulative hero damage by round), and a two-player comparison.
 
-A Team area aggregates every scrim in a date range: win rates by map and type, hero pick rates against recorded bans, ult economy over time, teamfight statistics, and a headline overview. It also has a Players tab with a leaderboard, roster, and per-player pages (per-10 stats, fight and ult cards, hero filter, per-scrim chart).
+A Team area aggregates every scrim in a date range: win rates by map and type, hero pick rates against recorded bans, ult economy over time, teamfight statistics, and a headline overview. It also has a Players tab with the roster and per-player pages (per-10 stats, fight and ult cards, hero filter, per-scrim chart).
 
 Built with Next.js (App Router, TypeScript), Drizzle ORM, and PGlite (embedded Postgres) with a swappable node-postgres driver for later deployment.
 
@@ -32,11 +32,11 @@ Each map card on the scrim page has a hero bans editor for both teams.
 ## Layout
 
 ```
-src/app/            Next.js pages (scrim list, scrim detail, map overview/killfeed/charts/events/compare, team overview/trends/teamfights/team players/leaderboard and player detail), server actions, and the map upload route handler
+src/app/            Next.js pages (scrim list, scrim detail, map overview/killfeed/charts/events/compare, team overview/trends/teamfights/players roster and player detail), server actions, and the map upload route handler
 src/components/      Shared tab nav, stat cell, and SVG chart helpers
 src/lib/parser/      Tokenizer, sanitizer, and descriptor-driven event coercion
 src/lib/db/          Drizzle schema, PGlite/Postgres connection, queries, and map insertion
-src/lib/stats/       Pure computation: fights, heroes (role map), sides, rounds, overview, killfeed, events, charts, compare, ultimates, team-rows, trends, teamfights, team-overview, leaderboard, player
+src/lib/stats/       Pure computation: fights, heroes (role map), sides, rounds, overview, killfeed, events, charts, compare, ultimates, team-rows, trends, teamfights, team-overview, roster, player
 src/lib/logs.ts       Raw log file storage under LOG_DIR
 src/lib/format.ts     Display formatting helpers
 test/                Vitest specs, mirroring src/, plus sample ScrimTime logs in test/samples/
