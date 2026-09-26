@@ -9,7 +9,7 @@ import { Stat } from "@/components/stat";
 export const dynamic = "force-dynamic";
 
 export default async function KillfeedPage({ params }: { params: MapParams }) {
-  const { db, map, sides } = await loadMap(params);
+  const { db, map, scrim, sides } = await loadMap(params);
   const rows = await getKillfeedRows(db, map.id);
   const kf = buildKillfeed({ map, kills: rows.kills, rezzes: rows.rezzes, roundEnds: rows.roundEnds, durationSeconds: map.durationSeconds });
   const pair = (p: { ours: number; theirs: number }) => `${p.ours} / ${p.theirs}`;
@@ -18,6 +18,12 @@ export default async function KillfeedPage({ params }: { params: MapParams }) {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <a href={`/api/scrims/${scrim.id}/maps/${map.id}/killfeed.csv`} download className="text-sm text-zinc-400 hover:underline">
+          Download CSV
+        </a>
+      </div>
+
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Match time" value={formatDuration(kf.header.matchTime)} />
         <Stat label="Kills" value={pair(kf.header.kills)} hint={hint} />
