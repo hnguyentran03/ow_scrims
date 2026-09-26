@@ -76,10 +76,10 @@ describe("buildEvents", () => {
     expect(entries.map((e) => `${e.time}:${e.kind}`)).toEqual([
       "0:match_start", "0:round_start", "10:ult", "10:ult_kill", "11:fight", "90:fight", "90:ult", "100:round_end",
     ]);
-    expect(entries[2]).toEqual({ kind: "ult", time: 10, team: "ours", player: "a", hero: "Sombra", fightIndex: 1, kills: 2 });
+    expect(entries[2]).toEqual({ kind: "ult", time: 10, team: "ours", player: "a", hero: "Sombra", fightIndex: 1, kills: 2, conversionKills: 2, diedDuringUlt: false });
     expect(entries[3]).toEqual({ kind: "ult_kill", time: 10, team: "ours", player: "a", hero: "Sombra", kills: 2 });
     expect(entries[4]).toEqual({ kind: "fight", time: 11, team: "ours", fightIndex: 1, winner: "Team 1", ours: 2, theirs: 0 });
-    expect(entries[6]).toMatchObject({ kind: "ult", kills: 0, fightIndex: 2 });
+    expect(entries[6]).toMatchObject({ kind: "ult", kills: 0, conversionKills: 1, diedDuringUlt: false, fightIndex: 2 });
     expect(entries[7]).toEqual({ kind: "round_end", time: 100, team: "ours", roundNumber: 1, capturingTeam: "Team 1" });
     expect(totals).toEqual({ rounds: 1, fights: 2, ults: 2, ultKills: 1, multikills: 0, swaps: 0, captures: 0 });
   });
@@ -100,6 +100,17 @@ describe("buildEvents", () => {
     const ultKills = entries.filter((e) => e.kind === "ult_kill");
     expect(ultKills).toHaveLength(1);
     expect(ultKills[0]).toMatchObject({ kills: 1 });
+  });
+
+  it("flags a caster who dies during their ult", () => {
+    const rows: EventRows = {
+      ...empty,
+      ultStarts: [ult(10, "a")],
+      ultEnds: [ult(20, "a")],
+      kills: [kill(15, "z", "a", { attackerTeam: "Team 2", victimTeam: "Team 1" })],
+    };
+    const { entries } = buildEvents(map, rows);
+    expect(entries.find((e) => e.kind === "ult")).toMatchObject({ kills: 0, conversionKills: 0, diedDuringUlt: true });
   });
 
   it("does not count suicides or environmental kills toward multikills", () => {
