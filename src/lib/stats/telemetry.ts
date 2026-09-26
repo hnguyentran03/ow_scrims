@@ -1,5 +1,5 @@
 import { ROLE_ORDER, roleOf, type Role } from "./heroes";
-import { finalRoundRows, type PlayerStatLike } from "./overview";
+import { finalRoundRows, per10, type PlayerStatLike } from "./overview";
 import { sideOf, sides, type SideKey } from "./sides";
 
 export interface DamageLike {
@@ -128,9 +128,35 @@ function roleShares(rows: DamageLike[], roleFor: (d: DamageLike) => Role): RoleS
   return ROLE_ORDER.map((role) => ({ role, damage: sum[role], share: total ? sum[role] / total : 0 }));
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function radarFor(_player: PlayerTotals, _all: PlayerTotals[]): TelemetryPlayer["radar"] {
-  return { opponent: null, axes: [] };
+const ROLE_AXIS: Record<Role, { label: string; pick: (t: PlayerTotals) => number }> = {
+  Support: { label: "Healing", pick: (t) => t.healing },
+  Tank: { label: "Blocked", pick: (t) => t.damageBlocked },
+  Damage: { label: "Damage taken", pick: (t) => t.damageTaken },
+  Unknown: { label: "Damage taken", pick: (t) => t.damageTaken },
+};
+
+/** The enemy with the most hero time in the player's role (ties by name) and five per-10 axes against them. */
+function radarFor(player: PlayerTotals, all: PlayerTotals[]): TelemetryPlayer["radar"] {
+  const opponent =
+    all
+      .filter((o) => o.team !== player.team && o.timeByRole[player.role] > 0)
+      .sort((a, b) => b.timeByRole[player.role] - a.timeByRole[player.role] || a.name.localeCompare(b.name))[0] ?? null;
+  const axis = (label: string, pick: (t: PlayerTotals) => number): RadarAxis => {
+    const mine = per10(pick(player), player.time);
+    const theirs = opponent ? per10(pick(opponent), opponent.time) : 0;
+    return { label, player: mine, opponent: theirs, max: Math.max(mine, theirs) || 1 };
+  };
+  const roleAxis = ROLE_AXIS[player.role];
+  return {
+    opponent: opponent ? { name: opponent.name, hero: opponent.hero, role: opponent.role } : null,
+    axes: [
+      axis("Elims", (t) => t.eliminations),
+      axis("Final blows", (t) => t.finalBlows),
+      axis("Hero damage", (t) => t.heroDamage),
+      axis("Deaths", (t) => t.deaths),
+      axis(roleAxis.label, roleAxis.pick),
+    ],
+  };
 }
 
 export function buildTelemetry(input: { map: TelemetryMapLike; damage: DamageLike[]; playerStats: PlayerStatLike[] }): Telemetry {

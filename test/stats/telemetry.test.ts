@@ -79,3 +79,55 @@ describe("buildTelemetry lanes and focus fire", () => {
     expect(cassidy.received[0].damage).toBeCloseTo(1104.27, 1);
   });
 });
+
+describe("buildTelemetry radar", () => {
+  it("picks the enemy with the most time in the player's role, ties by name", () => {
+    const stats = [
+      stat("Team 1", "a", "Zarya"),
+      stat("Team 2", "y", "Orisa", { heroTimePlayed: 300 }),
+      stat("Team 2", "x", "Orisa", { heroTimePlayed: 300 }),
+      stat("Team 2", "w", "Genji"),
+    ];
+    const a = buildTelemetry({ map, damage: [], playerStats: stats }).players.find((p) => p.name === "a")!;
+    expect(a.radar.opponent).toEqual({ name: "x", hero: "Orisa", role: "Tank" });
+  });
+
+  it("uses a role-specific fifth axis", () => {
+    const stats = [
+      stat("Team 1", "s", "Ana", { healingDealt: 6000 }), stat("Team 2", "s2", "Kiriko", { healingDealt: 3000 }),
+      stat("Team 1", "t", "Zarya", { damageBlocked: 1200 }), stat("Team 2", "t2", "Orisa", { damageBlocked: 600 }),
+      stat("Team 1", "d", "Genji", { damageTaken: 900 }), stat("Team 2", "d2", "Tracer", { damageTaken: 300 }),
+    ];
+    const players = buildTelemetry({ map, damage: [], playerStats: stats }).players;
+    const axis = (name: string) => players.find((p) => p.name === name)!.radar.axes[4];
+    expect(axis("s")).toEqual({ label: "Healing", player: 6000, opponent: 3000, max: 6000 });
+    expect(axis("t")).toEqual({ label: "Blocked", player: 1200, opponent: 600, max: 1200 });
+    expect(axis("d")).toEqual({ label: "Damage taken", player: 900, opponent: 300, max: 900 });
+    expect(players.find((p) => p.name === "s")!.radar.axes.map((x) => x.label)).toEqual(["Elims", "Final blows", "Hero damage", "Deaths", "Healing"]);
+  });
+
+  it("scales per 10 minutes and falls back to a max of 1 when both values are zero", () => {
+    const stats = [stat("Team 1", "a", "Genji", { eliminations: 10 }), stat("Team 2", "x", "Tracer", { heroTimePlayed: 300, eliminations: 5 })];
+    const a = buildTelemetry({ map, damage: [], playerStats: stats }).players.find((p) => p.name === "a")!;
+    expect(a.radar.axes[0]).toEqual({ label: "Elims", player: 10, opponent: 10, max: 10 });
+    expect(a.radar.axes[3]).toEqual({ label: "Deaths", player: 0, opponent: 0, max: 1 });
+  });
+
+  it("has no opponent when nobody on the other team played the role", () => {
+    const stats = [stat("Team 1", "a", "Genji", { eliminations: 10 }), stat("Team 2", "x", "Ana")];
+    const a = buildTelemetry({ map, damage: [], playerStats: stats }).players.find((p) => p.name === "a")!;
+    expect(a.radar.opponent).toBeNull();
+    expect(a.radar.axes[0]).toEqual({ label: "Elims", player: 10, opponent: 0, max: 10 });
+  });
+
+  it("matches MomoMiles against StellBell in the Antarctic sample, which has no damage rows", () => {
+    const t = buildTelemetry({ map, ...sample("Log-2026-04-15-21-12-58") });
+    expect(t.hasDamage).toBe(false);
+    expect(t.players).toHaveLength(10);
+    const momo = t.players.find((p) => p.name === "MomoMiles")!;
+    expect(momo.radar.opponent).toEqual({ name: "StellBell", hero: "Domina", role: "Tank" });
+    expect(momo.radar.axes[0].player).toBeCloseTo(20.88, 1);
+    expect(momo.radar.axes[0].opponent).toBeCloseTo(10.89, 1);
+    expect(momo.radar.axes[4].label).toBe("Blocked");
+  });
+});
