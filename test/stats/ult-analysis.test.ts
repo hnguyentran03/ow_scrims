@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CONVERSION_WINDOW_SECONDS, casterKills, ultDetails, COMBO_WINDOW_SECONDS, COUNTER_WINDOW_SECONDS, ultCombos, counterUlts } from "@/lib/stats/ult-analysis";
+import { CONVERSION_WINDOW_SECONDS, casterKills, ultDetails, COMBO_WINDOW_SECONDS, COUNTER_WINDOW_SECONDS, ultCombos, counterUlts, ultAdvantageByFight } from "@/lib/stats/ult-analysis";
 import type { KillLike } from "@/lib/stats/fights";
 import type { UltLike } from "@/lib/stats/ultimates";
 import { groupFights } from "@/lib/stats/fights";
@@ -100,5 +100,40 @@ describe("counterUlts", () => {
       ["Novadachi", "StellBell", 0.37],
     ]);
     expect(pairs.filter((p) => p.answer.team === "Team 1")).toHaveLength(2);
+  });
+});
+
+describe("ultAdvantageByFight", () => {
+  const s = { ours: "Team 1", theirs: "Team 2" };
+  const fightsAt = (...times: number[]) => groupFights(times.map((t, i) => kill(t, "a", `v${i}`)));
+
+  it("returns null with no charge events", () => {
+    expect(ultAdvantageByFight([], [ult(10)], [], fightsAt(20), s)).toBeNull();
+  });
+
+  it("counts a player as holding an ult after a charge and before the next cast, through flicker", () => {
+    const charged = [ult(10), ult(11), ult(12), ult(30), ult(31)];
+    const starts = [ult(20)];
+    const result = ultAdvantageByFight(charged, starts, [], fightsAt(15, 45, 75), s)!;
+    expect(result.fights.map((f) => [f.index, f.ours, f.theirs, f.advantage])).toEqual([[1, 1, 0, 1], [2, 1, 0, 1], [3, 1, 0, 1]]);
+  });
+
+  it("stops holding at a cast that shares the charge time, and counts enemies", () => {
+    const charged = [ult(20), ult(5, "x", "Team 2")];
+    const starts = [ult(20)];
+    const result = ultAdvantageByFight(charged, starts, [], fightsAt(25), s)!;
+    expect(result.fights[0]).toEqual({ index: 1, ours: 0, theirs: 1, advantage: -1, winner: "ours" });
+  });
+
+  it("summarises decided fights by ahead, even, and behind", () => {
+    const charged = [ult(1, "a"), ult(1, "x", "Team 2")];
+    const kills = [
+      kill(10, "a", "v1"), kill(11, "x", "a", { attackerTeam: "Team 2", victimTeam: "Team 1" }),
+      kill(100, "a", "v2"),
+      kill(200, "x", "b", { attackerTeam: "Team 2", victimTeam: "Team 1" }),
+    ];
+    const result = ultAdvantageByFight(charged, [ult(50, "x", "Team 2")], [], groupFights(kills), s)!;
+    expect(result.fights.map((f) => [f.advantage, f.winner])).toEqual([[0, null], [1, "ours"], [1, "theirs"]]);
+    expect(result.summary).toEqual({ ahead: { fights: 2, won: 1 }, even: { fights: 0, won: 0 }, behind: { fights: 0, won: 0 } });
   });
 });

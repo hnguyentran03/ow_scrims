@@ -1,5 +1,6 @@
 import { fightIndexAt, killKind, type Fight, type KillLike } from "./fights";
 import { pairUltimates, type UltLike } from "./ultimates";
+import { sideOf, type SideKey, type Sides } from "./sides";
 
 export const CONVERSION_WINDOW_SECONDS = 8;
 
@@ -108,4 +109,66 @@ export function counterUlts(starts: UltLike[], ends: UltLike[]): CounterUlt[] {
     }
   });
   return out;
+}
+
+export interface FightAdvantage {
+  index: number;
+  ours: number;
+  theirs: number;
+  advantage: number;
+  winner: SideKey | null;
+}
+
+export interface AdvantageBucket {
+  fights: number;
+  won: number;
+}
+
+export interface UltAdvantage {
+  fights: FightAdvantage[];
+  summary: { ahead: AdvantageBucket; even: AdvantageBucket; behind: AdvantageBucket };
+}
+
+const playerKey = (team: string, player: string) => `${team}|${player}`;
+
+/** Holding at `t`: the latest charge at or before `t` is strictly later than the latest cast at or before `t`. */
+function holdsUlt(chargeTimes: number[], castTimes: number[], t: number): boolean {
+  const lastCharge = chargeTimes.filter((c) => c <= t).at(-1);
+  if (lastCharge === undefined) return false;
+  const lastCast = castTimes.filter((c) => c <= t).at(-1);
+  return lastCast === undefined || lastCharge > lastCast;
+}
+
+/** Ults held per team at each fight's first kill, with our advantage and the fight winner. Null without charge events. */
+export function ultAdvantageByFight(charged: UltLike[], starts: UltLike[], ends: UltLike[], fights: Fight[], s: Sides): UltAdvantage | null {
+  if (charged.length === 0) return null;
+  const charges = new Map<string, number[]>();
+  const casts = new Map<string, number[]>();
+  const teamOf = new Map<string, string>();
+  for (const c of charged) {
+    const key = playerKey(c.playerTeam, c.playerName);
+    charges.set(key, [...(charges.get(key) ?? []), c.matchTime].sort((a, b) => a - b));
+    teamOf.set(key, c.playerTeam);
+  }
+  for (const c of keptCasts(starts, ends)) {
+    const key = playerKey(c.team, c.player);
+    casts.set(key, [...(casts.get(key) ?? []), c.time]);
+    teamOf.set(key, c.team);
+  }
+  const held = (team: string, t: number) =>
+    [...teamOf].filter(([key, owner]) => owner === team && holdsUlt(charges.get(key) ?? [], casts.get(key) ?? [], t)).length;
+
+  const rows: FightAdvantage[] = fights.map((f) => {
+    const ours = held(s.ours, f.start);
+    const theirs = held(s.theirs, f.start);
+    return { index: f.index, ours, theirs, advantage: ours - theirs, winner: f.winner ? sideOf(f.winner, s) : null };
+  });
+  const bucket = (pick: (f: FightAdvantage) => boolean): AdvantageBucket => {
+    const decided = rows.filter((f) => f.winner !== null && pick(f));
+    return { fights: decided.length, won: decided.filter((f) => f.winner === "ours").length };
+  };
+  return {
+    fights: rows,
+    summary: { ahead: bucket((f) => f.advantage > 0), even: bucket((f) => f.advantage === 0), behind: bucket((f) => f.advantage < 0) },
+  };
 }
