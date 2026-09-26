@@ -68,6 +68,17 @@ describe("buildTelemetry lanes and focus fire", () => {
     ]);
   });
 
+  it("breaks a role tie by ROLE_ORDER and a hero tie by name", () => {
+    const stats2 = [
+      stat("Team 1", "a", "Zarya", { heroTimePlayed: 300 }),
+      stat("Team 1", "a", "Genji", { heroTimePlayed: 300 }),
+    ];
+    const a = buildTelemetry({ map, damage: [], playerStats: stats2 }).players.find((p) => p.name === "a")!;
+    expect(a.role).toBe("Tank");
+    expect(a.hero).toBe("Genji");
+    expect(a.timePlayed).toBe(600);
+  });
+
   it("finds Cassidy's top lanes in the Aatlis sample", () => {
     const t = buildTelemetry({ map: { ...map, ourSide: 2 }, ...sample("Log-2026-09-18-13-52-18") });
     expect(t.hasDamage).toBe(true);
@@ -111,6 +122,16 @@ describe("buildTelemetry radar", () => {
     const a = buildTelemetry({ map, damage: [], playerStats: stats }).players.find((p) => p.name === "a")!;
     expect(a.radar.axes[0]).toEqual({ label: "Elims", player: 10, opponent: 10, max: 10 });
     expect(a.radar.axes[3]).toEqual({ label: "Deaths", player: 0, opponent: 0, max: 1 });
+  });
+
+  it("resolves the Unknown-role bucket for an off-list hero", () => {
+    const stats = [
+      stat("Team 1", "d", "Vendetta", { damageTaken: 900 }),
+      stat("Team 2", "d2", "Vendetta", { damageTaken: 300 }),
+    ];
+    const d = buildTelemetry({ map, damage: [], playerStats: stats }).players.find((p) => p.name === "d")!;
+    expect(d.radar.opponent?.role).toBe("Unknown");
+    expect(d.radar.axes[4]).toEqual({ label: "Damage taken", player: 900, opponent: 300, max: 900 });
   });
 
   it("has no opponent when nobody on the other team played the role", () => {

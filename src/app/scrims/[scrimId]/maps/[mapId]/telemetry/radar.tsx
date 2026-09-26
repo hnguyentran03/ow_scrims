@@ -27,7 +27,7 @@ export function Radar({ axes, playerLabel, opponentLabel, playerColor, opponentC
         <span><span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ background: playerColor }} />{playerLabel}</span>
         {opponentLabel && <span><span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ background: opponentColor }} />{opponentLabel}</span>}
       </div>
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="mx-auto w-full max-w-sm" role="img" aria-label="Matchup radar">
+      <svg viewBox={`-60 -10 ${SIZE + 120} ${SIZE + 20}`} className="mx-auto w-full max-w-sm" role="img" aria-label="Matchup radar">
         {[0.25, 0.5, 0.75, 1].map((v) => <polygon key={v} points={ring(v)} fill="none" stroke="#27272a" />)}
         {axes.map((_, i) => { const p = point(i, 1); return <line key={i} x1={C} y1={C} x2={p.x} y2={p.y} stroke="#3f3f46" />; })}
         {opponentLabel && <polygon points={polygon((a) => a.opponent)} fill={opponentColor} fillOpacity={0.2} stroke={opponentColor} strokeWidth={2} />}

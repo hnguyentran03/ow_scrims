@@ -42,7 +42,7 @@ export function TelemetryPanel({ telemetry, sides }: { telemetry: Telemetry; sid
           <Card title="Damage dealt by hero"><LaneList lanes={player.dealt} color={color} /></Card>
           <Card title="Damage received by hero"><LaneList lanes={player.received} color={opponentColor} /></Card>
           <Card title="Focus fire received" note="Share of damage taken, by enemy role"><RoleBar shares={player.focusFire.received} color={opponentColor} /></Card>
-          <Card title="Damage dealt by enemy role"><RoleBar shares={player.focusFire.dealt} color={color} /></Card>
+          <Card title="Damage dealt, by enemy role"><RoleBar shares={player.focusFire.dealt} color={color} /></Card>
         </div>
       ) : (
         <p className="text-sm text-zinc-400">Damage logging was off for this map. Turn on damage logging in the ScrimTime Workshop settings before hosting.</p>
@@ -72,17 +72,27 @@ function LaneList({ lanes, color }: { lanes: Lane[]; color: string }) {
   );
 }
 
+const roleOpacity = (i: number) => 1 - i * 0.22;
+
 function RoleBar({ shares, color }: { shares: RoleShare[]; color: string }) {
   if (shares.every((s) => s.damage === 0)) return <p className="text-sm text-zinc-400">None.</p>;
   return (
     <div className="space-y-2 text-sm">
       <div className="flex h-3 overflow-hidden rounded bg-zinc-800">
         {shares.map((s, i) => (
-          <span key={s.role} style={{ width: `${s.share * 100}%`, background: color, opacity: 1 - i * 0.22 }} />
+          <span key={s.role} style={{ width: `${s.share * 100}%`, background: color, opacity: roleOpacity(i) }} />
         ))}
       </div>
       <ul className="flex flex-wrap gap-4 text-zinc-400">
-        {shares.filter((s) => s.damage > 0).map((s) => <li key={s.role}>{s.role} {formatPct(s.share)}</li>)}
+        {shares.map((s, i) => {
+          if (s.damage === 0) return null;
+          return (
+            <li key={s.role} className="flex items-center gap-1.5">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: color, opacity: roleOpacity(i) }} />
+              {s.role} {formatPct(s.share)}
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
