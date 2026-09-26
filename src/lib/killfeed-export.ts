@@ -3,9 +3,12 @@ import { getKillfeedRows, getMap } from "./db/queries";
 import { buildKillfeed } from "./stats/killfeed";
 import { killfeedCsv } from "./stats/killfeed-csv";
 
+const INT4_MAX = 2147483647;
+
 const positiveInt = (raw: string): number | null => {
+  if (!/^[1-9]\d{0,9}$/.test(raw)) return null;
   const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : null;
+  return n <= INT4_MAX ? n : null;
 };
 
 export function fileSlug(name: string): string {

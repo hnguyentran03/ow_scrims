@@ -28,7 +28,17 @@ describe("killfeedCsvResponse", () => {
   });
 
   it("rejects ids that are not positive integers", async () => {
-    for (const params of [{ scrimId: "abc", mapId: String(mapId) }, { scrimId: "0", mapId: String(mapId) }, { scrimId: String(scrimId), mapId: "1.5" }]) {
+    for (const params of [
+      { scrimId: "abc", mapId: String(mapId) },
+      { scrimId: "0", mapId: String(mapId) },
+      { scrimId: String(scrimId), mapId: "1.5" },
+      { scrimId: String(scrimId), mapId: "2147483648" },
+      { scrimId: String(scrimId), mapId: "9999999999" },
+      { scrimId: String(scrimId), mapId: " 5 " },
+      { scrimId: String(scrimId), mapId: "5e0" },
+      { scrimId: String(scrimId), mapId: "0x5" },
+      { scrimId: String(scrimId), mapId: "007" },
+    ]) {
       const res = await killfeedCsvResponse(db, params);
       expect(res.status).toBe(400);
       expect(await res.json()).toEqual({ error: "invalid id" });

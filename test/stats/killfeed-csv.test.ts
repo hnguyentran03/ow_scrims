@@ -22,6 +22,14 @@ describe("csvField", () => {
     expect(csvField(3)).toBe('"3"');
     expect(csvField(true)).toBe('"true"');
   });
+
+  it("prefixes a leading apostrophe to defuse spreadsheet formula characters", () => {
+    expect(csvField("=cmd|' /C calc'!A0")).toBe(`"'=cmd|' /C calc'!A0"`);
+    expect(csvField("+1")).toBe(`"'+1"`);
+    expect(csvField("-5")).toBe(`"'-5"`);
+    expect(csvField("@x")).toBe(`"'@x"`);
+    expect(csvField("Ana")).toBe('"Ana"');
+  });
 });
 
 describe("killfeedCsv", () => {
@@ -46,6 +54,32 @@ describe("killfeedCsv", () => {
   it("quotes a name with a comma and a quote", () => {
     const csv = killfeedCsv(buildKillfeed({ map, kills: [kill(10, 'Bob "The" Builder, Jr.', "b")], rezzes: [], roundEnds: [], durationSeconds: 10 }));
     expect(csv.split("\r\n")[1]).toContain('"Bob ""The"" Builder, Jr."');
+  });
+
+  it("prefixes an attacker name that looks like a spreadsheet formula", () => {
+    const csv = killfeedCsv(buildKillfeed({ map, kills: [kill(10, '=HYPERLINK("x")', "b")], rezzes: [], roundEnds: [], durationSeconds: 10 }));
+    expect(csv.split("\r\n")[1]).toBe('"1","1","10.00","kill","Team 1","\'=HYPERLINK(""x"")","Ana","Team 2","b","Genji","Primary Fire","false"');
+  });
+
+  it("labels a fight straddling a capture with the round in progress, not a contiguous count", () => {
+    const kills = [kill(10, "a", "b"), kill(100, "a", "c")];
+    const csv = killfeedCsv(buildKillfeed({ map, kills, rezzes: [], roundEnds: [roundEnd(2, 50)], durationSeconds: 120 }));
+    expect(csv.split("\r\n")).toEqual([
+      HEADER,
+      '"1","2","10.00","kill","Team 1","a","Ana","Team 2","b","Genji","Primary Fire","false"',
+      '"2","3","100.00","kill","Team 1","a","Ana","Team 2","c","Genji","Primary Fire","false"',
+      "",
+    ]);
+  });
+
+  it("marks a suicide with the attacker's team and name repeating the victim's", () => {
+    const csv = killfeedCsv(buildKillfeed({ map, kills: [kill(10, "a", "a", { attackerTeam: "Team 1", victimTeam: "Team 1", victimName: "a" })], rezzes: [], roundEnds: [], durationSeconds: 10 }));
+    expect(csv.split("\r\n")[1]).toBe('"1","1","10.00","suicide","Team 1","a","Ana","Team 1","a","Genji","Primary Fire","false"');
+  });
+
+  it("marks an environmental kill", () => {
+    const csv = killfeedCsv(buildKillfeed({ map, kills: [kill(10, "a", "b", { isEnvironmental: "True" })], rezzes: [], roundEnds: [], durationSeconds: 10 }));
+    expect(csv.split("\r\n")[1]).toBe('"1","1","10.00","environmental","Team 1","a","Ana","Team 2","b","Genji","Primary Fire","false"');
   });
 
   it("writes 58 rows for the Antarctic sample", () => {
