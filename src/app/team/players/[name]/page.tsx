@@ -6,7 +6,7 @@ import { getTeamRows } from "@/lib/db/queries";
 import { formatDuration, formatPct, formatPer10, formatSeconds } from "@/lib/format";
 import { parseHero, parseRange, type SearchParams } from "@/lib/range";
 import { BEST_PERFORMANCE_MIN_SECONDS, buildPlayerPage, playerHeroes, resolvePlayerName, type BestPerformance, type HeroCount, type MethodCount, type PlayerCards } from "@/lib/stats/player";
-import { Card } from "../../card";
+import { Card } from "@/components/card";
 import { Empty } from "../../empty";
 import { EmptyRange } from "../../empty-range";
 import { mapRecordRows, RecordTable, typeRecordRows } from "../../record-table";

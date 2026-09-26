@@ -2,7 +2,7 @@ import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
 import { parseRange, type SearchParams } from "@/lib/range";
 import { heroPicks, ultEconomyByScrim, winRateByMap, winRateByType } from "@/lib/stats/trends";
-import { Card } from "../card";
+import { Card } from "@/components/card";
 import { EmptyRange } from "../empty-range";
 import { mapRecordRows, RecordTable, typeRecordRows } from "../record-table";
 import { HeroPicksTable } from "./hero-picks-table";
