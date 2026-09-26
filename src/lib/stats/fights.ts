@@ -78,3 +78,10 @@ function scoreFight(fight: Fight): void {
   fight.killsByTeam = counts;
   fight.winner = leader ? leader[0] : null;
 }
+
+/** The fight whose window contains `time`, else the next fight to start, else null. */
+export function fightIndexAt(time: number, fights: Fight[]): number | null {
+  const inside = fights.find((f) => time >= f.start && time <= f.end);
+  if (inside) return inside.index;
+  return fights.find((f) => f.start > time)?.index ?? null;
+}

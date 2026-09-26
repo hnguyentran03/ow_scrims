@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { CONVERSION_WINDOW_SECONDS, casterKills, ultDetails } from "@/lib/stats/ult-analysis";
+import { CONVERSION_WINDOW_SECONDS, casterKills, ultDetails, COMBO_WINDOW_SECONDS, COUNTER_WINDOW_SECONDS, ultCombos, counterUlts } from "@/lib/stats/ult-analysis";
 import type { KillLike } from "@/lib/stats/fights";
 import type { UltLike } from "@/lib/stats/ultimates";
+import { groupFights } from "@/lib/stats/fights";
 import { sampleRows } from "./sample-rows";
 
 const ult = (matchTime: number, playerName = "a", playerTeam = "Team 1", playerHero: string | null = "Mei"): UltLike => ({ matchTime, playerTeam, playerName, playerHero });
@@ -53,5 +54,51 @@ describe("ultDetails", () => {
     const vpal = details.find((d) => d.start.playerName === "VPAL" && d.start.matchTime === 155.86)!;
     expect(vpal).toMatchObject({ conversionKills: 2, casterKills: 1 });
     expect(details.filter((d) => d.diedDuringUlt).map((d) => `${d.start.playerName}@${d.start.matchTime}`)).toEqual(["Dyeonnie@213.28", "MomoMiles@413.08", "meowzy@480.48"]);
+  });
+});
+
+describe("ultCombos", () => {
+  it("chains same-team casts within the window and drops the pair that is one hundredth over", () => {
+    expect(COMBO_WINDOW_SECONDS).toBe(5);
+    const starts = [ult(10, "a"), ult(14, "b"), ult(19, "c"), ult(30, "d"), ult(35.01, "e"), ult(31, "x", "Team 2"), ult(33, "y", "Team 2")];
+    const combos = ultCombos(starts, [], groupFights([kill(12, "a", "x")]));
+    expect(combos.map((c) => [c.team, c.casts.map((x) => x.player), c.fightIndex])).toEqual([
+      ["Team 1", ["a", "b", "c"], 1],
+      ["Team 2", ["x", "y"], null],
+    ]);
+  });
+
+  it("finds the four combos in the Antarctic sample", () => {
+    const { starts, ends, kills } = sampleRows("Log-2026-04-15-21-12-58");
+    const combos = ultCombos(starts, ends, groupFights(kills));
+    expect(combos.map((c) => [c.team, c.casts.map((x) => `${x.player}@${x.time}`)])).toEqual([
+      ["Team 1", ["VPAL@155.86", "Novadachi@157.38"]],
+      ["Team 2", ["Dyeonnie@213.28", "StellBell@214.67"]],
+      ["Team 2", ["meowzy@390.4", "sleepyme@391.92"]],
+      ["Team 1", ["Gray@646.01", "Novadachi@646.78"]],
+    ]);
+  });
+});
+
+describe("counterUlts", () => {
+  it("pairs a cast with the nearest preceding enemy cast, once each", () => {
+    expect(COUNTER_WINDOW_SECONDS).toBe(5);
+    const starts = [ult(10, "a"), ult(13, "x", "Team 2"), ult(14, "y", "Team 2"), ult(20, "b"), ult(26, "z", "Team 2")];
+    const pairs = counterUlts(starts, []);
+    expect(pairs.map((p) => [p.ult.player, p.answer.player, p.delaySeconds])).toEqual([["a", "x", 3]]);
+  });
+
+  it("finds the six answers in the Antarctic sample", () => {
+    const { starts, ends } = sampleRows("Log-2026-04-15-21-12-58");
+    const pairs = counterUlts(starts, ends);
+    expect(pairs.map((p) => [p.ult.player, p.answer.player, Number(p.delaySeconds.toFixed(2))])).toEqual([
+      ["meowzy", "MomoMiles", 3.27],
+      ["MomoMiles", "Dyeonnie", 3.01],
+      ["Kloverr", "sun", 4.9],
+      ["VPAL", "StellBell", 0.48],
+      ["MomoMiles", "Dyeonnie", 0.69],
+      ["Novadachi", "StellBell", 0.37],
+    ]);
+    expect(pairs.filter((p) => p.answer.team === "Team 1")).toHaveLength(2);
   });
 });

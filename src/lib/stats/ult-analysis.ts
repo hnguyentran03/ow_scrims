@@ -1,4 +1,4 @@
-import { killKind, type KillLike } from "./fights";
+import { fightIndexAt, killKind, type Fight, type KillLike } from "./fights";
 import { pairUltimates, type UltLike } from "./ultimates";
 
 export const CONVERSION_WINDOW_SECONDS = 8;
@@ -36,4 +36,76 @@ export function ultDetails(starts: UltLike[], ends: UltLike[], kills: KillLike[]
       end !== null &&
       kills.some((k) => k.victimTeam === start.playerTeam && k.victimName === start.playerName && between(start.matchTime, end.matchTime)(k)),
   }));
+}
+
+export const COMBO_WINDOW_SECONDS = 5;
+export const COUNTER_WINDOW_SECONDS = 5;
+
+export interface UltCast {
+  team: string;
+  player: string;
+  hero: string;
+  time: number;
+}
+
+export interface UltCombo {
+  team: string;
+  casts: UltCast[];
+  fightIndex: number | null;
+}
+
+export interface CounterUlt {
+  ult: UltCast;
+  answer: UltCast;
+  delaySeconds: number;
+}
+
+const toCast = (u: UltLike): UltCast => ({ team: u.playerTeam, player: u.playerName, hero: u.playerHero ?? "", time: u.matchTime });
+
+/** Every kept cast (double casts dropped) in time order. */
+export function keptCasts(starts: UltLike[], ends: UltLike[]): UltCast[] {
+  return pairUltimates(starts, ends).map((p) => toCast(p.start));
+}
+
+/** Chains of two or more same-team casts where each cast is within COMBO_WINDOW_SECONDS of the previous one. */
+export function ultCombos(starts: UltLike[], ends: UltLike[], fights: Fight[]): UltCombo[] {
+  const open = new Map<string, UltCast[]>();
+  const combos: UltCombo[] = [];
+  const close = (team: string, chain: UltCast[]) => {
+    if (chain.length >= 2) combos.push({ team, casts: chain, fightIndex: fightIndexAt(chain[0].time, fights) });
+  };
+  for (const c of keptCasts(starts, ends)) {
+    const chain = open.get(c.team);
+    if (chain && c.time - chain[chain.length - 1].time <= COMBO_WINDOW_SECONDS) {
+      chain.push(c);
+      continue;
+    }
+    if (chain) close(c.team, chain);
+    open.set(c.team, [c]);
+  }
+  for (const [team, chain] of open) close(team, chain);
+  return combos.sort((a, b) => a.casts[0].time - b.casts[0].time);
+}
+
+/**
+ * A cast answers the latest enemy cast strictly before it within COUNTER_WINDOW_SECONDS, unless that
+ * ult was already answered, so a two-ult combo answered once counts once.
+ */
+export function counterUlts(starts: UltLike[], ends: UltLike[]): CounterUlt[] {
+  const casts = keptCasts(starts, ends);
+  const answered = new Set<UltCast>();
+  const out: CounterUlt[] = [];
+  casts.forEach((answer, i) => {
+    for (let j = i - 1; j >= 0; j--) {
+      const ult = casts[j];
+      if (answer.time - ult.time > COUNTER_WINDOW_SECONDS) break;
+      if (ult.team === answer.team || ult.time >= answer.time) continue;
+      if (!answered.has(ult)) {
+        answered.add(ult);
+        out.push({ ult, answer, delaySeconds: answer.time - ult.time });
+      }
+      break;
+    }
+  });
+  return out;
 }

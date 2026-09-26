@@ -1,9 +1,10 @@
-import { groupFights, killKind, type Fight, type KillLike } from "./fights";
+import { fightIndexAt, groupFights, killKind, type Fight, type KillLike } from "./fights";
 import { dedupeRounds, roundCapturer, type RoundEndLike, type RoundLike } from "./rounds";
 import { sideOf, sides, type SideKey } from "./sides";
 import { pairUltimates, DOUBLE_CAST_SECONDS, type UltLike } from "./ultimates";
 
 export { pairUltimates, DOUBLE_CAST_SECONDS };
+export { fightIndexAt };
 export type { UltLike };
 
 export interface EventMapLike {
@@ -94,13 +95,6 @@ const KIND_PRIORITY: Record<EventKind, number> = {
 };
 
 export const MULTIKILL_MIN = 3;
-
-/** The fight whose window contains `time`, else the next fight to start, else null. */
-export function fightIndexAt(time: number, fights: Fight[]): number | null {
-  const inside = fights.find((f) => time >= f.start && time <= f.end);
-  if (inside) return inside.index;
-  return fights.find((f) => f.start > time)?.index ?? null;
-}
 
 export function findMultikills(fights: Fight[]): Array<{ team: string; player: string; hero: string; kills: number; time: number; fightIndex: number }> {
   const out: Array<{ team: string; player: string; hero: string; kills: number; time: number; fightIndex: number }> = [];
