@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { isActiveTab } from "./tab-active";
 
 export interface Tab {
   suffix: string;
@@ -16,7 +17,7 @@ export function Tabs({ base, tabs }: { base: string; tabs: readonly Tab[] }) {
     <nav className="flex gap-4 border-b border-zinc-800 text-sm">
       {tabs.map(({ suffix, label }) => {
         const path = `${base}${suffix}`;
-        const active = pathname === path;
+        const active = isActiveTab(pathname, path, suffix);
         return (
           <Link
             key={path}
