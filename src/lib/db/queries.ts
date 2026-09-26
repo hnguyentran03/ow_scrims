@@ -105,6 +105,8 @@ const killsFor = (db: Db, mapId: number) => db.select().from(kill).where(eq(kill
 const roundEndsFor = (db: Db, mapId: number) => db.select().from(roundEnd).where(eq(roundEnd.mapId, mapId)).orderBy(asc(roundEnd.matchTime), asc(roundEnd.id));
 const playerStatsFor = (db: Db, mapId: number) => db.select().from(playerStat).where(eq(playerStat.mapId, mapId)).orderBy(asc(playerStat.matchTime), asc(playerStat.id));
 const ultEndsFor = (db: Db, mapId: number) => db.select().from(ultimateEnd).where(eq(ultimateEnd.mapId, mapId)).orderBy(asc(ultimateEnd.matchTime), asc(ultimateEnd.id));
+const ultStartsFor = (db: Db, mapId: number) => db.select().from(ultimateStart).where(eq(ultimateStart.mapId, mapId)).orderBy(asc(ultimateStart.matchTime), asc(ultimateStart.id));
+const ultChargedFor = (db: Db, mapId: number) => db.select().from(ultimateCharged).where(eq(ultimateCharged.mapId, mapId)).orderBy(asc(ultimateCharged.matchTime), asc(ultimateCharged.id));
 
 export async function getMapStats(db: Db, mapId: number): Promise<{ playerStats: PlayerStatRow[]; kills: KillRow[]; ultimateEnds: UltEndRow[] }> {
   const playerStats = await playerStatsFor(db, mapId);
@@ -127,17 +129,29 @@ export async function getEventRows(db: Db, mapId: number): Promise<EventRowSet> 
   const roundEnds = await roundEndsFor(db, mapId);
   const captures = await db.select().from(objectiveCaptured).where(eq(objectiveCaptured.mapId, mapId)).orderBy(asc(objectiveCaptured.matchTime), asc(objectiveCaptured.id));
   const swaps = await db.select().from(heroSwap).where(eq(heroSwap.mapId, mapId)).orderBy(asc(heroSwap.matchTime), asc(heroSwap.id));
-  const ultStarts = await db.select().from(ultimateStart).where(eq(ultimateStart.mapId, mapId)).orderBy(asc(ultimateStart.matchTime), asc(ultimateStart.id));
+  const ultStarts = await ultStartsFor(db, mapId);
   const ultEnds = await ultEndsFor(db, mapId);
   const kills = await killsFor(db, mapId);
   return { matchStarts, matchEnds, roundStarts, roundEnds, captures, swaps, ultStarts, ultEnds, kills };
 }
 
-export async function getChartRows(db: Db, mapId: number): Promise<{ kills: KillRow[]; roundEnds: RoundEndRow[]; playerStats: PlayerStatRow[] }> {
+export interface ChartRows {
+  kills: KillRow[];
+  roundEnds: RoundEndRow[];
+  playerStats: PlayerStatRow[];
+  ultStarts: UltStartRow[];
+  ultEnds: UltEndRow[];
+  ultCharged: UltChargedRow[];
+}
+
+export async function getChartRows(db: Db, mapId: number): Promise<ChartRows> {
   const kills = await killsFor(db, mapId);
   const roundEnds = await roundEndsFor(db, mapId);
   const playerStats = await playerStatsFor(db, mapId);
-  return { kills, roundEnds, playerStats };
+  const ultStarts = await ultStartsFor(db, mapId);
+  const ultEnds = await ultEndsFor(db, mapId);
+  const ultCharged = await ultChargedFor(db, mapId);
+  return { kills, roundEnds, playerStats, ultStarts, ultEnds, ultCharged };
 }
 
 export async function getCompareRows(db: Db, mapId: number): Promise<{ playerStats: PlayerStatRow[] }> {

@@ -75,6 +75,10 @@ describe("queries", () => {
     expect(chart.kills).toHaveLength(58);
     expect(chart.roundEnds).toHaveLength(3);
     expect(chart.playerStats).toHaveLength(40);
+    expect(chart.ultStarts).toHaveLength(28);
+    expect(chart.ultEnds).toHaveLength(28);
+    expect(chart.ultCharged).toHaveLength(29);
+    expect(chart.ultCharged[0].matchTime).toBeLessThanOrEqual(chart.ultCharged[1].matchTime);
     const compare = await getCompareRows(db, mapId);
     expect(compare.playerStats).toHaveLength(40);
   });
