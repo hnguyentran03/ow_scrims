@@ -8,7 +8,7 @@ import { heroAt, positionAt } from "@/lib/stats/playback";
 import type { Replay, ReplayStage } from "@/lib/stats/replay";
 import { windowIndexAt } from "@/lib/stats/stages";
 import { DEATH_MARKER_SECONDS } from "@/lib/stats/tracks";
-import { StageCanvas } from "../heatmap/stage-canvas";
+import { StageCanvas } from "../stage-canvas";
 
 const NEUTRAL = "#71717a";
 

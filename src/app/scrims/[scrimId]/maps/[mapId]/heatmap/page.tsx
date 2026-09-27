@@ -6,6 +6,7 @@ import { groupFights } from "@/lib/stats/fights";
 import { buildHeatmap } from "@/lib/stats/heatmap";
 import { buildReplay } from "@/lib/stats/replay";
 import { loadMap, type MapParams } from "../load-map";
+import { NO_POSITIONS } from "../stage-canvas";
 import { HeatmapFilters } from "./heatmap-filters";
 import { HeatmapPanel } from "./heatmap-panel";
 
@@ -15,6 +16,9 @@ export default async function HeatmapPage({ params, searchParams }: { params: Ma
   const { db, map, sides } = await loadMap(params);
   const rows = await getReplayRows(db, map.id);
   const replay = buildReplay({ map, sides, rows, images: [] });
+  if (!replay.hasPositions) {
+    return <p className="text-sm text-zinc-400">{NO_POSITIONS}</p>;
+  }
   const filter = parseHeatmapFilters(await searchParams, replay);
   const fights = groupFights(rows.kills);
   const heatmap = buildHeatmap({ replay, sides, rows, fights, filter });

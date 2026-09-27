@@ -100,9 +100,9 @@ describe("buildHeatmap against the Lijiang sample", () => {
     const fights = groupFights(rows.kills);
     const deaths = replay.stages.map((_, i) => buildHeatmap({ replay, sides: sd, rows, fights, filter: { ...both, stage: i } }).points.deaths.length);
     expect(deaths).toEqual([25, 33, 22]);
+    const kills = replay.stages.map((_, i) => buildHeatmap({ replay, sides: sd, rows, fights, filter: { ...both, stage: i } }).points.kills.length);
+    expect(kills).toEqual([21, 31, 18]);
     const first = buildHeatmap({ replay, sides: sd, rows, fights, filter: both });
-    expect(first.points.kills.length).toBeGreaterThan(0);
-    expect(first.points.kills.length).toBeLessThanOrEqual(25);
     for (const m of [...first.points.kills, ...first.points.deaths]) {
       expect(m.px).toBeGreaterThanOrEqual(0);
       expect(m.px).toBeLessThanOrEqual(first.grid.width);

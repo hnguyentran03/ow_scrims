@@ -9,6 +9,8 @@ import { SAMPLE_STEP_SECONDS, type Segment } from "./tracks";
 
 export const HEATMAP_CELLS = 40;
 
+const round1 = (v: number) => Number(v.toFixed(1));
+
 export type StageLike = Replay["stages"][number];
 
 export interface Grid {
@@ -272,7 +274,7 @@ function buildRoutes(ctx: {
         fightIndex: fightIndexAt(first, fights),
         points: seg.samples.map(([t, x, z]) => {
           const { px, py } = project({ x, z });
-          return [px, py, t];
+          return [round1(px), round1(py), t];
         }),
       });
     }

@@ -8,7 +8,7 @@ import { formatDuration, formatInt, formatPct } from "@/lib/format";
 import type { Cell, Heatmap, Marker, Route } from "@/lib/stats/heatmap";
 import type { Replay } from "@/lib/stats/replay";
 import type { SideKey, Sides } from "@/lib/stats/sides";
-import { markerRadius, StageCanvas } from "./stage-canvas";
+import { markerRadius, NO_POSITIONS, StageCanvas } from "../stage-canvas";
 
 // Replaced by `import type { Territory } from "@/lib/stats/territory"` in PR 3.
 type Territory = { cells: Array<{ c: number; r: number; owner: "ours" | "theirs" | "contested"; seconds: number }>; objective: { stage: { ours: number; theirs: number; contested: number }; byFight: Array<{ index: number; winner: SideKey | null; share: { ours: number; theirs: number; contested: number } }>; observedSeconds: number } | null };
@@ -53,7 +53,7 @@ export function HeatmapPanel({ heatmap, stage, sides, fights, hasPositions, filt
   const visibleLayers = LAYERS.filter((l) => l.key !== "territory" || territory !== null);
 
   if (!hasPositions) {
-    return <p className="text-sm text-zinc-400">Position logging was off for this map. Turn on position logging in the ScrimTime Workshop settings before hosting.</p>;
+    return <p className="text-sm text-zinc-400">{NO_POSITIONS}</p>;
   }
 
   const empty = heatmap.points.deaths.length === 0 && heatmap.points.kills.length === 0 && heatmap.routes.length === 0;

@@ -6,6 +6,8 @@ import type { Replay } from "@/lib/stats/replay";
 
 type Stage = Replay["stages"][number];
 
+export const NO_POSITIONS = "Position logging was off for this map. Turn on position logging in the ScrimTime Workshop settings before hosting.";
+
 export function stageSize(stage: Stage): { w: number; h: number } {
   return { w: stage.image?.width ?? PLANE_SIZE, h: stage.image?.height ?? PLANE_SIZE };
 }
