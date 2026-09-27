@@ -56,6 +56,14 @@ describe("buildReplay", () => {
     expect(r.feed.map((e) => e.kind)).toEqual(["fight", "kill"]);
   });
 
+  it("collapses an ult's ult_kill entry into the feed, keeping the ult and kill entries", () => {
+    const rows: ReplayRowsLike = { ...empty, ultStarts: [ult(10)], ultEnds: [ult(15)], kills: [kill(12)] };
+    const r = buildReplay({ map, sides: s, rows, images: [] });
+    expect(r.feed.filter((e) => e.kind === "ult")).toHaveLength(1);
+    expect(r.feed.filter((e) => e.kind === "kill")).toHaveLength(1);
+    expect(r.feed.some((e) => e.kind === "ult_kill")).toBe(false);
+  });
+
   it("attaches a calibrated image to the matching stage only", () => {
     const rows: ReplayRowsLike = { ...empty, roundStarts: [{ matchTime: 0, roundNumber: 1, objectiveIndex: 2 }, { matchTime: 100, roundNumber: 2, objectiveIndex: 0 }], roundEnds: [{ matchTime: 100, roundNumber: 1, capturingTeam: "", team1Score: 0, team2Score: 0 }] };
     const affine = { a: 1, b: 0, c: 0, d: 0, e: 1, f: 0 };

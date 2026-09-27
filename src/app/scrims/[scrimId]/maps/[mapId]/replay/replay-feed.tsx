@@ -19,9 +19,9 @@ export function feedLabel(e: FeedEntry, sides: Sides): string {
 
 export function ReplayFeed({ feed, sides, t, playing, onSeek }: { feed: FeedEntry[]; sides: Sides; t: number; playing: boolean; onSeek: (t: number) => void }) {
   const visible = feed.filter((e) => e.time <= t);
-  const endRef = useRef<HTMLLIElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   useEffect(() => {
-    if (playing) endRef.current?.scrollIntoView({ block: "nearest" });
+    if (playing && listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [visible.length, playing]);
   return (
     <section className="space-y-2 rounded border border-zinc-800 p-3">
@@ -29,9 +29,9 @@ export function ReplayFeed({ feed, sides, t, playing, onSeek }: { feed: FeedEntr
       {visible.length === 0 ? (
         <p className="text-sm text-zinc-400">Nothing yet.</p>
       ) : (
-        <ul className="max-h-80 space-y-1 overflow-y-auto text-sm">
+        <ul ref={listRef} className="max-h-80 space-y-1 overflow-y-auto text-sm">
           {visible.map((e, i) => (
-            <li key={i} ref={i === visible.length - 1 ? endRef : undefined}>
+            <li key={i}>
               <button type="button" onClick={() => onSeek(e.time)} className="flex w-full items-center gap-2 text-left hover:bg-zinc-900">
                 <span className="w-12 shrink-0 tabular-nums text-zinc-400">{formatDuration(e.time)}</span>
                 <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: e.team ? TEAM_COLORS[e.team] : "#52525b" }} />

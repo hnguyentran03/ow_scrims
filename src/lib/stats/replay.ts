@@ -189,7 +189,9 @@ export function buildReplay(input: { map: ReplayMapLike; sides: Sides; rows: Rep
   ].sort((a, b) => a.t - b.t);
 
   const feed: FeedEntry[] = [
-    ...buildEvents(map, rows).entries,
+    // The kill-level feed entries below already cover ult kills and multikills; drop the duplicate
+    // ult_kill/multikill lines buildEvents produces for the events tab.
+    ...buildEvents(map, rows).entries.filter((e) => e.kind !== "ult_kill" && e.kind !== "multikill"),
     ...kills.map((k): FeedEntry => ({
       kind: "kill", time: k.t, team: k.attacker ? side(k.attacker.team) : side(k.victim.team),
       attacker: k.attacker?.name ?? k.victim.name, attackerHero: k.attacker?.hero ?? k.victim.hero, victim: k.victim.name, victimHero: k.victim.hero, killKind: k.kind,

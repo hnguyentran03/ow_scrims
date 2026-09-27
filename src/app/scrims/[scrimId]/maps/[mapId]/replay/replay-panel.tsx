@@ -80,7 +80,8 @@ export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: R
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement | null)?.tagName;
-      if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA" || tag === "BUTTON") return;
+      if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+      if (tag === "BUTTON" && e.key === " ") return;
       if (e.key === " ") {
         e.preventDefault();
         toggle();
