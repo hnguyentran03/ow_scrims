@@ -30,6 +30,38 @@ describe("collectSamples", () => {
       [1, "a", "Mei", 3, 4], [1, "v", "Ana", 5, 6], [2, "v", "Ana", 7, 8], [3, "a", "Mei", 9, 10], [4, "v", "", 11, 12], [5, "a", "Mei", 1, 2],
     ]);
   });
+
+  it("self-damage row with both tuples parseable yields one sample at victim position", () => {
+    const rows: TrackRows = {
+      ...emptyRows,
+      damage: [{ matchTime: 5, attackerTeam: "Team 1", attackerName: "a", attackerHero: "Mei", victimTeam: "Team 1", victimName: "a", victimHero: "Mei", attackerPosition: "(1, 0, 2)", victimPosition: "(3, 0, 4)" }],
+    };
+    expect(collectSamples(rows).map((s) => [s.t, s.name, s.point.x, s.point.z])).toEqual([[5, "a", 3, 4]]);
+  });
+
+  it("environmental kill row (attacker null, victim parseable) yields one sample at victim position", () => {
+    const rows: TrackRows = {
+      ...emptyRows,
+      kills: [{ matchTime: 10, attackerTeam: "Team 2", attackerName: "e", attackerHero: "Junkrat", victimTeam: "Team 2", victimName: "e", victimHero: "Junkrat", attackerPosition: null, victimPosition: "(5, 0, 6)" }],
+    };
+    expect(collectSamples(rows).map((s) => [s.t, s.name, s.point.x, s.point.z])).toEqual([[10, "e", 5, 6]]);
+  });
+
+  it("self-heal row with healee unparseable and healer parseable yields one sample at healer position", () => {
+    const rows: TrackRows = {
+      ...emptyRows,
+      healing: [{ matchTime: 7, healerTeam: "Team 1", healerName: "a", healerHero: "Moira", healeeTeam: "Team 1", healeeName: "a", healeeHero: "Moira", healerPosition: "(7, 0, 8)", healeePosition: "invalid" }],
+    };
+    expect(collectSamples(rows).map((s) => [s.t, s.name, s.point.x, s.point.z])).toEqual([[7, "a", 7, 8]]);
+  });
+
+  it("kill with distinct attacker and victim yields two samples", () => {
+    const rows: TrackRows = {
+      ...emptyRows,
+      kills: [{ matchTime: 12, attackerTeam: "Team 1", attackerName: "a", attackerHero: "Mei", victimTeam: "Team 2", victimName: "v", victimHero: "Ana", attackerPosition: "(8, 0, 9)", victimPosition: "(10, 0, 11)" }],
+    };
+    expect(collectSamples(rows).map((s) => [s.t, s.name, s.point.x, s.point.z])).toEqual([[12, "a", 8, 9], [12, "v", 10, 11]]);
+  });
 });
 
 describe("buildTracks", () => {

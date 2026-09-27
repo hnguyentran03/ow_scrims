@@ -59,19 +59,67 @@ export interface TrackRows {
 /** One sample per parseable tuple, across every row kind that carries a position, in time order. */
 export function collectSamples(rows: TrackRows): PositionSample[] {
   const out: PositionSample[] = [];
-  const push = (t: number, team: string, name: string, hero: string | null, raw: string | null) => {
-    const point = parsePosition(raw);
-    if (point) out.push({ t, team, name, hero: hero ?? "", point });
-  };
+
+  // Process kills and damage
   for (const r of [...rows.kills, ...rows.damage]) {
-    push(r.matchTime, r.attackerTeam, r.attackerName, r.attackerHero, r.attackerPosition);
-    if (!(r.attackerTeam === r.victimTeam && r.attackerName === r.victimName)) push(r.matchTime, r.victimTeam, r.victimName, r.victimHero, r.victimPosition);
+    if (r.attackerTeam === r.victimTeam && r.attackerName === r.victimName) {
+      // Self-row: try victim first, fall back to attacker
+      const victimPoint = parsePosition(r.victimPosition);
+      if (victimPoint) {
+        out.push({ t: r.matchTime, team: r.victimTeam, name: r.victimName, hero: r.victimHero ?? "", point: victimPoint });
+      } else {
+        const attackerPoint = parsePosition(r.attackerPosition);
+        if (attackerPoint) {
+          out.push({ t: r.matchTime, team: r.attackerTeam, name: r.attackerName, hero: r.attackerHero ?? "", point: attackerPoint });
+        }
+      }
+    } else {
+      // Distinct participants: emit up to two samples
+      const attackerPoint = parsePosition(r.attackerPosition);
+      if (attackerPoint) {
+        out.push({ t: r.matchTime, team: r.attackerTeam, name: r.attackerName, hero: r.attackerHero ?? "", point: attackerPoint });
+      }
+      const victimPoint = parsePosition(r.victimPosition);
+      if (victimPoint) {
+        out.push({ t: r.matchTime, team: r.victimTeam, name: r.victimName, hero: r.victimHero ?? "", point: victimPoint });
+      }
+    }
   }
+
+  // Process healing
   for (const r of rows.healing) {
-    push(r.matchTime, r.healerTeam, r.healerName, r.healerHero, r.healerPosition);
-    if (!(r.healerTeam === r.healeeTeam && r.healerName === r.healeeName)) push(r.matchTime, r.healeeTeam, r.healeeName, r.healeeHero, r.healeePosition);
+    if (r.healerTeam === r.healeeTeam && r.healerName === r.healeeName) {
+      // Self-row: try healee first, fall back to healer
+      const healeePoint = parsePosition(r.healeePosition);
+      if (healeePoint) {
+        out.push({ t: r.matchTime, team: r.healeeTeam, name: r.healeeName, hero: r.healeeHero ?? "", point: healeePoint });
+      } else {
+        const healerPoint = parsePosition(r.healerPosition);
+        if (healerPoint) {
+          out.push({ t: r.matchTime, team: r.healerTeam, name: r.healerName, hero: r.healerHero ?? "", point: healerPoint });
+        }
+      }
+    } else {
+      // Distinct participants: emit up to two samples
+      const healerPoint = parsePosition(r.healerPosition);
+      if (healerPoint) {
+        out.push({ t: r.matchTime, team: r.healerTeam, name: r.healerName, hero: r.healerHero ?? "", point: healerPoint });
+      }
+      const healeePoint = parsePosition(r.healeePosition);
+      if (healeePoint) {
+        out.push({ t: r.matchTime, team: r.healeeTeam, name: r.healeeName, hero: r.healeeHero ?? "", point: healeePoint });
+      }
+    }
   }
-  for (const r of [...rows.ability1, ...rows.ability2, ...rows.ultEnds]) push(r.matchTime, r.playerTeam, r.playerName, r.playerHero, r.playerPosition);
+
+  // Process ability and ultimate events
+  for (const r of [...rows.ability1, ...rows.ability2, ...rows.ultEnds]) {
+    const point = parsePosition(r.playerPosition);
+    if (point) {
+      out.push({ t: r.matchTime, team: r.playerTeam, name: r.playerName, hero: r.playerHero ?? "", point });
+    }
+  }
+
   return out.sort((a, b) => a.t - b.t);
 }
 
