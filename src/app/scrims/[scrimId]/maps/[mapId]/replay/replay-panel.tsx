@@ -7,6 +7,8 @@ import type { Sides } from "@/lib/stats/sides";
 import { windowIndexAt } from "@/lib/stats/stages";
 import { ReplayCanvas } from "./replay-canvas";
 import { ReplayControls } from "./replay-controls";
+import { ReplayFeed } from "./replay-feed";
+import { ReplayPlayers } from "./replay-players";
 
 export type Speed = 1 | 2 | 4;
 
@@ -120,8 +122,8 @@ export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: R
           <ReplayControls t={t} duration={duration} playing={playing} speed={speed} onToggle={toggle} onScrub={(v) => setT(clamp(v))} onSeek={seek} onStep={step} onSpeed={setSpeed} />
         </div>
         <div className="space-y-6">
-          <div data-slot="players" />
-          <div data-slot="feed" />
+          <ReplayPlayers replay={replay} sides={sides} t={t} />
+          <ReplayFeed feed={replay.feed} sides={sides} t={t} playing={playing} onSeek={seek} />
         </div>
       </div>
       <p className="text-xs text-zinc-500">Space plays and pauses; ← and → step one second, five with Shift. {mapName} · {sides.ours} vs {sides.theirs}.</p>
