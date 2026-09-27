@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { createTestDb, type Db } from "@/lib/db";
-import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getKillfeedRows, getMap, getMapStats, getScrim, getTelemetryRows, listScrims, setMapWinner } from "@/lib/db/queries";
+import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getKillfeedRows, getMap, getMapStats, getReplayRows, getScrim, getTelemetryRows, listScrims, setMapWinner } from "@/lib/db/queries";
 import { insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
@@ -87,6 +87,22 @@ describe("queries", () => {
     const rows = await getTelemetryRows(db, mapId);
     expect(rows.damage).toHaveLength(0);
     expect(rows.playerStats).toHaveLength(40);
+  });
+
+  it("loads every row kind the replay needs, ordered by time", async () => {
+    const rows = await getReplayRows(db, mapId);
+    expect(rows.kills).toHaveLength(58);
+    expect(rows.roundStarts.map((r) => r.roundNumber)).toEqual([1, 2, 3]);
+    expect(rows.playerStats).toHaveLength(40);
+    expect(rows.ultCharged).toHaveLength(29);
+    expect(rows.heroSpawns.length).toBeGreaterThan(0);
+    expect(rows.heroSwaps).toEqual(rows.swaps);
+    expect(rows.damage).toEqual([]);
+    expect(rows.healing).toEqual([]);
+    expect(rows.ability1).toEqual([]);
+    expect(rows.objectiveUpdated).toHaveLength(3);
+    const times = rows.healing.map((r) => r.matchTime);
+    expect(times).toEqual([...times].sort((a, b) => a - b));
   });
 
   it("sets a manual winner", async () => {

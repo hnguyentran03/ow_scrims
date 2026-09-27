@@ -1,8 +1,8 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, inArray, lte, sql, type SQL } from "drizzle-orm";
 import type { Db } from "./index";
 import {
-  damage, heroSwap, kill, mapBans, maps, matchEnd, matchStart, mercyRez, objectiveCaptured, playerStat, roundEnd, roundStart, scrims,
-  ultimateCharged, ultimateEnd, ultimateStart,
+  ability1Used, ability2Used, damage, healing, heroSpawn, heroSwap, kill, mapBans, maps, matchEnd, matchStart, mercyRez, objectiveCaptured,
+  objectiveUpdated, playerStat, roundEnd, roundStart, scrims, ultimateCharged, ultimateEnd, ultimateStart,
 } from "./schema";
 
 export type ScrimRow = typeof scrims.$inferSelect;
@@ -21,6 +21,10 @@ export type UltEndRow = typeof ultimateEnd.$inferSelect;
 export type MapBanRow = typeof mapBans.$inferSelect;
 export type UltChargedRow = typeof ultimateCharged.$inferSelect;
 export type DamageRow = typeof damage.$inferSelect;
+export type HealingRow = typeof healing.$inferSelect;
+export type AbilityRow = typeof ability1Used.$inferSelect;
+export type SpawnRow = typeof heroSpawn.$inferSelect;
+export type ObjectiveUpdatedRow = typeof objectiveUpdated.$inferSelect;
 
 /** Inclusive YYYY-MM-DD bounds on the scrim date; either may be absent. */
 export interface DateRange {
@@ -163,6 +167,34 @@ export async function getTelemetryRows(db: Db, mapId: number): Promise<{ damage:
   const damageRows = await db.select().from(damage).where(eq(damage.mapId, mapId)).orderBy(asc(damage.matchTime), asc(damage.id));
   const playerStats = await playerStatsFor(db, mapId);
   return { damage: damageRows, playerStats };
+}
+
+/** Every row the replay tab needs: the events set plus positions (damage, healing, abilities), spawns, charge, and stats. */
+export interface ReplayRows extends EventRowSet {
+  rezzes: RezRow[];
+  damage: DamageRow[];
+  healing: HealingRow[];
+  ability1: AbilityRow[];
+  ability2: AbilityRow[];
+  ultCharged: UltChargedRow[];
+  heroSwaps: SwapRow[];
+  heroSpawns: SpawnRow[];
+  objectiveUpdated: ObjectiveUpdatedRow[];
+  playerStats: PlayerStatRow[];
+}
+
+export async function getReplayRows(db: Db, mapId: number): Promise<ReplayRows> {
+  const events = await getEventRows(db, mapId);
+  const rezzes = await db.select().from(mercyRez).where(eq(mercyRez.mapId, mapId)).orderBy(asc(mercyRez.matchTime), asc(mercyRez.id));
+  const damageRows = await db.select().from(damage).where(eq(damage.mapId, mapId)).orderBy(asc(damage.matchTime), asc(damage.id));
+  const healingRows = await db.select().from(healing).where(eq(healing.mapId, mapId)).orderBy(asc(healing.matchTime), asc(healing.id));
+  const ability1 = await db.select().from(ability1Used).where(eq(ability1Used.mapId, mapId)).orderBy(asc(ability1Used.matchTime), asc(ability1Used.id));
+  const ability2 = await db.select().from(ability2Used).where(eq(ability2Used.mapId, mapId)).orderBy(asc(ability2Used.matchTime), asc(ability2Used.id));
+  const ultCharged = await ultChargedFor(db, mapId);
+  const heroSpawns = await db.select().from(heroSpawn).where(eq(heroSpawn.mapId, mapId)).orderBy(asc(heroSpawn.matchTime), asc(heroSpawn.id));
+  const updates = await db.select().from(objectiveUpdated).where(eq(objectiveUpdated.mapId, mapId)).orderBy(asc(objectiveUpdated.matchTime), asc(objectiveUpdated.id));
+  const playerStats = await playerStatsFor(db, mapId);
+  return { ...events, rezzes, damage: damageRows, healing: healingRows, ability1, ability2, ultCharged, heroSwaps: events.swaps, heroSpawns, objectiveUpdated: updates, playerStats };
 }
 
 export async function setMapBans(db: Db, mapId: number, side: 1 | 2, heroes: string[]): Promise<void> {
