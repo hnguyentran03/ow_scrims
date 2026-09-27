@@ -7,6 +7,7 @@ const MAP_TABS = [
   { suffix: "/events", label: "Events" },
   { suffix: "/compare", label: "Compare" },
   { suffix: "/telemetry", label: "Telemetry" },
+  { suffix: "/replay", label: "Replay" },
 ] as const;
 
 export function MapTabs({ base }: { base: string }) {
