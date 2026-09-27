@@ -9,6 +9,7 @@ const MAP_TABS = [
   { suffix: "/compare", label: "Compare" },
   { suffix: "/telemetry", label: "Telemetry" },
   ...(REPLAY_ENABLED ? [{ suffix: "/replay", label: "Replay" }] : []),
+  { suffix: "/heatmap", label: "Heatmap" },
 ];
 
 export function MapTabs({ base }: { base: string }) {
