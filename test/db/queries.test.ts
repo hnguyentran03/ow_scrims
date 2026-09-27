@@ -101,8 +101,20 @@ describe("queries", () => {
     expect(rows.healing).toEqual([]);
     expect(rows.ability1).toEqual([]);
     expect(rows.objectiveUpdated).toHaveLength(3);
-    const times = rows.healing.map((r) => r.matchTime);
-    expect(times).toEqual([...times].sort((a, b) => a - b));
+    expect(rows.healing).toEqual([]);
+
+    expect(rows.kills.length).toBeGreaterThan(0);
+    for (let i = 1; i < rows.kills.length; i++) {
+      expect(rows.kills[i].matchTime).toBeGreaterThanOrEqual(rows.kills[i - 1].matchTime);
+    }
+
+    // heroSpawns share matchTime 0 for several rows, so this also covers the id tiebreak.
+    for (let i = 1; i < rows.heroSpawns.length; i++) {
+      const prev = rows.heroSpawns[i - 1];
+      const cur = rows.heroSpawns[i];
+      expect(cur.matchTime).toBeGreaterThanOrEqual(prev.matchTime);
+      if (cur.matchTime === prev.matchTime) expect(cur.id).toBeGreaterThan(prev.id);
+    }
   });
 
   it("sets a manual winner", async () => {
