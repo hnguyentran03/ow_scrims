@@ -21,7 +21,7 @@ export default async function HeatmapPage({ params, searchParams }: { params: Ma
   const stage = replay.stages[filter.stage];
   const stageOptions = replay.stages.map((s, index) => ({ index, label: s.label }));
   const playerOptions = replay.players.map((p) => ({ key: playerKey(p), label: p.name, side: p.side }));
-  const fightOptions = fights.map((f) => ({ index: f.index, start: f.start }));
+  const fightOptions = fights.filter((f) => f.start >= stage.start && f.start <= stage.end).map((f) => ({ index: f.index, start: f.start }));
 
   return (
     <div className="space-y-4">
