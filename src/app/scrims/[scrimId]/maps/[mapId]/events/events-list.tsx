@@ -42,7 +42,7 @@ export function EventsList({ events, sides }: { events: Events; sides: Sides }) 
             <li key={i} className="flex items-center gap-3 py-1">
               <span className="w-14 tabular-nums text-zinc-400">{formatDuration(e.time)}</span>
               <span className="inline-block h-2 w-2 rounded-full" style={{ background: e.team ? TEAM_COLORS[e.team] : "#52525b" }} />
-              <span>{describe(e, sides)}</span>
+              <span>{describeEvent(e, sides)}</span>
             </li>
           ))}
         </ul>
@@ -51,7 +51,7 @@ export function EventsList({ events, sides }: { events: Events; sides: Sides }) 
   );
 }
 
-function describe(e: EventEntry, sides: Sides): string {
+export function describeEvent(e: EventEntry, sides: Sides): string {
   const teamName = (t: "ours" | "theirs" | null) => (t ? sides[t] : "");
   switch (e.kind) {
     case "match_start": return "Match started";
