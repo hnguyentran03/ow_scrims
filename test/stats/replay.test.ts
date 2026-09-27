@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { buildReplay, ULT_PROXY_SECONDS, type ReplayRowsLike } from "@/lib/stats/replay";
+import { fitBounds } from "@/lib/stats/calibration";
 import type { ReplayRows } from "@/lib/db/queries";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
@@ -27,9 +28,11 @@ const kill = (matchTime: number, extra: Partial<ReplayRowsLike["kills"][number]>
 describe("buildReplay", () => {
   it("places an ult at the caster's nearest sample within the proxy window, else the end position, else nowhere", () => {
     expect(ULT_PROXY_SECONDS).toBe(3);
-    const rows: ReplayRowsLike = { ...empty, ultStarts: [ult(10), ult(50), ult(90)], ultEnds: [ult(12, "(7, 0, 8)"), ult(52, "(9, 0, 9)"), ult(92)], damage: [dmg(8.4, "(5, 0, 6)"), dmg(11.5, "(5.5, 0, 6.5)"), dmg(46, "(0, 0, 0)")] };
+    const rows: ReplayRowsLike = { ...empty, ultStarts: [ult(10), ult(50), ult(90)], ultEnds: [ult(12, "(7, 0, 8)"), ult(55, "(9, 0, 9)"), ult(92)], damage: [dmg(8.4, "(5, 0, 6)"), dmg(11.5, "(5.5, 0, 6.5)"), dmg(46, "(0, 0, 0)")] };
     const r = buildReplay({ map, sides: s, rows, images: [] });
-    expect(r.ults.map((u) => [u.start, u.end, u.x, u.z])).toEqual([[10, 12, 5.5, 6.5], [50, 52, 9, 9], [90, 92, null, null]]);
+    // Ult 2's end row (55) is outside the ULT_PROXY_SECONDS window of its start (50), and no sample falls
+    // inside that window either (the nearest damage row is 4s away) — [9, 9] can only come from endPos.
+    expect(r.ults.map((u) => [u.start, u.end, u.x, u.z])).toEqual([[10, 12, 5.5, 6.5], [50, 55, 9, 9], [90, 92, null, null]]);
     expect(r.ultStates.map((u) => [u.t, u.state])).toEqual([[10, "used"], [50, "used"], [90, "used"]]);
   });
 
@@ -58,6 +61,9 @@ describe("buildReplay", () => {
     const affine = { a: 1, b: 0, c: 0, d: 0, e: 1, f: 0 };
     const r = buildReplay({ map, sides: s, rows, images: [{ stage: 0, id: 4, width: 800, height: 600, affine }] });
     expect(r.stages.map((st) => [st.stage, st.label, st.image?.id ?? null])).toEqual([[2, "Stage 2 · Round 1", null], [0, "Stage 0 · Round 2", 4]]);
+    // Neither window has any position samples, so both fall back to the blank-plane fit.
+    expect(r.stages[0].bounds).toEqual(fitBounds([]));
+    expect(r.stages[1].bounds).toEqual(fitBounds([]));
   });
 
   it("reconciles with the Lijiang sample and stays under the size budget", () => {
@@ -79,6 +85,10 @@ describe("buildReplay", () => {
     expect(r.ults.length).toBeLessThanOrEqual(33);
     expect(r.ults.filter((u) => u.x !== null).length).toBeGreaterThan(20);
     expect(r.heroes).toHaveLength(28);
+    // Stage 0's window has real position samples, so its bounds is a genuine fit, not the blank-plane fallback.
+    const stage0 = r.stages.find((st) => st.stage === 0)!;
+    expect(stage0.bounds).not.toEqual(fitBounds([]));
+    for (const v of Object.values(stage0.bounds)) expect(Number.isFinite(v)).toBe(true);
     expect(JSON.stringify(r).length).toBeLessThan(300_000);
   });
 });
