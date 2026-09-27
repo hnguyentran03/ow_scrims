@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Replay, ReplayStage } from "@/lib/stats/replay";
 import type { Sides } from "@/lib/stats/sides";
 import { windowIndexAt } from "@/lib/stats/stages";
+import { ReplayCanvas } from "./replay-canvas";
 import { ReplayControls } from "./replay-controls";
 
 export type Speed = 1 | 2 | 4;
@@ -112,7 +113,7 @@ export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: R
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-2">
           {replay.hasPositions ? (
-            <div data-slot="canvas" className="aspect-square w-full rounded border border-zinc-800" />
+            <ReplayCanvas replay={replay} t={t} windowIndex={windowIndex} mapName={mapName} />
           ) : (
             <p className="rounded border border-zinc-800 p-4 text-sm text-zinc-400">{NO_POSITIONS}</p>
           )}
