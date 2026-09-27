@@ -111,3 +111,46 @@ describe("buildHeatmap against the Lijiang sample", () => {
     }
   });
 });
+
+describe("buildHeatmap density layers and routes", () => {
+  const seg = (window: number, samples: Array<[number, number, number]>) => ({ window, samples });
+  const replay = {
+    stages: [stage(0, 100), stage(100, 200)],
+    players: [
+      player("Team 1", "a", "ours", [seg(0, [[10, 100, 100], [11, 100, 150], [12, 100, 200]]), seg(1, [[150, 5, 5]])]),
+      player("Team 2", "x", "theirs", [seg(0, [[10, 900, 900], [10.5, 900, 900]])]),
+    ],
+  };
+  const fights = groupFights([kill(11, "Team 1", "a", "Team 2", "x", 0, 0, 0, 0)]);
+  const rows = {
+    kills: [],
+    damage: [dmg(10, "Team 1", "a", "Team 2", 40, 100, 100), dmg(10, "Team 1", "a", "Team 2", 60, 100, 100), dmg(10, "Team 1", "a", "Team 1", 999, 100, 100), dmg(10, "Team 2", "x", "Team 1", 10, 900, 900)],
+    healing: [heal(10, "Team 1", "a", 30, 100, 100), heal(10, "Team 1", "a", 500, 100, 100, "True"), heal(150, "Team 1", "a", 7, 5, 5)],
+  };
+
+  it("sums cross-team damage and non-health-pack healing per cell", () => {
+    const h = buildHeatmap({ replay, sides: s, rows, fights, filter: both });
+    expect(h.density.damage).toEqual([{ c: 4, r: 4, v: 100 }, { c: 36, r: 36, v: 10 }]);
+    expect(h.density.healing).toEqual([{ c: 4, r: 4, v: 30 }]);
+    expect(h.totals).toMatchObject({ damage: 110, healing: 30 });
+  });
+
+  it("credits presence seconds along each segment and reports the walked length", () => {
+    const h = buildHeatmap({ replay, sides: s, rows, fights, filter: both });
+    expect(h.totals.presenceSeconds).toBeCloseTo(2.5, 6);
+    const a = buildHeatmap({ replay, sides: s, rows, fights, filter: { ...both, side: "ours" } });
+    expect(a.totals.presenceSeconds).toBeCloseTo(2, 6);
+    expect(a.density.presence.reduce((n, c) => n + c.v, 0)).toBeCloseTo(2, 6);
+    expect(a.density.presence.map((c) => [c.r, c.v])).toEqual([[4, 0.5], [5, 0.5], [6, 0.5], [7, 0.5]]);
+  });
+
+  it("emits routes with the fight index of the segment's first sample and projected points with times", () => {
+    const h = buildHeatmap({ replay, sides: s, rows, fights, filter: { ...both, side: "ours" } });
+    expect(h.routes).toHaveLength(1);
+    expect(h.routes[0]).toMatchObject({ name: "a", side: "ours", fightIndex: 1 });
+    expect(h.routes[0].points).toEqual([[100, 100, 10], [100, 150, 11], [100, 200, 12]]);
+    const later = buildHeatmap({ replay, sides: s, rows, fights, filter: { ...both, stage: 1 } });
+    expect(later.routes[0]).toMatchObject({ fightIndex: null });
+    expect(later.density.presence).toEqual([]);
+  });
+});

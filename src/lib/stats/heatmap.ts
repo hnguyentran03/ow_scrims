@@ -1,10 +1,11 @@
 import type { HeatmapFilter } from "@/lib/heatmap-filters";
 import { applyAffine, PLANE_SIZE } from "./calibration";
-import { killKind, type Fight, type KillKind } from "./fights";
+import { fightIndexAt, isFlagSet, killKind, type Fight, type KillKind } from "./fights";
 import { parsePosition } from "./positions";
 import type { Replay } from "./replay";
 import { sideOf, type SideKey, type Sides } from "./sides";
 import { windowIndexAt } from "./stages";
+import { SAMPLE_STEP_SECONDS, type Segment } from "./tracks";
 
 export const HEATMAP_CELLS = 40;
 
@@ -170,13 +171,111 @@ export function buildHeatmap(input: HeatmapInput): Heatmap {
 
   const density = buildDensity({ grid, project, inWindow, matches, rows, replay, filter });
 
-  return { grid, points: { kills, deaths, fights: fightMarkers }, density: density.cells, totals: density.totals, routes: buildRoutes({ project, inWindow, matches, replay, fights, sides }) };
+  return { grid, points: { kills, deaths, fights: fightMarkers }, density: density.cells, totals: density.totals, routes: buildRoutes({ project, matches, replay, fights, sides, filter }) };
 }
 
-function buildDensity(_: unknown): { cells: Heatmap["density"]; totals: Heatmap["totals"] } {
-  return { cells: { damage: [], healing: [], presence: [] }, totals: { damage: 0, healing: 0, presenceSeconds: 0 } };
+/** Steps along a segment every SAMPLE_STEP_SECONDS, interpolating position, and reports each step's start point and length. Returns the seconds walked. */
+export function walkSegment(segment: Segment, onStep: (t: number, x: number, z: number, seconds: number) => void): number {
+  let walked = 0;
+  for (let i = 1; i < segment.samples.length; i += 1) {
+    const [t0, x0, z0] = segment.samples[i - 1];
+    const [t1, x1, z1] = segment.samples[i];
+    const span = t1 - t0;
+    if (span <= 0) continue;
+    for (let t = t0; t < t1; t += SAMPLE_STEP_SECONDS) {
+      const len = Math.min(SAMPLE_STEP_SECONDS, t1 - t);
+      const k = (t - t0) / span;
+      onStep(t, x0 + (x1 - x0) * k, z0 + (z1 - z0) * k, len);
+      walked += len;
+    }
+  }
+  return walked;
 }
 
-function buildRoutes(_: unknown): Route[] {
-  return [];
+class CellSum {
+  private readonly map = new Map<string, Cell>();
+  add(cell: { c: number; r: number } | null, v: number): void {
+    if (!cell || v === 0) return;
+    const key = `${cell.c},${cell.r}`;
+    const cur = this.map.get(key);
+    if (cur) cur.v += v;
+    else this.map.set(key, { c: cell.c, r: cell.r, v });
+  }
+  cells(): Cell[] {
+    return [...this.map.values()].sort((a, b) => a.r - b.r || a.c - b.c);
+  }
+}
+
+function buildDensity(ctx: {
+  grid: Grid;
+  project: (p: { x: number; z: number }) => { px: number; py: number };
+  inWindow: (t: number) => boolean;
+  matches: (team: string, name: string) => boolean;
+  rows: HeatmapInput["rows"];
+  replay: HeatmapInput["replay"];
+  filter: HeatmapFilter;
+}): { cells: Heatmap["density"]; totals: Heatmap["totals"] } {
+  const { grid, project, inWindow, matches, rows, replay, filter } = ctx;
+  const at = (p: { x: number; z: number }) => {
+    const { px, py } = project(p);
+    return cellAt(grid, px, py);
+  };
+  const damage = new CellSum();
+  let damageTotal = 0;
+  for (const d of rows.damage) {
+    if (d.attackerTeam === d.victimTeam || !inWindow(d.matchTime) || !matches(d.attackerTeam, d.attackerName)) continue;
+    const p = ground(d.attackerPosition);
+    if (!p) continue;
+    damage.add(at(p), d.eventDamage);
+    damageTotal += d.eventDamage;
+  }
+  const healing = new CellSum();
+  let healingTotal = 0;
+  for (const h of rows.healing) {
+    if (isFlagSet(h.isHealthPack) || !inWindow(h.matchTime) || !matches(h.healerTeam, h.healerName)) continue;
+    const p = ground(h.healerPosition);
+    if (!p) continue;
+    healing.add(at(p), h.eventHealing);
+    healingTotal += h.eventHealing;
+  }
+  const presence = new CellSum();
+  let presenceSeconds = 0;
+  for (const pl of replay.players) {
+    if (!matches(pl.team, pl.name)) continue;
+    for (const seg of pl.segments) {
+      if (seg.samples.length === 0 || seg.window !== filter.stage) continue;
+      presenceSeconds += walkSegment(seg, (_t, x, z, seconds) => presence.add(at({ x, z }), seconds));
+    }
+  }
+  return { cells: { damage: damage.cells(), healing: healing.cells(), presence: presence.cells() }, totals: { damage: damageTotal, healing: healingTotal, presenceSeconds } };
+}
+
+function buildRoutes(ctx: {
+  project: (p: { x: number; z: number }) => { px: number; py: number };
+  matches: (team: string, name: string) => boolean;
+  replay: HeatmapInput["replay"];
+  fights: Fight[];
+  sides: Sides;
+  filter: HeatmapFilter;
+}): Route[] {
+  const { project, matches, replay, fights, sides, filter } = ctx;
+  const routes: Route[] = [];
+  for (const pl of replay.players) {
+    if (!matches(pl.team, pl.name)) continue;
+    for (const seg of pl.segments) {
+      if (seg.samples.length === 0 || seg.window !== filter.stage) continue;
+      const first = seg.samples[0][0];
+      routes.push({
+        team: pl.team,
+        name: pl.name,
+        side: sideOf(pl.team, sides),
+        fightIndex: fightIndexAt(first, fights),
+        points: seg.samples.map(([t, x, z]) => {
+          const { px, py } = project({ x, z });
+          return [px, py, t];
+        }),
+      });
+    }
+  }
+  return routes;
 }
