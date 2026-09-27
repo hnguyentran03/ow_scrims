@@ -36,9 +36,10 @@ src/app/            Next.js pages (scrim list, scrim detail, map overview/killfe
 src/components/      Shared tab nav, card, stat cell, and SVG chart helpers
 src/lib/parser/      Tokenizer, sanitizer, and descriptor-driven event coercion
 src/lib/db/          Drizzle schema, PGlite/Postgres connection, queries, and map insertion
-src/lib/stats/       Pure computation: fights, heroes (role map), sides, rounds, overview, killfeed, killfeed-csv, events, charts, compare, ultimates, ult-analysis, tempo, telemetry, team-rows, trends, teamfights, team-overview, roster, player
+src/lib/stats/       Pure computation: fights, heroes (role map), sides, rounds, overview, killfeed, killfeed-csv, events, charts, compare, ultimates, ult-analysis, tempo, telemetry, team-rows, trends, teamfights, team-overview, roster, player, and the replay modules (positions, calibration, stages, tracks, replay, playback)
 src/lib/logs.ts       Raw log file storage under LOG_DIR
 src/lib/killfeed-export.ts  Killfeed CSV response (id validation, headers)
+src/lib/flags.ts      Feature flags (the map replay tab is merged but switched off until map images land)
 src/lib/format.ts     Display formatting helpers
 test/                Vitest specs, mirroring src/, plus sample ScrimTime logs in test/samples/
 drizzle/             Generated SQL migrations
