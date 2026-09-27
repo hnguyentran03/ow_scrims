@@ -1,8 +1,8 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import type { Replay } from "@/lib/stats/replay";
+import type { Replay, ReplayStage } from "@/lib/stats/replay";
 import type { Sides } from "@/lib/stats/sides";
 import { windowIndexAt } from "@/lib/stats/stages";
 import { ReplayControls } from "./replay-controls";
@@ -12,7 +12,6 @@ export type Speed = 1 | 2 | 4;
 const NO_POSITIONS = "Position logging was off for this map. Turn on position logging in the ScrimTime Workshop settings before hosting.";
 
 export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: Replay; sides: Sides; mapName: string; initialTime: number }) {
-  const router = useRouter();
   const pathname = usePathname();
   const duration = replay.durationSeconds;
   const [t, setT] = useState(initialTime);
@@ -20,23 +19,32 @@ export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: R
   const [speed, setSpeed] = useState<Speed>(1);
   const windowIndex = windowIndexAt(t, replay.stages);
 
-  /** Writes the paused time to the URL without a history entry or a scroll jump. Never called while playing. */
+  /**
+   * Writes the paused time to the URL via the native History API so a pause/step/seek never triggers a
+   * server round-trip on this force-dynamic route. Next syncs `usePathname`/`useSearchParams` (and thus
+   * `Tabs`) with native history calls without re-fetching. Never called while playing.
+   */
   const commit = useCallback(
     (time: number) => {
       const q = new URLSearchParams(window.location.search);
       q.set("t", time.toFixed(1));
-      router.replace(`${pathname}?${q.toString()}`, { scroll: false });
+      window.history.replaceState(null, "", `${pathname}?${q.toString()}`);
     },
-    [router, pathname],
+    [pathname],
   );
 
   const clamp = (time: number) => Math.min(Math.max(time, 0), duration);
+  /** Updates `t` and, unless playback is running, commits it to the URL. While playing, the next pause commits the current time. */
   const seek = (time: number) => {
     const next = clamp(time);
     setT(next);
-    commit(next);
+    if (!playing) commit(next);
   };
   const step = (dt: number) => seek(t + dt);
+  /** Selecting a window keeps `t` when it already falls inside it, otherwise seeks to the window's start. */
+  const selectWindow = (w: ReplayStage) => {
+    if (t < w.start || t > w.end) seek(w.start);
+  };
   const toggle = () => {
     if (playing) {
       setPlaying(false);
@@ -93,7 +101,7 @@ export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: R
             <button
               key={i}
               type="button"
-              onClick={() => seek(s.start)}
+              onClick={() => selectWindow(s)}
               className={`rounded border px-2 py-1 text-sm ${i === windowIndex ? "border-zinc-100" : "border-zinc-700 text-zinc-400 hover:text-zinc-200"}`}
             >
               {s.label}
