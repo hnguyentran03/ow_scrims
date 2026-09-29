@@ -32,11 +32,12 @@ export const HEROES: readonly string[] = Object.keys(HERO_ROLES).sort(
  * cooldown), so slot 1 is the Shift ability and slot 2 is the E ability. A single use can log more
  * than one row (Moira slot 2 repeats within 1.03 s), so counts are approximate. Heroes whose default
  * binding is not known here (Wrecking Ball, Hanzo, Pharah, Lifeweaver, Freja, the inferred heroes
- * Domina, Emre, Sierra, and Wuyang) are left out on purpose and fall back to "Ability <slot>".
+ * Domina, Emre, Sierra, and Wuyang) are left out on purpose and fall back to "Ability <slot>". Entries
+ * for heroes outside the sample were checked against the default Overwatch 2 bindings on 2026-09-29.
  */
 export const HERO_ABILITIES: Readonly<Record<string, readonly [string, string]>> = {
   "D.Va": ["Boosters", "Micro Missiles"], Doomfist: ["Seismic Slam", "Power Block"], Hazard: ["Violent Leap", "Jagged Wall"],
-  "Junker Queen": ["Carnage", "Commanding Shout"], Mauga: ["Overrun", "Cardiac Overdrive"], Orisa: ["Fortify", "Javelin Spin"],
+  "Junker Queen": ["Commanding Shout", "Carnage"], Mauga: ["Overrun", "Cardiac Overdrive"], Orisa: ["Fortify", "Javelin Spin"],
   Ramattra: ["Nemesis Form", "Ravenous Vortex"], Reinhardt: ["Charge", "Fire Strike"], Roadhog: ["Chain Hook", "Pig Pen"],
   Sigma: ["Kinetic Grasp", "Accretion"], Winston: ["Jump Pack", "Barrier Projector"], Zarya: ["Particle Barrier", "Projected Barrier"],
   Ashe: ["Coach Gun", "Dynamite"], Bastion: ["Reconfigure", "A-36 Tactical Grenade"], Cassidy: ["Combat Roll", "Magnetic Grenade"],
