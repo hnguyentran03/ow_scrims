@@ -3,7 +3,7 @@ import { groupFights, killKind, type KillLike } from "./fights";
 import { ROLE_ORDER, roleOf, type Role } from "./heroes";
 import { per10, type PlayerStatLike } from "./overview";
 import { sides } from "./sides";
-import { finalsByMap, groupByMap, outcome, rate, type MapKeyed, type StatLike, type TeamMapLike } from "./team-rows";
+import { groupByMap, outcome, ourRowsByMap, rate, type MapKeyed, type StatLike, type TeamMapLike } from "./team-rows";
 import { winRateByMap, winRateByType, type MapRecord, type TypeRecord } from "./trends";
 import { pairUltimates, ultTimings, type UltLike } from "./ultimates";
 
@@ -140,18 +140,6 @@ function per10Record(rows: PlayerStatLike[]): Record<ChartStat, number> {
   const time = rows.reduce((n, r) => n + r.heroTimePlayed, 0);
   const out = {} as Record<ChartStat, number>;
   for (const k of CHART_STAT_KEYS) out[k] = per10(rows.reduce((n, r) => n + STAT_OF[k](r), 0), time);
-  return out;
-}
-
-/** Final rows for `name` on our side with time on the hero, per map in map order. */
-function ourRowsByMap(maps: TeamMapLike[], playerStats: StatLike[], name: string, hero: string | null): Map<number, StatLike[]> {
-  const finals = finalsByMap(playerStats);
-  const out = new Map<number, StatLike[]>();
-  for (const map of maps) {
-    const ours = sides(map).ours;
-    const rows = (finals.get(map.id) ?? []).filter((r) => r.playerTeam === ours && r.playerName === name && r.heroTimePlayed > 0 && (hero === null || r.playerHero === hero));
-    if (rows.length > 0) out.set(map.id, rows);
-  }
   return out;
 }
 
