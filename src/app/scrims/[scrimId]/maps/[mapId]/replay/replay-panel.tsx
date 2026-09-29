@@ -2,10 +2,13 @@
 
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import type { Ghost, GhostOption } from "@/lib/ghost";
+import { ghostTime } from "@/lib/stats/playback";
 import type { Replay, ReplayStage } from "@/lib/stats/replay";
 import type { Sides } from "@/lib/stats/sides";
 import { windowIndexAt } from "@/lib/stats/stages";
 import { NO_POSITIONS } from "../stage-canvas";
+import { type Alignment, GhostSelect } from "./ghost-select";
 import { ReplayCanvas } from "./replay-canvas";
 import { ReplayControls } from "./replay-controls";
 import { ReplayFeed } from "./replay-feed";
@@ -13,13 +16,24 @@ import { ReplayPlayers } from "./replay-players";
 
 export type Speed = 1 | 2 | 4;
 
-export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: Replay; sides: Sides; mapName: string; initialTime: number }) {
+export function ReplayPanel({ replay, sides, mapName, initialTime, ghostSources, mapId }: {
+  replay: Replay;
+  sides: Sides;
+  mapName: string;
+  initialTime: number;
+  ghostSources: GhostOption[][];
+  mapId: number;
+}) {
   const pathname = usePathname();
   const duration = replay.durationSeconds;
   const [t, setT] = useState(initialTime);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<Speed>(1);
+  const [ghost, setGhost] = useState<Ghost | null>(null);
+  const [alignment, setAlignment] = useState<Alignment>("start");
   const windowIndex = windowIndexAt(t, replay.stages);
+
+  useEffect(() => setGhost(null), [windowIndex]);
 
   /**
    * Writes the paused time to the URL via the native History API so a pause/step/seek never triggers a
@@ -96,6 +110,10 @@ export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: R
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  const stage = replay.stages[windowIndex];
+  const firstKillIn = (s: ReplayStage) => replay.kills.find((k) => k.t >= s.start && k.t <= s.end)?.t ?? null;
+  const ghostT = ghost ? ghostTime(t, { start: stage.start, firstKill: firstKillIn(stage) }, ghost, alignment) : null;
+
   return (
     <div className="space-y-4">
       {replay.stages.length > 1 && (
@@ -115,11 +133,21 @@ export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: R
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-2">
           {replay.hasPositions ? (
-            <ReplayCanvas replay={replay} t={t} windowIndex={windowIndex} mapName={mapName} />
+            <ReplayCanvas replay={replay} t={t} windowIndex={windowIndex} mapName={mapName} ghost={ghost} ghostT={ghostT} />
           ) : (
             <p className="rounded border border-zinc-800 p-4 text-sm text-zinc-400">{NO_POSITIONS}</p>
           )}
           <ReplayControls t={t} duration={duration} playing={playing} speed={speed} onToggle={toggle} onScrub={(v) => setT(clamp(v))} onSeek={seek} onStep={step} onSpeed={setSpeed} />
+          {replay.hasPositions && (
+            <GhostSelect
+              options={ghostSources[windowIndex] ?? []}
+              mapId={mapId}
+              windowIndex={windowIndex}
+              alignment={alignment}
+              onAlignment={setAlignment}
+              onGhost={setGhost}
+            />
+          )}
         </div>
         <div className="space-y-6">
           <ReplayPlayers replay={replay} sides={sides} t={t} />

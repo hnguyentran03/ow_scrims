@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { TEAM_COLORS } from "@/lib/colors";
+import { formatDuration } from "@/lib/format";
+import type { Ghost } from "@/lib/ghost";
 import { heroAbbrev } from "@/lib/hero-abbrev";
 import { applyAffine, PLANE_SIZE, type Affine } from "@/lib/stats/calibration";
 import { activeKillLines, activeUltRings, heroAt, positionAt, ultPulse } from "@/lib/stats/playback";
@@ -19,7 +21,15 @@ export function stageFrame(stage: ReplayStage): { width: number; height: number;
   return { width, height, affine: stage.image?.affine ?? stage.bounds, size: Math.max(width, height) };
 }
 
-export function ReplayCanvas({ replay, t, windowIndex, mapName, children }: { replay: Replay; t: number; windowIndex: number; mapName: string; children?: React.ReactNode }) {
+export function ReplayCanvas({ replay, t, windowIndex, mapName, ghost, ghostT, children }: {
+  replay: Replay;
+  t: number;
+  windowIndex: number;
+  mapName: string;
+  ghost?: Ghost | null;
+  ghostT?: number | null;
+  children?: React.ReactNode;
+}) {
   const [hoverKey, setHoverKey] = useState<string | null>(null);
   const stage = replay.stages[windowIndex];
   const { width, affine, size } = stageFrame(stage);
@@ -85,6 +95,12 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, children }: { re
             </text>
           </g>
         ))}
+        {ghost && ghostT !== null && ghostT !== undefined && ghost.players.map((p) => {
+          const pos = positionAt(p.segments, ghostT);
+          if (!pos) return null;
+          const { px, py } = project(pos);
+          return <circle key={`g|${p.team}|${p.name}`} cx={px} cy={py} r={r} fill={colour(p.side)} opacity={0.4} stroke={colour(p.side)} strokeDasharray={`${r * 0.5} ${r * 0.3}`} />;
+        })}
         {children}
         {hover && (
           <g transform={`translate(${Math.min(hover.px + r, width - size * 0.25)},${Math.max(hover.py - r * 3, r)})`} pointerEvents="none">
@@ -94,6 +110,7 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, children }: { re
         )}
       </StageCanvas>
       {!stage.image && <p className="text-xs text-zinc-500">No calibrated image for {stage.label} yet. Positions are drawn on a plane fitted to this round.</p>}
+      {ghost && <p className="text-xs text-zinc-500">Ghost: {ghost.label} at {formatDuration(ghostT ?? 0)}</p>}
     </div>
   );
 }
