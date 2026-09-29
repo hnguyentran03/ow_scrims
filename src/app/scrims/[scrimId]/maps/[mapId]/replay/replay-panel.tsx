@@ -5,14 +5,13 @@ import { useCallback, useEffect, useState } from "react";
 import type { Replay, ReplayStage } from "@/lib/stats/replay";
 import type { Sides } from "@/lib/stats/sides";
 import { windowIndexAt } from "@/lib/stats/stages";
+import { NO_POSITIONS } from "../stage-canvas";
 import { ReplayCanvas } from "./replay-canvas";
 import { ReplayControls } from "./replay-controls";
 import { ReplayFeed } from "./replay-feed";
 import { ReplayPlayers } from "./replay-players";
 
 export type Speed = 1 | 2 | 4;
-
-const NO_POSITIONS = "Position logging was off for this map. Turn on position logging in the ScrimTime Workshop settings before hosting.";
 
 export function ReplayPanel({ replay, sides, mapName, initialTime }: { replay: Replay; sides: Sides; mapName: string; initialTime: number }) {
   const pathname = usePathname();

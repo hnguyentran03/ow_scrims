@@ -8,6 +8,7 @@ import { heroAt, positionAt } from "@/lib/stats/playback";
 import type { Replay, ReplayStage } from "@/lib/stats/replay";
 import { windowIndexAt } from "@/lib/stats/stages";
 import { DEATH_MARKER_SECONDS } from "@/lib/stats/tracks";
+import { StageCanvas } from "../stage-canvas";
 
 const NEUTRAL = "#71717a";
 
@@ -21,11 +22,10 @@ export function stageFrame(stage: ReplayStage): { width: number; height: number;
 export function ReplayCanvas({ replay, t, windowIndex, mapName, children }: { replay: Replay; t: number; windowIndex: number; mapName: string; children?: React.ReactNode }) {
   const [hoverKey, setHoverKey] = useState<string | null>(null);
   const stage = replay.stages[windowIndex];
-  const { width, height, affine, size } = stageFrame(stage);
+  const { width, affine, size } = stageFrame(stage);
   const r = size * 0.012;
   const project = (p: { x: number; z: number }) => applyAffine(affine, p);
   const colour = (side: "ours" | "theirs" | null) => (side ? TEAM_COLORS[side] : NEUTRAL);
-  const gridStep = PLANE_SIZE / 10;
 
   const markers = replay.players.flatMap((p) => {
     const pos = positionAt(p.segments, t);
@@ -40,19 +40,7 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, children }: { re
 
   return (
     <div className="space-y-1">
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full rounded border border-zinc-800 bg-zinc-950" role="img" aria-label={`Replay of ${mapName}, ${stage.label}`} onMouseLeave={() => setHoverKey(null)}>
-        {stage.image ? (
-          <image href={`/api/map-images/${stage.image.id}`} width={width} height={height} />
-        ) : (
-          <g stroke="#27272a">
-            {Array.from({ length: 11 }, (_, i) => i * gridStep).map((v) => (
-              <g key={v}>
-                <line x1={v} x2={v} y1={0} y2={PLANE_SIZE} />
-                <line x1={0} x2={PLANE_SIZE} y1={v} y2={v} />
-              </g>
-            ))}
-          </g>
-        )}
+      <StageCanvas stage={stage} className="w-full rounded border border-zinc-800 bg-zinc-950" aria-label={`Replay of ${mapName}, ${stage.label}`} onMouseLeave={() => setHoverKey(null)}>
         {deaths.map((d) => {
           const { px, py } = project({ x: d.x!, z: d.z! });
           const side = replay.players.find((p) => p.team === d.team && p.name === d.name)?.side ?? null;
@@ -79,7 +67,7 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, children }: { re
             <text x={r * 0.6} y={r * 1.45} fontSize={r} fill="#e4e4e7">{hover.name} · {hover.hero || "?"}</text>
           </g>
         )}
-      </svg>
+      </StageCanvas>
       {!stage.image && <p className="text-xs text-zinc-500">No calibrated image for {stage.label} yet. Positions are drawn on a plane fitted to this round.</p>}
     </div>
   );
