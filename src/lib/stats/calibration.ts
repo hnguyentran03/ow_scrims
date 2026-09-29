@@ -64,8 +64,21 @@ function solve3(m: number[][], rhs: number[]): [number, number, number] | null {
 
 /** True when every world point lies on one line (within a small area tolerance), which makes the fit singular. */
 function collinear(points: Array<{ x: number; z: number }>): boolean {
-  const [p0, p1] = points;
-  return points.every((p) => Math.abs((p1.x - p0.x) * (p.z - p0.z) - (p1.z - p0.z) * (p.x - p0.x)) < 1e-6);
+  const p0 = points[0];
+  // Find the first point separated from p0 by distance > sqrt(1e-18) ≈ 1e-9
+  let ref: { x: number; z: number } | null = null;
+  for (const p of points) {
+    const dx = p.x - p0.x;
+    const dz = p.z - p0.z;
+    if (dx * dx + dz * dz > 1e-18) {
+      ref = p;
+      break;
+    }
+  }
+  // If no separated point found, all points coincide (collinear)
+  if (!ref) return true;
+  // Test all points against the (p0, ref) direction
+  return points.every((p) => Math.abs((ref!.x - p0.x) * (p.z - p0.z) - (ref!.z - p0.z) * (p.x - p0.x)) < 1e-6);
 }
 
 /**

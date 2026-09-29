@@ -75,6 +75,14 @@ describe("solveAffine", () => {
     expect(solveAffine([pair(0, 0), pair(1, 1)])).toBeNull();
     expect(solveAffine([pair(0, 0), pair(1, 1), pair(2, 2), pair(3, 3)])).toBeNull();
   });
+
+  it("tolerates a repeated first point", () => {
+    close(solveAffine([pair(0, 0), pair(0, 0), pair(50, 10), pair(-20, 40)]), truth, 6);
+  });
+
+  it("returns null when every world point coincides", () => {
+    expect(solveAffine([pair(3, 3), pair(3, 3), pair(3, 3)])).toBeNull();
+  });
 });
 
 describe("parseCalibration", () => {
