@@ -12,6 +12,11 @@ import { pairUltimates, type UltLike } from "./ultimates";
 /** An ult cast is placed at the caster's nearest positioned sample within this many seconds of the start. */
 export const ULT_PROXY_SECONDS = 3;
 
+/** A kill line is drawn from attacker to victim for this long after the kill. */
+export const KILL_LINE_SECONDS = 2;
+/** An ult ring stays on the caster for the ult's span, or this long when no end was logged. */
+export const ULT_RING_SECONDS = 5;
+
 export interface CalibratedImage {
   stage: number;
   id: number;

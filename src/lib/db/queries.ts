@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, getTableColumns, gte, inArray, lte, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, gte, inArray, lte, ne, sql, type SQL } from "drizzle-orm";
 import type { Db } from "./index";
 import {
   ability1Used, ability2Used, damage, healing, heroSpawn, heroSwap, kill, mapBans, mapImages, maps, matchEnd, matchStart, mercyRez, objectiveCaptured,
@@ -407,4 +407,35 @@ export async function listPositionedStages(db: Db, mapName: string): Promise<Pos
     roundEnds: ends.filter((e) => e.mapId === r.map.id),
     objectiveUpdated: updates.filter((u) => u.mapId === r.map.id),
   }));
+}
+
+/**
+ * Every other map with the same base name, newest scrim first, with the round-window rows the ghost
+ * picker needs. Unlike the map-images PR's `listPositionedStages`, this does not filter to maps with
+ * positions — `ghostFrom` already handles a source with no samples by yielding empty segments. Once
+ * both land, `listPositionedStages` supersedes this.
+ */
+export async function listSameMapReplays(
+  db: Db,
+  mapName: string,
+  exceptMapId: number,
+): Promise<Array<{ map: MapRow; scrimName: string; scrimDate: string; roundStarts: RoundStartRow[]; roundEnds: RoundEndRow[]; objectiveUpdated: ObjectiveUpdatedRow[] }>> {
+  const rows = await db
+    .select({ map: maps, scrimName: scrims.name, scrimDate: scrims.date })
+    .from(maps)
+    .innerJoin(scrims, eq(scrims.id, maps.scrimId))
+    .where(and(eq(maps.mapName, mapName), ne(maps.id, exceptMapId)))
+    .orderBy(desc(scrims.date), desc(scrims.id), desc(maps.order));
+  return Promise.all(
+    rows.map(async (r) => {
+      const roundStarts = await db.select().from(roundStart).where(eq(roundStart.mapId, r.map.id)).orderBy(asc(roundStart.matchTime), asc(roundStart.id));
+      const roundEnds = await roundEndsFor(db, r.map.id);
+      const objectiveUpdatedRows = await db
+        .select()
+        .from(objectiveUpdated)
+        .where(eq(objectiveUpdated.mapId, r.map.id))
+        .orderBy(asc(objectiveUpdated.matchTime), asc(objectiveUpdated.id));
+      return { map: r.map, scrimName: r.scrimName, scrimDate: r.scrimDate, roundStarts, roundEnds, objectiveUpdated: objectiveUpdatedRows };
+    }),
+  );
 }
