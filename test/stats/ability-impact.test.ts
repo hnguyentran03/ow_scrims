@@ -73,25 +73,43 @@ describe("buildAbilityImpact", () => {
     expect(buildAbilityImpact([map(1)], ten, [], stats)).toEqual({ ours: [], theirs: [], hasAbilities: false });
   });
 
-  it("counts a played hero's fights on a map with no uses of a slot into without, across maps", () => {
+  it("counts a played hero's fights on a map with no uses of a slot into without, across maps, and skips an unlogged map entirely", () => {
     // Map 2 repeats map 1's fight pattern (A wins 1-5, B wins 6-10) but Ana never uses Biotic Grenade there.
     const tenMap2 = [...Array(10)].map((_, i) => (i < 5 ? kill(i * 100, "A", "B", 2) : kill(i * 100, "B", "A", 2)));
-    // Ana's slot 2 used once in each of map 1's five won fights only.
+    // Map 3 also repeats the pattern but has no ability rows at all: an unlogged map whose fights must count nowhere.
+    const tenMap3 = [...Array(10)].map((_, i) => (i < 5 ? kill(i * 100, "A", "B", 3) : kill(i * 100, "B", "A", 3)));
+    // Ana's slot 2 used once in each of map 1's five won fights only. A theirs-side row logs map 2 without touching Ana.
     const anaMap1 = [0, 100, 200, 300, 400].map((t) => ability(t, "A", "Ana", 2, 1));
-    // Ana and Mercy are both played (via stat rows) on both maps; Mercy never uses either slot anywhere.
-    const twoMapStats = [stat(1, "A", "Ana"), stat(2, "A", "Ana"), stat(1, "A", "Mercy"), stat(2, "A", "Mercy")];
-    const { ours } = buildAbilityImpact([map(1), map(2)], [...ten, ...tenMap2], anaMap1, twoMapStats);
+    const abilities = [...anaMap1, ability(0, "B", "Zarya", 1, 2)];
+    // Ana and Mercy are both played (via stat rows) on all three maps; Mercy never uses either slot anywhere.
+    const threeMapStats = [
+      stat(1, "A", "Ana"), stat(2, "A", "Ana"), stat(3, "A", "Ana"),
+      stat(1, "A", "Mercy"), stat(2, "A", "Mercy"), stat(3, "A", "Mercy"),
+    ];
+    const { ours } = buildAbilityImpact([map(1), map(2), map(3)], [...ten, ...tenMap2, ...tenMap3], abilities, threeMapStats);
 
     const ana = ours.find((r) => r.hero === "Ana")!;
     expect(ana.uses).toBe(5);
     expect(ana.with).toEqual({ count: 5, decided: 5, won: 5, rate: 1 });
-    // Without = map 1's five unused, lost fights, plus all ten of map 2's fights (never used there).
+    // Without = map 1's five unused, lost fights, plus all ten of map 2's fights (never used there); map 3 is unlogged and contributes nothing.
     expect(ana.without).toEqual({ count: 15, decided: 15, won: 5, rate: 5 / 15 });
     expect(ana.perFightWon).toBe(0.5);
     expect(ana.perFightLost).toBe(0);
     expect(ana.lift).toBe(1 - 5 / 15);
 
     expect(ours.find((r) => r.hero === "Mercy")).toBeUndefined();
+  });
+
+  it("excludes a drawn fight from decided but still counts it, when a used slot is logged on the map", () => {
+    // One drawn fight (one kill each way, within the fight gap) plus five decided fights A wins; Ana uses her slot 2 ability in every fight.
+    const draw = [kill(0), kill(2, "B", "A")];
+    const wonFights = [1000, 1100, 1200, 1300, 1400].map((t) => kill(t));
+    const uses = [0, 1000, 1100, 1200, 1300, 1400].map((t) => ability(t, "A", "Ana", 2));
+    const r = buildAbilityImpact([map(1)], [...draw, ...wonFights], uses, [stat(1, "A", "Ana")]).ours[0];
+    expect(r.with).toEqual({ count: 6, decided: 5, won: 5, rate: 1 });
+    expect(r.without).toEqual({ count: 0, decided: 0, won: 0, rate: null });
+    expect(r.perFightWon).toBe(1);
+    expect(r.perFightLost).toBeNull();
   });
 
   it("reconciles with the Lijiang sample", () => {

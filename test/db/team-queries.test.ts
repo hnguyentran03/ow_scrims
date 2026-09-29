@@ -34,7 +34,8 @@ describe("team queries", () => {
     expect(rows.ultCharged).toHaveLength(29 + 56);
     expect(rows.playerStats).toHaveLength(40 + 50);
     expect(rows.bans).toEqual([]);
-    expect(rows.abilities).toHaveLength(185 + 161);
+    // Antarctic has no ability rows; Aatlis has 185 slot 1 rows plus 161 slot 2 rows.
+    expect(rows.abilities).toHaveLength(0 + 346);
     expect(rows.abilities[0].slot).toBe(1);
     expect(rows.abilities.every((a, i) => i === 0 || rows.abilities[i - 1].matchTime <= a.matchTime)).toBe(true);
     expect(rows.roundStarts).toHaveLength(3 + 1);

@@ -21,10 +21,11 @@ export interface AbilityImpactRow {
   ability: string;
   /** Every use by this side, in a fight or not. */
   uses: number;
-  /** Mean uses per decided fight this side won / lost, on maps where the side played the hero; null under the guard. */
+  /** Mean uses per decided fight this side won / lost, on maps where the side played the hero and abilities were logged; null under the guard. */
   perFightWon: number | null;
   perFightLost: number | null;
   with: ImpactRatio;
+  /** Fights on maps where the side played the hero and abilities were logged, but this slot was not used. */
   without: ImpactRatio;
   lift: number | null;
 }
@@ -58,9 +59,11 @@ export function buildAbilityImpact(maps: TeamMapLike[], kills: (KillLike & MapKe
   const acc: Record<SideKey, Map<string, Acc>> = { ours: new Map(), theirs: new Map() };
 
   for (const map of maps) {
+    const mapAbilities = abilitiesBy.get(map.id) ?? [];
+    if (mapAbilities.length === 0) continue;
     const s = sides(map);
     const fights = groupFights(killsBy.get(map.id) ?? []);
-    const rows = (abilitiesBy.get(map.id) ?? []).map((r) => ({ ...r, side: sideOf(r.playerTeam, s), fightIndex: fightIndexAt(r.matchTime, fights) }));
+    const rows = mapAbilities.map((r) => ({ ...r, side: sideOf(r.playerTeam, s), fightIndex: fightIndexAt(r.matchTime, fights) }));
     const mapFinals = finals.get(map.id) ?? [];
 
     for (const side of SIDES) {
