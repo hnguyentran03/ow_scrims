@@ -27,6 +27,8 @@ export type UltChargedRow = typeof ultimateCharged.$inferSelect;
 export type DamageRow = typeof damage.$inferSelect;
 export type HealingRow = typeof healing.$inferSelect;
 export type AbilityRow = typeof ability1Used.$inferSelect;
+/** An ability_1_used or ability_2_used row tagged with its slot. */
+export type SlottedAbilityRow = AbilityRow & { slot: 1 | 2 };
 export type SpawnRow = typeof heroSpawn.$inferSelect;
 export type ObjectiveUpdatedRow = typeof objectiveUpdated.$inferSelect;
 export type MapImageRow = typeof mapImages.$inferSelect;
@@ -50,6 +52,8 @@ export interface TeamRows {
   ultCharged: UltChargedRow[];
   playerStats: PlayerStatRow[];
   bans: MapBanRow[];
+  abilities: SlottedAbilityRow[];
+  roundStarts: RoundStartRow[];
 }
 
 export interface ScrimSummary {
@@ -239,9 +243,18 @@ export interface TeamTables {
   charged?: boolean; // ultimate_charged
   playerStats?: boolean;
   bans?: boolean;
+  abilities?: boolean; // ability_1_used and ability_2_used, merged in time order
+  rounds?: boolean; // round_start
 }
 
-export const ALL_TEAM_TABLES: TeamTables = { kills: true, ults: true, charged: true, playerStats: true, bans: true };
+export const ALL_TEAM_TABLES: TeamTables = { kills: true, ults: true, charged: true, playerStats: true, bans: true, abilities: true, rounds: true };
+
+/** Both ability tables for the given maps, merged by match time with slot 1 first on a tie. */
+async function abilitiesFor(db: Db, ids: number[]): Promise<SlottedAbilityRow[]> {
+  const a1 = await db.select().from(ability1Used).where(inArray(ability1Used.mapId, ids)).orderBy(asc(ability1Used.matchTime), asc(ability1Used.id));
+  const a2 = await db.select().from(ability2Used).where(inArray(ability2Used.mapId, ids)).orderBy(asc(ability2Used.matchTime), asc(ability2Used.id));
+  return [...a1.map((r) => ({ ...r, slot: 1 as const })), ...a2.map((r) => ({ ...r, slot: 2 as const }))].sort((x, y) => x.matchTime - y.matchTime || x.slot - y.slot);
+}
 
 /** Maps in the date range (scrim date, scrim id, map order) and, for those maps only, the rows requested in `tables`; omitted tables come back as empty arrays and are never queried. */
 export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTables = ALL_TEAM_TABLES): Promise<TeamRows> {
@@ -255,7 +268,7 @@ export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTab
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(asc(scrims.date), asc(scrims.id), asc(maps.order));
   const ids = mapRows.map((m) => m.id);
-  if (ids.length === 0) return { maps: mapRows, kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [] };
+  if (ids.length === 0) return { maps: mapRows, kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [] };
   const kills = tables.kills ? await db.select().from(kill).where(inArray(kill.mapId, ids)).orderBy(asc(kill.matchTime), asc(kill.id)) : [];
   const ultStarts = tables.ults
     ? await db.select().from(ultimateStart).where(inArray(ultimateStart.mapId, ids)).orderBy(asc(ultimateStart.matchTime), asc(ultimateStart.id))
@@ -270,7 +283,11 @@ export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTab
     ? await db.select().from(playerStat).where(inArray(playerStat.mapId, ids)).orderBy(asc(playerStat.matchTime), asc(playerStat.id))
     : [];
   const bans = tables.bans ? await db.select().from(mapBans).where(inArray(mapBans.mapId, ids)).orderBy(asc(mapBans.id)) : [];
-  return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans };
+  const abilities = tables.abilities ? await abilitiesFor(db, ids) : [];
+  const roundStarts = tables.rounds
+    ? await db.select().from(roundStart).where(inArray(roundStart.mapId, ids)).orderBy(asc(roundStart.matchTime), asc(roundStart.id))
+    : [];
+  return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans, abilities, roundStarts };
 }
 
 export async function setMapWinner(db: Db, mapId: number, side: 1 | 2): Promise<void> {
