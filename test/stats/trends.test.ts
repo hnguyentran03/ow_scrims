@@ -10,7 +10,7 @@ const map = (id: number, mapName: string, mapType: string, winnerSide: number | 
 });
 const stat = (mapId: number, playerTeam: string, playerName: string, playerHero: string, heroTimePlayed: number, extra: Partial<StatLike> = {}): StatLike => ({
   mapId, roundNumber: 1, playerTeam, playerName, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, damageTaken: 0,
-  damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, heroTimePlayed, ...extra,
+  damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed, ...extra,
 });
 const ult = (mapId: number, matchTime: number, playerName: string, playerTeam = "A"): UltRowLike => ({ mapId, matchTime, playerTeam, playerName, playerHero: "Ana" });
 

@@ -18,7 +18,7 @@ const map = (id: number, mapName: string, mapType: string, ourSide: number, winn
 });
 const stat = (mapId: number, playerTeam: string, playerName: string, playerHero: string, heroTimePlayed: number, extra: Partial<StatLike> = {}): StatLike => ({
   mapId, roundNumber: 1, playerTeam, playerName, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, damageTaken: 0,
-  damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, heroTimePlayed, ...extra,
+  damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed, ...extra,
 });
 const kill = (mapId: number, matchTime: number, attackerTeam: string, attackerName: string, attackerHero: string, victimTeam: string, victimName: string, victimHero: string, eventAbility: string): Kill => ({
   mapId, matchTime, attackerTeam, attackerName, attackerHero, victimTeam, victimName, victimHero, eventAbility,
@@ -67,7 +67,7 @@ const kills: Kill[] = [
 const ultStarts: Ult[] = [ult(1, 11, "B", "q1", "Genji"), ult(1, 30, "A", "p1", "Ana"), ult(1, 95, "A", "p1", "Ana"), ult(2, 50, "B", "p1", "Ana"), ult(3, 18, "A", "p1", "Genji")];
 const ultEnds: Ult[] = [ult(1, 13, "B", "q1", "Genji"), ult(1, 38, "A", "p1", "Ana"), ult(1, 105, "A", "p1", "Ana"), ult(3, 26, "A", "p1", "Genji")];
 const ultCharged: Ult[] = [ult(1, 20, "A", "p1", "Ana"), ult(1, 90, "A", "p1", "Ana")];
-const rows: PlayerRows = { playerStats, kills, ultStarts, ultEnds, ultCharged };
+const rows: PlayerRows = { playerStats, kills, ultStarts, ultEnds, ultCharged, roundStarts: [{ mapId: 1, matchTime: 5, roundNumber: 1 }] };
 
 describe("playerHeroes", () => {
   it("lists our player's heroes by playtime and nothing for a stranger", () => {
@@ -191,5 +191,15 @@ describe("buildPlayerPage", () => {
       firstPick: { count: 0, fights: 0, won: 0, rate: null }, firstDeath: { count: 0, fights: 0, won: 0, rate: null }, reversal: { count: 0, won: 0, rate: null },
       killsPerUlt: { ults: 0, kills: 0, perUlt: null }, avgChargeSeconds: null, avgHoldSeconds: null,
     });
+  });
+
+  it("carries the profile cards built from the same maps and filter", () => {
+    expect(p.profile.mvp).toMatchObject({ maps: 3 });
+    expect(p.profile.mvp.score).not.toBeNull();
+    // p1's first counted final blow on map 1 is at t=10, measured from the round start at 5.
+    expect(p.profile.drought?.longestSeconds).toBeGreaterThanOrEqual(5);
+    expect(genji.profile.mvp.maps).toBe(2);
+    expect(genji.profile.mvp.score).toBeNull();
+    expect(buildPlayerPage(maps, rows, "nobody").profile).toEqual({ mvp: { score: null, maps: 0, mvpCount: 0 }, deadlift: null, drought: null, records: [], playStyle: null });
   });
 });

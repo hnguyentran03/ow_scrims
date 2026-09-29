@@ -3,7 +3,7 @@ import { finalsByMap, groupByMap, outcome, rate } from "@/lib/stats/team-rows";
 
 const stat = (mapId: number, roundNumber: number, playerName: string, eliminations: number) => ({
   mapId, roundNumber, playerTeam: "Team 1", playerName, playerHero: "Ana", eliminations, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0,
-  damageTaken: 0, damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, heroTimePlayed: 100,
+  damageTaken: 0, damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed: 100,
 });
 
 describe("team-rows", () => {

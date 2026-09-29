@@ -7,7 +7,7 @@ const map = (id: number, mapName: string, winnerSide: number | null, scrimId = 1
 });
 const stat = (mapId: number, playerTeam: string, playerHero: string, finalBlows: number, deaths: number, heroDamageDealt: number, healingDealt: number): StatLike => ({
   mapId, roundNumber: 1, playerTeam, playerName: playerHero, playerHero, eliminations: 0, finalBlows, deaths, heroDamageDealt, healingDealt, damageTaken: 0, damageBlocked: 0,
-  ultimatesEarned: 0, ultimatesUsed: 0, heroTimePlayed: 100,
+  ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed: 100,
 });
 
 describe("buildTeamOverview", () => {
