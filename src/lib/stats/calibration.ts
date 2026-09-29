@@ -52,3 +52,34 @@ export function fitBounds(points: Array<{ x: number; z: number }>, padding = 0.1
   const cz = (minZ + maxZ) / 2;
   return { a: scale, b: 0, c: half - scale * cx, d: 0, e: -scale, f: half + scale * cz };
 }
+
+export interface Calibration {
+  pairs: Pair[];
+  affine: Affine;
+  objective: { x: number; z: number } | null;
+}
+
+const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+const isPair = (p: unknown): p is Pair => {
+  const o = p as Pair;
+  return !!o && !!o.world && !!o.image && isNum(o.world.x) && isNum(o.world.z) && isNum(o.image.px) && isNum(o.image.py);
+};
+const isAffine = (a: unknown): a is Affine => {
+  const o = a as Affine;
+  return !!o && (["a", "b", "c", "d", "e", "f"] as const).every((k) => isNum(o[k]));
+};
+
+/** The JSON stored on map_image.calibration, or null when absent or malformed. */
+export function parseCalibration(raw: string | null): Calibration | null {
+  if (raw === null) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return null;
+  }
+  const o = parsed as Calibration;
+  if (!o || !Array.isArray(o.pairs) || !o.pairs.every(isPair) || !isAffine(o.affine)) return null;
+  const objective = o.objective === null || o.objective === undefined ? null : isNum(o.objective.x) && isNum(o.objective.z) ? { x: o.objective.x, z: o.objective.z } : null;
+  return { pairs: o.pairs.map((p) => ({ world: { x: p.world.x, z: p.world.z }, image: { px: p.image.px, py: p.image.py } })), affine: { a: o.affine.a, b: o.affine.b, c: o.affine.c, d: o.affine.d, e: o.affine.e, f: o.affine.f }, objective };
+}

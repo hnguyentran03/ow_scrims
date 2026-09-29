@@ -1,7 +1,10 @@
+import { parseCalibration } from "./calibration";
 import type { Fight } from "./fights";
 import { cellAt, gridFor, projectorFor, walkSegment, type Grid } from "./heatmap";
+import { positionAt } from "./playback";
 import type { Replay } from "./replay";
 import type { SideKey } from "./sides";
+import { SAMPLE_STEP_SECONDS } from "./tracks";
 
 export const TERRITORY_MAJORITY = 0.6;
 export const OBJECTIVE_RADIUS_METERS = 10;
@@ -78,12 +81,47 @@ export function buildTerritory(input: TerritoryInput): Territory {
   return { cells: buildCells(input, grid), objective: input.objective ? buildObjective(input) : null };
 }
 
-function buildObjective(_input: TerritoryInput): NonNullable<Territory["objective"]> {
-  void _input;
-  return { stage: { ours: 0, theirs: 0, contested: 0 }, byFight: [], observedSeconds: 0 };
+type Instant = "ours" | "theirs" | "contested";
+
+function share(instants: Instant[]): Share {
+  const n = instants.length;
+  if (n === 0) return { ours: 0, theirs: 0, contested: 0 };
+  const count = (k: Instant) => instants.filter((i) => i === k).length / n;
+  return { ours: count("ours"), theirs: count("theirs"), contested: count("contested") };
 }
 
-export function objectiveFromCalibration(_calibration: string | null): { x: number; z: number } | null {
-  void _calibration;
-  return null;
+function buildObjective(input: TerritoryInput): NonNullable<Territory["objective"]> {
+  const window = input.replay.stages[input.stage];
+  const centre = input.objective as { x: number; z: number };
+  const players = sidedPlayersInWindow(input);
+  const oursTeam = input.replay.players.find((p) => p.side === "ours")?.team ?? null;
+  const theirsTeam = input.replay.players.find((p) => p.side === "theirs")?.team ?? null;
+  const observed: Array<{ t: number; state: Instant }> = [];
+  for (let t = window.start; t <= window.end + 1e-9; t += SAMPLE_STEP_SECONDS) {
+    let ours = 0;
+    let theirs = 0;
+    for (const { player, segments } of players) {
+      const p = positionAt(segments, t);
+      if (!p) continue;
+      if (Math.hypot(p.x - centre.x, p.z - centre.z) <= OBJECTIVE_RADIUS_METERS) {
+        if (player.side === "ours") ours += 1;
+        else theirs += 1;
+      }
+    }
+    if (ours === 0 && theirs === 0) continue;
+    observed.push({ t, state: ours > theirs ? "ours" : theirs > ours ? "theirs" : "contested" });
+  }
+  const byFight = input.fights
+    .filter((f) => f.end >= window.start && f.start <= window.end)
+    .map((f) => ({
+      index: f.index,
+      winner: (f.winner === null ? null : f.winner === oursTeam ? "ours" : f.winner === theirsTeam ? "theirs" : null) as SideKey | null,
+      share: share(observed.filter((o) => o.t >= f.start && o.t <= f.end).map((o) => o.state)),
+    }));
+  return { stage: share(observed.map((o) => o.state)), byFight, observedSeconds: observed.length * SAMPLE_STEP_SECONDS };
+}
+
+/** The objective centre stored by the phase 7 calibration page, or null when absent or malformed; `parseCalibration` already validates the JSON. */
+export function objectiveFromCalibration(calibration: string | null): { x: number; z: number } | null {
+  return parseCalibration(calibration)?.objective ?? null;
 }
