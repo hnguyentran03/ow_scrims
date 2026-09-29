@@ -1,5 +1,7 @@
 import { Suspense } from "react";
+import { notFound } from "next/navigation";
 import { getMapImages, getReplayRows } from "@/lib/db/queries";
+import { POSITION_FEATURES_ENABLED } from "@/lib/flags";
 import { parseHeatmapFilters, playerKey } from "@/lib/heatmap-filters";
 import { calibratedImages } from "@/lib/map-images";
 import { stageHref } from "@/lib/map-images-href";
@@ -16,6 +18,7 @@ import { HeatmapPanel } from "./heatmap-panel";
 export const dynamic = "force-dynamic";
 
 export default async function HeatmapPage({ params, searchParams }: { params: MapParams; searchParams: SearchParams }) {
+  if (!POSITION_FEATURES_ENABLED) notFound();
   const { db, map, sides } = await loadMap(params);
   const rows = await getReplayRows(db, map.id);
   const imageRows = await getMapImages(db, map.mapName);

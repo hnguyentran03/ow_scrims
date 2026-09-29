@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteMapImageAction } from "@/app/actions";
 import { getDb } from "@/lib/db";
+import { POSITION_FEATURES_ENABLED } from "@/lib/flags";
 import { getKillfeedRows, getMapImages, listPositionedStages, listStagesSeen } from "@/lib/db/queries";
 import { nameCandidates } from "@/lib/player-name";
 import { parseCalibration } from "@/lib/stats/calibration";
@@ -13,6 +14,7 @@ import { UploadForm } from "./upload-form";
 export const dynamic = "force-dynamic";
 
 export default async function StagePage({ params }: { params: Promise<{ mapName: string; stage: string }> }) {
+  if (!POSITION_FEATURES_ENABLED) notFound();
   const p = await params;
   const candidates = nameCandidates(p.mapName);
   if (!/^\d{1,3}$/.test(p.stage)) notFound();

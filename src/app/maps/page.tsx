@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { getDb } from "@/lib/db";
+import { POSITION_FEATURES_ENABLED } from "@/lib/flags";
 import { listStagesSeen } from "@/lib/db/queries";
 import { stageHref } from "@/lib/map-images-href";
 import { stageLabel } from "@/lib/stats/stages";
@@ -7,6 +9,7 @@ import { stageLabel } from "@/lib/stats/stages";
 export const dynamic = "force-dynamic";
 
 export default async function MapsPage() {
+  if (!POSITION_FEATURES_ENABLED) notFound();
   const stages = await listStagesSeen(await getDb());
   return (
     <div className="space-y-4">

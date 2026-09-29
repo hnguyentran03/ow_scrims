@@ -1,8 +1,9 @@
 /**
  * Feature flags for work that is merged but not yet ready for users.
  *
- * The map replay viewer (phase 7) is shipped without map images or overlays,
- * so its tab is hidden and its route 404s until the rest lands. Flip this to
- * re-enable it.
+ * Every position-based surface — the Replay and Heatmap tabs, the Maps pages
+ * with image upload and calibration, the map image routes, and the
+ * calibration and ghost actions — is switched off together until a stage has
+ * been calibrated and the user turns it on. Flip this to enable them all.
  */
-export const REPLAY_ENABLED = false;
+export const POSITION_FEATURES_ENABLED = false;

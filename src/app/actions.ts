@@ -6,7 +6,7 @@ import { getDb } from "@/lib/db";
 import { createScrim, deleteMap, deleteMapImage, deleteScrim, getMap, getReplayRows, setCalibration, setMapBans, setMapWinner } from "@/lib/db/queries";
 import { parseBanInput } from "@/lib/bans";
 import { parseCalibrationInput } from "@/lib/calibration-input";
-import { REPLAY_ENABLED } from "@/lib/flags";
+import { POSITION_FEATURES_ENABLED } from "@/lib/flags";
 import { ghostFrom, type Ghost } from "@/lib/ghost";
 import { deleteRawLog } from "@/lib/logs";
 import { deleteImageFile } from "@/lib/map-images";
@@ -71,7 +71,7 @@ export async function setMapBansAction(scrimId: number, mapId: number, side: 1 |
 /** A ghost overlay source: another window of the same stage on the same base map. Null for anything else, including a source window with no position samples. */
 export async function getGhostAction(input: { mapId: number; window: number; sourceMapId: number; sourceWindow: number }): Promise<Ghost | null> {
   // Mirrors the replay page's own gate.
-  if (!REPLAY_ENABLED) return null;
+  if (!POSITION_FEATURES_ENABLED) return null;
   const mapId = requireId(input.mapId);
   const sourceMapId = requireId(input.sourceMapId);
   if (!Number.isInteger(input.window) || !Number.isInteger(input.sourceWindow) || input.window < 0 || input.sourceWindow < 0) return null;
@@ -100,6 +100,7 @@ const MAPS_PATHS = () => {
 
 /** Solves and stores a stage calibration. Returns an error message instead of throwing so the client can show it. */
 export async function setCalibrationAction(raw: unknown): Promise<{ error: string } | null> {
+  if (!POSITION_FEATURES_ENABLED) return { error: "Map features are switched off." };
   const input = parseCalibrationInput(raw);
   if (!input) return { error: "Invalid calibration." };
   const affine = solveAffine(input.pairs);
@@ -120,12 +121,14 @@ export async function setCalibrationAction(raw: unknown): Promise<{ error: strin
 }
 
 export async function clearCalibrationAction(id: number): Promise<void> {
+  if (!POSITION_FEATURES_ENABLED) return;
   id = requireId(id);
   await setCalibration(await getDb(), id, null);
   MAPS_PATHS();
 }
 
 export async function deleteMapImageAction(id: number): Promise<void> {
+  if (!POSITION_FEATURES_ENABLED) return;
   id = requireId(id);
   const row = await deleteMapImage(await getDb(), id);
   if (row) await deleteImageFile(row.filename);

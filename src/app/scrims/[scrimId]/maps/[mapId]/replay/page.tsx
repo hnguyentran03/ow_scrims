@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getMapImages, getReplayRows, listSameMapReplays } from "@/lib/db/queries";
-import { REPLAY_ENABLED } from "@/lib/flags";
+import { POSITION_FEATURES_ENABLED } from "@/lib/flags";
 import { ghostOptions } from "@/lib/ghost";
 import { calibratedImages } from "@/lib/map-images";
 import type { SearchParams } from "@/lib/range";
@@ -13,7 +13,7 @@ import { ReplayPanel } from "./replay-panel";
 export const dynamic = "force-dynamic";
 
 export default async function ReplayPage({ params, searchParams }: { params: MapParams; searchParams: SearchParams }) {
-  if (!REPLAY_ENABLED) notFound();
+  if (!POSITION_FEATURES_ENABLED) notFound();
   const { db, map, scrim, sides } = await loadMap(params);
   const rows = await getReplayRows(db, map.id);
   const images = calibratedImages(await getMapImages(db, map.mapName));
