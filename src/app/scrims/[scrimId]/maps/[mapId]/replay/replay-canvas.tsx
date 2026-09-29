@@ -66,7 +66,7 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, ghost, ghostT, c
           );
         })}
         {lines.map((k) => {
-          // activeKillLines only returns kills where the attacker and both positions are non-null.
+          // activeKillLines only returns kills where the attacker is non-null and both x and z are non-null on both ends.
           const a = project({ x: k.attacker!.x!, z: k.attacker!.z! });
           const v = project({ x: k.victim.x!, z: k.victim.z! });
           const side = replay.players.find((p) => p.team === k.attacker!.team && p.name === k.attacker!.name)?.side ?? null;
@@ -76,7 +76,7 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, ghost, ghostT, c
           const player = replay.players.find((p) => p.team === u.team && p.name === u.name);
           const pos = player ? positionAt(player.segments, t) : null;
           const pulse = ultPulse(u, t);
-          // ultPulse returns non-null only when the ult has a cast position, so u.x/u.z are safe here.
+          // ultPulse returns non-null only when the ult has a cast position, so both u.x and u.z are safe here.
           const cast = pulse !== null ? project({ x: u.x!, z: u.z! }) : null;
           return (
             <g key={`${u.start}|${u.team}|${u.name}`} fill="none" stroke={colour(player?.side ?? null)}>
@@ -124,7 +124,7 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, ghost, ghostT, c
       {!stage.image && <p className="text-xs text-zinc-500">No calibrated image for {stage.label} yet. Positions are drawn on a plane fitted to this round.</p>}
       {ghost && (
         <p className="text-xs text-zinc-500">
-          Ghost: {ghost.label} {ghostT !== null && ghostT !== undefined && ghostT >= 0 ? `at ${formatDuration(ghostT)}` : "(before this round)"}
+          Ghost: {ghost.label} {ghostT !== null && ghostT !== undefined && ghostT >= ghost.start && ghostT <= ghost.end ? `at ${formatDuration(ghostT)}` : "(outside this round)"}
         </p>
       )}
     </div>

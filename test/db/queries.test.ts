@@ -5,6 +5,9 @@ import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getE
 import { insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
+import { buildReplay } from "@/lib/stats/replay";
+import { sides } from "@/lib/stats/sides";
+import { stageWindows } from "@/lib/stats/stages";
 
 const sample = (name: string) => readFileSync(`test/samples/${name}.txt`, "utf8");
 
@@ -140,6 +143,22 @@ describe("queries", () => {
     expect(rows[0].map.id).toBe(m2);
     expect(rows[0].roundStarts).toHaveLength(3);
     await deleteScrim(db, s2);
+  });
+
+  it("agrees with buildReplay on stage window boundaries for the same map", async () => {
+    const rows = await listSameMapReplays(db, "Antarctic Peninsula", -1);
+    const row = rows.find((r) => r.map.id === mapId)!;
+    const windows = stageWindows({
+      mapType: row.map.mapType,
+      roundStarts: row.roundStarts,
+      roundEnds: row.roundEnds,
+      objectiveUpdated: row.objectiveUpdated,
+      durationSeconds: row.map.durationSeconds,
+    });
+    const replay = buildReplay({ map: row.map, sides: sides(row.map), rows: await getReplayRows(db, mapId), images: [] });
+    expect(windows.map(({ stage, roundNumber, start, end }) => ({ stage, roundNumber, start, end }))).toEqual(
+      replay.stages.map(({ stage, roundNumber, start, end }) => ({ stage, roundNumber, start, end })),
+    );
   });
 
   it("sets a manual winner", async () => {

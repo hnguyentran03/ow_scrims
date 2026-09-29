@@ -32,8 +32,10 @@ export function heroAt(heroes: HeroChange[], team: string, name: string, t: numb
   return hero;
 }
 
+const ultActiveAt = (u: ReplayUlt, t: number) => u.start <= t && t <= (u.end ?? u.start + ULT_RING_SECONDS);
+
 export function ultStateAt(ultStates: UltState[], ults: ReplayUlt[], team: string, name: string, t: number): "charged" | "using" | null {
-  const using = ults.some((u) => u.team === team && u.name === name && u.start <= t && t <= (u.end ?? u.start + ULT_RING_SECONDS));
+  const using = ults.some((u) => u.team === team && u.name === name && ultActiveAt(u, t));
   if (using) return "using";
   let last: UltState["state"] | null = null;
   for (const s of ultStates) if (s.team === team && s.name === name && s.t <= t) last = s.state;
@@ -43,16 +45,26 @@ export function ultStateAt(ultStates: UltState[], ults: ReplayUlt[], team: strin
 const ULT_PULSE_SECONDS = 1;
 
 export function activeKillLines(kills: ReplayKill[], t: number): ReplayKill[] {
-  return kills.filter((k) => k.kind === "kill" && k.attacker !== null && k.attacker.x !== null && k.victim.x !== null && k.t <= t && t <= k.t + KILL_LINE_SECONDS);
+  return kills.filter(
+    (k) =>
+      k.kind === "kill" &&
+      k.attacker !== null &&
+      k.attacker.x !== null &&
+      k.attacker.z !== null &&
+      k.victim.x !== null &&
+      k.victim.z !== null &&
+      k.t <= t &&
+      t <= k.t + KILL_LINE_SECONDS,
+  );
 }
 
 export function activeUltRings(ults: ReplayUlt[], t: number): ReplayUlt[] {
-  return ults.filter((u) => u.start <= t && t <= (u.end ?? u.start + ULT_RING_SECONDS));
+  return ults.filter((u) => ultActiveAt(u, t));
 }
 
 /** 0..1 through a one-second pulse at the cast position, or null outside it or when the ult has no position. */
 export function ultPulse(ult: ReplayUlt, t: number): number | null {
-  if (ult.x === null || t < ult.start || t > ult.start + ULT_PULSE_SECONDS) return null;
+  if (ult.x === null || ult.z === null || t < ult.start || t > ult.start + ULT_PULSE_SECONDS) return null;
   return (t - ult.start) / ULT_PULSE_SECONDS;
 }
 

@@ -64,7 +64,7 @@ export async function setMapBansAction(scrimId: number, mapId: number, side: 1 |
   revalidatePath("/team", "layout");
 }
 
-/** A ghost overlay source: another window of the same stage on the same base map. Null for anything else. */
+/** A ghost overlay source: another window of the same stage on the same base map. Null for anything else, including a source window with no position samples. */
 export async function getGhostAction(input: { mapId: number; window: number; sourceMapId: number; sourceWindow: number }): Promise<Ghost | null> {
   const mapId = requireId(input.mapId);
   const sourceMapId = requireId(input.sourceMapId);
@@ -81,5 +81,8 @@ export async function getGhostAction(input: { mapId: number; window: number; sou
   const ownStage = ownStages[input.window]?.stage;
   const sourceStage = sourceReplay.stages[input.sourceWindow]?.stage;
   if (ownStage === undefined || sourceStage === undefined || ownStage !== sourceStage) return null;
-  return ghostFrom(sourceReplay, input.sourceWindow, input.window, `${source.scrim.name} · ${source.scrim.date} · ${sourceReplay.stages[input.sourceWindow].label}`);
+  const label = `${source.scrim.name} · ${source.scrim.date} · ${sourceReplay.stages[input.sourceWindow].label}`;
+  const ghost = ghostFrom(sourceReplay, input.sourceWindow, input.window, label);
+  if (!ghost || !ghost.players.some((p) => p.segments.length > 0)) return null;
+  return ghost;
 }
