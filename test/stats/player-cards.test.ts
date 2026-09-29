@@ -168,3 +168,65 @@ describe("play style", () => {
     expect(style.sentence).toBe("Passive, fragile, low output");
   });
 });
+
+describe("hero filter and multi-hero teammate", () => {
+  // px is a flex player: Ana (Support) on maps 101-102, Genji (Damage) on map 103. The season-wide main
+  // role is Support (1200 s of Ana against 600 s of Genji), but map 103 must be scored against the
+  // Damage reference, not Support. Teammate ty plays two heroes on map 103 alone (Zarya 200 s, Ana 400 s),
+  // so ty's combined main role for that map is Support (400 > 200) and both rows must be scored together.
+  const maps3 = [map(101, 9), map(102, 9), map(103, 9)];
+  const pxAna1 = stat(101, "A", "px", "Ana", { eliminations: 10, finalBlows: 2, deaths: 4, heroDamageDealt: 2000, healingDealt: 8000 });
+  const pxAna2 = stat(102, "A", "px", "Ana", { eliminations: 10, finalBlows: 2, deaths: 4, heroDamageDealt: 2000, healingDealt: 8000 });
+  const pxGenji = stat(103, "A", "px", "Genji", { eliminations: 14, finalBlows: 10, deaths: 5, heroDamageDealt: 6000 });
+  const tyZarya = stat(103, "A", "ty", "Zarya", { heroTimePlayed: 200, eliminations: 2, heroDamageDealt: 1000, damageBlocked: 3000 });
+  const tyAna = stat(103, "A", "ty", "Ana", { heroTimePlayed: 400, eliminations: 4, healingDealt: 2000, deaths: 2 });
+  const playerStats3 = [pxAna1, pxAna2, pxGenji, tyZarya, tyAna];
+  // Map 103 opens at 5. Two Genji final blows at 200 and 220: the opening gap (195) must be dropped
+  // under the filter, leaving only the 20-second gap between the two kills.
+  const kills3 = [
+    kill(103, 200, "A", "px", "B", "q1", { attackerHero: "Genji" }),
+    kill(103, 220, "A", "px", "B", "q1", { attackerHero: "Genji" }),
+  ];
+  const roundStarts3 = [{ mapId: 103, matchTime: 5, roundNumber: 1 }];
+  const rows3: ProfileRows = { playerStats: playerStats3, kills: kills3, roundStarts: roundStarts3 };
+  const ref3 = roleReference(maps3, playerStats3);
+
+  it("scores the player's off-role map against that map's own role, and groups a multi-hero teammate", () => {
+    // Damage reference: px's own Genji row is the only Damage appearance (finalBlows 10, elims 14,
+    // deaths 5, heroDamage 6000 per 10) so map 103 scores exactly 100 against itself.
+    expect(mvpMapScore([pxGenji], "Damage", ref3)).toBeCloseTo(100, 9);
+    // Support reference (px x2 + ty's Ana row, time-weighted over 1600 s): elims 9, finalBlows 1.5,
+    // deaths 3.75, heroDamage 1500, healing 6750. Map 101/102 score 100 * (32/27 + 10/9 + 4/3 + 15/16) / 4
+    // ≈ 114.178 each (unchanged by the fix, since Ana is already the map's own role).
+    const anaScore = mvpMapScore([pxAna1], "Support", ref3);
+    expect(anaScore).toBeCloseTo(114.17824, 4);
+    const built = buildProfileCards(maps3, rows3, "px", null);
+    // Mean of 114.178, 114.178, and the fixed 100 (not the ~157.6 a season-wide Support role would give
+    // Genji's zero healing and 4x-inflated hero-damage ratio) is ≈109.452.
+    expect(built.mvp.score).toBeCloseTo((anaScore * 2 + 100) / 3, 6);
+    expect(built.mvp.score).toBeCloseTo(109.4522, 3);
+
+    // ty's two hero rows (Zarya 200 s, Ana 400 s) combine to a Support main role and a single score:
+    // combined per 10 (t = 600 s) is elims 6, healing 2000, heroDamage 1000, deaths 2; against the same
+    // Support reference that is 100 * (8/27 + 2/3 + 2/3 + 15/8) / 4 ≈ 87.616.
+    expect(mainRole([tyZarya, tyAna])).toBe("Support");
+    const tyScore = mvpMapScore([tyZarya, tyAna], "Support", ref3);
+    expect(tyScore).toBeCloseTo(87.6157, 3);
+    // px's fixed map-103 score (100) beats ty's combined score, so px is MVP on every map.
+    expect(built.mvp).toMatchObject({ maps: 3, mvpCount: 3 });
+  });
+
+  it("under a hero filter, keeps only that hero's map, drops the opening gap, and needs more maps for deadlift/play style", () => {
+    const filtered = buildProfileCards(maps3, rows3, "px", "Genji");
+    expect(filtered.mvp).toMatchObject({ maps: 1, mvpCount: 1, score: null });
+    expect(filtered.deadlift).toBeNull();
+    expect(filtered.playStyle).toBeNull();
+    expect(filtered.records.map((r) => r.key)).toEqual(["finalBlows", "eliminations", "heroDamage"]);
+    for (const r of filtered.records) expect(r.mapId).toBe(103);
+    expect(filtered.records.find((r) => r.key === "finalBlows")).toMatchObject({ value: 10 });
+    expect(filtered.records.find((r) => r.key === "eliminations")).toMatchObject({ value: 14 });
+    expect(filtered.records.find((r) => r.key === "heroDamage")).toMatchObject({ value: 6000 });
+    // Only the internal 20-second gap counts; the 195-second gap from the round start is dropped.
+    expect(filtered.drought).toEqual({ longestSeconds: 20, longestMap: { mapId: 103, scrimId: 9, mapName: "Map 103", scrimDate: "2026-09-19" }, meanSeconds: 20 });
+  });
+});

@@ -65,7 +65,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
 
       <Profile profile={p.profile} />
 
-      <Card title="Personal records" note="Best single map in range; longest life is the longest gap between deaths">
+      <Card title="Personal records" note="Best single map in range; longest life is the longest gap between deaths on a map, counted from the round start; a map with no deaths is skipped">
         <Records rows={p.profile.records} />
       </Card>
 
@@ -186,7 +186,7 @@ function Profile({ profile: pr }: { profile: ProfileCards }) {
   return (
     <div className="grid gap-3 sm:grid-cols-4">
       <Stat label="MVP score" value={pr.mvp.score === null ? "–" : String(Math.round(pr.mvp.score))} hint={pr.mvp.score === null ? needMaps : `MVP on ${pr.mvp.mvpCount} of ${pr.mvp.maps} maps; 100 is the role average`} />
-      <Stat label="Deadlift share" value={formatPct(pr.deadlift?.meanShare ?? null)} hint={pr.deadlift ? `best ${formatPct(pr.deadlift.best.share)} on ${pr.deadlift.best.mapName}` : needMaps} />
+      <Stat label="Deadlift share" value={formatPct(pr.deadlift?.meanShare ?? null)} hint={pr.deadlift ? `best ${formatPct(pr.deadlift.best.share)} of our hero damage on ${pr.deadlift.best.mapName}` : needMaps} />
       <Stat label="Final-blow drought" value={formatSeconds(pr.drought?.longestSeconds ?? null)} hint={pr.drought ? `longest on ${pr.drought.longestMap.mapName}; mean ${formatSeconds(pr.drought.meanSeconds)}` : "No final blows in range"} />
       <Stat label="Play style" value={pr.playStyle?.sentence ?? "–"} hint={pr.playStyle ? `aggression ${one(pr.playStyle.aggression)}, survival ${one(pr.playStyle.survival)}, output ${one(pr.playStyle.output)} vs role` : needMaps} />
     </div>
