@@ -167,8 +167,16 @@ const RECORDS: Array<{ key: Exclude<RecordKey, "longestLife">; label: string; of
   { key: "objectiveKills", label: "Objective kills", of: (r) => sum(r, "objectiveKills") },
 ];
 
-/** Gaps between consecutive times, the first measured from `open`. */
-const gaps = (times: number[], open: number) => times.map((t, i) => t - (i === 0 ? open : times[i - 1]));
+/**
+ * Gaps between consecutive times. Under "all heroes" the first gap is measured from `open` (clamped to
+ * 0, so an event logged before the round start can't drag the mean); under a hero filter we don't know
+ * when the player swapped to that hero, so the opening gap is dropped and only gaps between the
+ * player's own events on that hero are counted.
+ */
+const gaps = (times: number[], open: number, includeOpen: boolean): number[] => {
+  const all = times.map((t, i) => (i === 0 ? Math.max(0, t - open) : t - times[i - 1]));
+  return includeOpen ? all : all.slice(1);
+};
 
 export function buildProfileCards(maps: TeamMapLike[], rows: ProfileRows, name: string, filter: string | null): ProfileCards {
   const byMap = ourRowsByMap(maps, rows.playerStats, name, filter);
@@ -193,12 +201,13 @@ export function buildProfileCards(maps: TeamMapLike[], rows: ProfileRows, name: 
     return (killsBy.get(m.id) ?? []).filter((k) => k.victimTeam === ours && k.victimName === name && (filter === null || k.victimHero === filter)).map((k) => k.matchTime).sort((a, b) => a - b);
   };
 
-  // MVP score: the player's map score against every teammate's, each teammate scored on their own main role for that map.
+  // MVP score: the player's map score against every teammate's, both scored on their own main role for that map.
   const scores: number[] = [];
   let mvpCount = 0;
   for (const m of playerMaps) {
     const ours = sides(m).ours;
-    const mine = mvpMapScore(byMap.get(m.id) ?? [], role, ref);
+    const mapRole = filter === null ? mainRole(byMap.get(m.id) ?? []) : roleOf(filter);
+    const mine = mvpMapScore(byMap.get(m.id) ?? [], mapRole, ref);
     scores.push(mine);
     const teammates = new Map<string, StatLike[]>();
     for (const r of finals.get(m.id) ?? []) {
@@ -221,11 +230,11 @@ export function buildProfileCards(maps: TeamMapLike[], rows: ProfileRows, name: 
   const bestShare = shares.reduce<{ share: number; map: TeamMapLike } | null>((b, s) => (b === null || s.share > b.share ? s : b), null);
   const deadlift: Deadlift | null = enough && bestShare ? { meanShare: mean(shares.map((s) => s.share)) ?? 0, best: { ...mapRef(bestShare.map), share: bestShare.share } } : null;
 
-  // Drought: gaps between the player's counted final blows, the first from the round start; no tail.
+  // Drought: gaps between the player's counted final blows, the first from the round start under "all heroes" only; no tail.
   let drought: Drought | null = null;
   const allGaps: number[] = [];
   for (const m of playerMaps) {
-    const g = gaps(blows(m), openOf(m));
+    const g = gaps(blows(m), openOf(m), filter === null);
     if (g.length === 0) continue;
     allGaps.push(...g);
     const longest = Math.max(...g);
@@ -243,9 +252,10 @@ export function buildProfileCards(maps: TeamMapLike[], rows: ProfileRows, name: 
     }
     if (best) records.push(best);
   }
+  // Longest life: gaps between the player's deaths, the first from the round start under "all heroes" only.
   let life: PersonalRecord | null = null;
   for (const m of playerMaps) {
-    const g = gaps(deaths(m), openOf(m));
+    const g = gaps(deaths(m), openOf(m), filter === null);
     const longest = g.length === 0 ? 0 : Math.max(...g);
     if (longest > (life?.value ?? 0)) life = { ...mapRef(m), key: "longestLife", label: "Longest life", value: longest };
   }
