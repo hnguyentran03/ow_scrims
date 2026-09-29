@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { Stat } from "@/components/stat";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
-import { formatDuration, formatPct, formatPer10, formatSeconds } from "@/lib/format";
+import { formatDuration, formatInt, formatPct, formatPer10, formatSeconds } from "@/lib/format";
 import { parseHero, parseRange, type SearchParams } from "@/lib/range";
 import { BEST_PERFORMANCE_MIN_SECONDS, buildPlayerPage, playerHeroes, resolvePlayerName, type BestPerformance, type HeroCount, type MethodCount, type PlayerCards } from "@/lib/stats/player";
+import { MIN_PROFILE_MAPS, type PersonalRecord, type ProfileCards } from "@/lib/stats/player-cards";
 import { Card } from "@/components/card";
 import { Empty } from "../../empty";
 import { EmptyRange } from "../../empty-range";
@@ -22,7 +23,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
   const { name: raw } = await params;
   const query = await searchParams;
   const range = parseRange(query);
-  const rows = await getTeamRows(await getDb(), range, { playerStats: true, kills: true, ults: true, charged: true });
+  const rows = await getTeamRows(await getDb(), range, { playerStats: true, kills: true, ults: true, charged: true, rounds: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const name = resolvePlayerName(rows.maps, rows.playerStats, raw);
   if (name === undefined) notFound();
@@ -61,6 +62,12 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
       </div>
 
       <Cards c={p.cards} />
+
+      <Profile profile={p.profile} />
+
+      <Card title="Personal records" note="Best single map in range; longest life is the longest gap between deaths">
+        <Records rows={p.profile.records} />
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Most played heroes">
@@ -169,5 +176,45 @@ function HeroList({ rows }: { rows: HeroCount[] }) {
         <li key={r.hero} className="flex justify-between gap-2"><span>{r.hero}</span><span>{r.count}</span></li>
       ))}
     </ul>
+  );
+}
+
+const needMaps = `Needs ${MIN_PROFILE_MAPS} maps in range`;
+const one = (v: number) => v.toFixed(1);
+
+function Profile({ profile: pr }: { profile: ProfileCards }) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-4">
+      <Stat label="MVP score" value={pr.mvp.score === null ? "–" : String(Math.round(pr.mvp.score))} hint={pr.mvp.score === null ? needMaps : `MVP on ${pr.mvp.mvpCount} of ${pr.mvp.maps} maps; 100 is the role average`} />
+      <Stat label="Deadlift share" value={formatPct(pr.deadlift?.meanShare ?? null)} hint={pr.deadlift ? `best ${formatPct(pr.deadlift.best.share)} on ${pr.deadlift.best.mapName}` : needMaps} />
+      <Stat label="Final-blow drought" value={formatSeconds(pr.drought?.longestSeconds ?? null)} hint={pr.drought ? `longest on ${pr.drought.longestMap.mapName}; mean ${formatSeconds(pr.drought.meanSeconds)}` : "No final blows in range"} />
+      <Stat label="Play style" value={pr.playStyle?.sentence ?? "–"} hint={pr.playStyle ? `aggression ${one(pr.playStyle.aggression)}, survival ${one(pr.playStyle.survival)}, output ${one(pr.playStyle.output)} vs role` : needMaps} />
+    </div>
+  );
+}
+
+const RECORD_VALUE: Record<PersonalRecord["key"], (v: number) => string> = {
+  finalBlows: String, eliminations: String, heroDamage: formatInt, healing: formatInt, damageBlocked: formatInt,
+  multikillBest: String, soloKills: String, objectiveKills: String, longestLife: (v) => formatDuration(v),
+};
+
+function Records({ rows }: { rows: PersonalRecord[] }) {
+  if (rows.length === 0) return <Empty />;
+  return (
+    <table className="w-full text-sm">
+      <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
+        <tr><th className="py-1">Record</th><th>Value</th><th>Map</th><th>Date</th></tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.key} className="border-t border-zinc-800 tabular-nums">
+            <td className="py-1">{r.label}</td>
+            <td>{RECORD_VALUE[r.key](r.value)}</td>
+            <td><Link href={`/scrims/${r.scrimId}/maps/${r.mapId}`} className="hover:underline">{r.mapName}</Link></td>
+            <td className="text-zinc-400">{r.scrimDate}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

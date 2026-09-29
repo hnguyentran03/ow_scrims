@@ -2,6 +2,7 @@ import { nameCandidates } from "@/lib/player-name";
 import { groupFights, killKind, type KillLike } from "./fights";
 import { ROLE_ORDER, roleOf, type Role } from "./heroes";
 import { per10, type PlayerStatLike } from "./overview";
+import { buildProfileCards, type ProfileCards, type RoundRowLike } from "./player-cards";
 import { sides } from "./sides";
 import { groupByMap, outcome, ourRowsByMap, rate, type MapKeyed, type StatLike, type TeamMapLike } from "./team-rows";
 import { winRateByMap, winRateByType, type MapRecord, type TypeRecord } from "./trends";
@@ -36,6 +37,7 @@ export interface PlayerRows {
   ultStarts: UltRowLike[];
   ultEnds: UltRowLike[];
   ultCharged: UltRowLike[];
+  roundStarts: RoundRowLike[];
 }
 
 export interface PlayerOverview {
@@ -133,6 +135,7 @@ export interface PlayerPage {
   finalBlowsOnMost: HeroCount[];
   chart: ChartPoint[];
   cards: PlayerCards;
+  profile: ProfileCards;
 }
 
 /** Sum of each chart stat over `rows`, per 10 minutes of their combined hero time. */
@@ -295,5 +298,6 @@ export function buildPlayerPage(maps: TeamMapLike[], rows: PlayerRows, name: str
     finalBlowsOnMost: topCounts(blowsOn, MATCHUP_LIMIT),
     chart,
     cards: buildCards(playerMaps, rows, name, filter, attackedBy, victimIs),
+    profile: buildProfileCards(maps, rows, name, filter),
   };
 }
