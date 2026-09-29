@@ -6,7 +6,7 @@ import { getTeamRows } from "@/lib/db/queries";
 import { formatDuration, formatInt, formatPct, formatPer10, formatSeconds } from "@/lib/format";
 import { parseHero, parseRange, type SearchParams } from "@/lib/range";
 import { BEST_PERFORMANCE_MIN_SECONDS, buildPlayerPage, playerHeroes, resolvePlayerName, type BestPerformance, type HeroCount, type MethodCount, type PlayerCards } from "@/lib/stats/player";
-import { MIN_PROFILE_MAPS, type PersonalRecord, type ProfileCards } from "@/lib/stats/player-cards";
+import { MIN_PROFILE_MAPS, MIN_PROFILE_SECONDS, type PersonalRecord, type ProfileCards } from "@/lib/stats/player-cards";
 import { Card } from "@/components/card";
 import { Empty } from "../../empty";
 import { EmptyRange } from "../../empty-range";
@@ -63,7 +63,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
 
       <Cards c={p.cards} />
 
-      <Profile profile={p.profile} />
+      <Profile profile={p.profile} hero={p.hero} />
 
       <Card title="Personal records" note="Best single map in range; longest life is the longest gap between deaths on a map, counted from the round start; a map with no deaths is skipped">
         <Records rows={p.profile.records} />
@@ -180,15 +180,17 @@ function HeroList({ rows }: { rows: HeroCount[] }) {
 }
 
 const needMaps = `Needs ${MIN_PROFILE_MAPS} maps in range`;
+const needRatedMaps = `Needs ${MIN_PROFILE_MAPS} maps with at least ${MIN_PROFILE_SECONDS / 60} minutes played`;
 const one = (v: number) => v.toFixed(1);
 
-function Profile({ profile: pr }: { profile: ProfileCards }) {
+function Profile({ profile: pr, hero }: { profile: ProfileCards; hero: string | null }) {
+  const droughtScope = hero === null ? "" : `; gaps between ${hero} final blows only`;
   return (
     <div className="grid gap-3 sm:grid-cols-4">
-      <Stat label="MVP score" value={pr.mvp.score === null ? "–" : String(Math.round(pr.mvp.score))} hint={pr.mvp.score === null ? needMaps : `MVP on ${pr.mvp.mvpCount} of ${pr.mvp.maps} maps; 100 is the role average`} />
+      <Stat label="MVP score" value={pr.mvp.score === null ? "–" : String(Math.round(pr.mvp.score))} hint={pr.mvp.score === null ? needRatedMaps : `MVP on ${pr.mvp.mvpCount} of ${pr.mvp.maps} maps; 100 is the role average`} />
       <Stat label="Deadlift share" value={formatPct(pr.deadlift?.meanShare ?? null)} hint={pr.deadlift ? `best ${formatPct(pr.deadlift.best.share)} of our hero damage on ${pr.deadlift.best.mapName}` : needMaps} />
-      <Stat label="Final-blow drought" value={formatSeconds(pr.drought?.longestSeconds ?? null)} hint={pr.drought ? `longest on ${pr.drought.longestMap.mapName}; mean ${formatSeconds(pr.drought.meanSeconds)}` : "No final blows in range"} />
-      <Stat label="Play style" value={pr.playStyle?.sentence ?? "–"} hint={pr.playStyle ? `aggression ${one(pr.playStyle.aggression)}, survival ${one(pr.playStyle.survival)}, output ${one(pr.playStyle.output)} vs role` : needMaps} />
+      <Stat label="Final-blow drought" value={formatSeconds(pr.drought?.longestSeconds ?? null)} hint={pr.drought ? `longest on ${pr.drought.longestMap.mapName}; mean ${formatSeconds(pr.drought.meanSeconds)}${droughtScope}` : "No final blows in range"} />
+      <Stat label="Play style" value={pr.playStyle?.sentence ?? "–"} hint={pr.playStyle ? `aggression ${one(pr.playStyle.aggression)}, survival ${one(pr.playStyle.survival)}, output ${one(pr.playStyle.output)} vs role` : needRatedMaps} />
     </div>
   );
 }

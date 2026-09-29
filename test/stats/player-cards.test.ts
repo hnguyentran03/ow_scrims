@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  MIN_PROFILE_MAPS, MVP_STATS, PLAYSTYLE_BAND, band, buildProfileCards, mainRole, mvpMapScore, ratioOf, roleReference, type ProfileRows,
+  MIN_PROFILE_MAPS, MIN_PROFILE_SECONDS, MVP_STATS, PLAYSTYLE_BAND, band, buildProfileCards, mainRole, mvpMapScore, ratioOf, roleReference, type ProfileRows,
 } from "@/lib/stats/player-cards";
 import type { KillLike } from "@/lib/stats/fights";
 import type { MapKeyed, StatLike, TeamMapLike } from "@/lib/stats/team-rows";
@@ -228,5 +228,33 @@ describe("hero filter and multi-hero teammate", () => {
     expect(filtered.records.find((r) => r.key === "heroDamage")).toMatchObject({ value: 6000 });
     // Only the internal 20-second gap counts; the 195-second gap from the round start is dropped.
     expect(filtered.drought).toEqual({ longestSeconds: 20, longestMap: { mapId: 103, scrimId: 9, mapName: "Map 103", scrimDate: "2026-09-19" }, meanSeconds: 20 });
+  });
+});
+
+describe("minimum hero time per map", () => {
+  // Map 4: p1 plays Ana for 45 s with inflated numbers (7 final blows), and lands two of them.
+  const stint = stat(4, "A", "p1", "Ana", { eliminations: 9, finalBlows: 7, heroDamageDealt: 3000, healingDealt: 2000, heroTimePlayed: 45 });
+  const stintKills = [kill(4, 20, "A", "p1", "B", "q1"), kill(4, 30, "A", "p1", "B", "q1")];
+  const fourMaps = [...maps, map(4, 3)];
+  const withStint: ProfileRows = { playerStats: [...playerStats, stint, stat(4, "A", "p3", "Genji")], kills: [...kills, ...stintKills], roundStarts: rows.roundStarts };
+
+  it("rates the MVP score and play style over maps with at least MIN_PROFILE_SECONDS only", () => {
+    expect(MIN_PROFILE_SECONDS).toBe(180);
+    const r = buildProfileCards(fourMaps, withStint, "p1", null);
+    expect(r.mvp.maps).toBe(3);
+    expect(r.mvp.mvpCount).toBe(1);
+    expect(r.playStyle).not.toBeNull();
+    // Two full maps plus the stint: the stint does not count toward the three rated maps, but every map played still counts for deadlift.
+    const two = buildProfileCards([maps[0], maps[1], map(4, 3)], withStint, "p1", null);
+    expect(two.mvp).toMatchObject({ score: null, maps: 2 });
+    expect(two.playStyle).toBeNull();
+    expect(two.deadlift).not.toBeNull();
+  });
+
+  it("keeps a short map for records and the drought", () => {
+    const r = buildProfileCards(fourMaps, withStint, "p1", null);
+    expect(r.records.find((x) => x.key === "finalBlows")).toMatchObject({ value: 7, mapId: 4 });
+    // Map 4 has no round start, so its blows at 20 and 30 add gaps 20 and 10 to the four from maps 1 and 3.
+    expect(r.drought?.meanSeconds).toBeCloseTo((20 + 20 + 60 + 100 + 20 + 10) / 6, 10);
   });
 });
