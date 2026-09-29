@@ -18,7 +18,7 @@ const kill = (matchTime: number, attackerTeam = "A", victimTeam = "B", mapId = 1
 const ult = (matchTime: number, playerTeam: string, playerHero: string, mapId = 1): Ult => ({ mapId, matchTime, playerTeam, playerName: `${playerTeam}-${playerHero}`, playerHero });
 const stat = (mapId: number, playerTeam: string, playerHero: string, heroTimePlayed = 600): StatLike => ({
   mapId, roundNumber: 1, playerTeam, playerName: `${playerTeam}-${playerHero}`, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0,
-  damageTaken: 0, damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, heroTimePlayed,
+  damageTaken: 0, damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed,
 });
 
 // Five fights: 1 [10,12] A wins 2-0; 2 [40,44] B wins 2-1; 3 [100,102] draw; 4 [200] A wins; 5 [300] B wins.

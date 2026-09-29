@@ -15,6 +15,9 @@ export interface PlayerStatLike {
   damageBlocked: number;
   ultimatesEarned: number;
   ultimatesUsed: number;
+  multikillBest: number;
+  soloKills: number;
+  objectiveKills: number;
   heroTimePlayed: number;
 }
 

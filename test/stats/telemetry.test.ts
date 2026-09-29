@@ -7,7 +7,7 @@ import { parseLog } from "@/lib/parser/parse";
 const map = { team1Name: "Team 1", team2Name: "Team 2", ourSide: 1 };
 const stat = (playerTeam: string, playerName: string, playerHero: string, extra: Partial<PlayerStatLike> = {}): PlayerStatLike => ({
   roundNumber: 1, playerTeam, playerName, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0,
-  damageTaken: 0, damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, heroTimePlayed: 600, ...extra,
+  damageTaken: 0, damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed: 600, ...extra,
 });
 const dmg = (attackerTeam: string, attackerName: string, attackerHero: string, victimTeam: string, victimName: string, victimHero: string, eventDamage: number): DamageLike => ({
   attackerTeam, attackerName, attackerHero, victimTeam, victimName, victimHero, eventDamage,
