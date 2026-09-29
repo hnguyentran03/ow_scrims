@@ -71,8 +71,17 @@ export function buildAbilityImpact(maps: TeamMapLike[], kills: (KillLike & MapKe
         const k = key(r.playerHero, r.slot);
         byKey.set(k, [...(byKey.get(k) ?? []), r]);
       }
-      for (const [k, uses] of byKey) {
-        const a = acc[side].get(k) ?? newAcc(uses[0].playerHero, uses[0].slot);
+      // Every (hero, slot) with a use this map, plus every slot of every hero this side played this map
+      // (even with zero uses), so a played hero's fights still land in `without` on a map with no uses.
+      const heroSlots = new Map<string, { hero: string; slot: 1 | 2 }>();
+      for (const [k, uses] of byKey) heroSlots.set(k, { hero: uses[0].playerHero, slot: uses[0].slot });
+      for (const hero of played) {
+        heroSlots.set(key(hero, 1), { hero, slot: 1 });
+        heroSlots.set(key(hero, 2), { hero, slot: 2 });
+      }
+      for (const [k, { hero, slot }] of heroSlots) {
+        const uses = byKey.get(k) ?? [];
+        const a = acc[side].get(k) ?? newAcc(hero, slot);
         a.uses += uses.length;
         const perFight = new Map<number, number>();
         for (const u of uses) if (u.fightIndex !== null) perFight.set(u.fightIndex, (perFight.get(u.fightIndex) ?? 0) + 1);
@@ -91,6 +100,7 @@ export function buildAbilityImpact(maps: TeamMapLike[], kills: (KillLike & MapKe
 
   const rows = (m: Map<string, Acc>): AbilityImpactRow[] =>
     [...m.values()]
+      .filter((a) => a.uses > 0)
       .map((a) => ({
         hero: a.hero, slot: a.slot, ability: abilityName(a.hero, a.slot), uses: a.uses,
         perFightWon: a.wonFights >= MIN_ABILITY_FIGHTS ? a.wonUses / a.wonFights : null,
