@@ -28,7 +28,7 @@ const crossfade = [
   ...[500, 600, 700].map((t) => ability(t, "A", "Lúcio", 1)),
   ability(2000, "A", "Lúcio", 1),
 ];
-const others = [ability(0, "A", "Emre", 2), ability(100, "A", "0", 1), ability(500, "B", "Zarya", 2), ability(9999, "C", "Ana", 1)];
+const others = [ability(0, "A", "Nobody", 2), ability(100, "A", "0", 1), ability(500, "B", "Zarya", 2), ability(9999, "C", "Ana", 1)];
 
 describe("buildAbilityImpact", () => {
   const { ours, theirs, hasAbilities } = buildAbilityImpact([map(1)], ten, [...crossfade, ...others], stats);
@@ -43,11 +43,11 @@ describe("buildAbilityImpact", () => {
   });
 
   it("names unknown and censored heroes by slot, keeps them in with only, and drops a team that is not on the map", () => {
-    expect(ours.map((r) => [r.hero, r.slot, r.ability, r.uses])).toEqual([["Lúcio", 1, "Crossfade", 14], ["0", 1, "Ability 1", 1], ["Emre", 2, "Ability 2", 1]]);
-    const emre = ours[2];
-    expect(emre.with).toEqual({ count: 1, decided: 1, won: 1, rate: 1 });
-    expect(emre.without).toEqual({ count: 0, decided: 0, won: 0, rate: null });
-    expect(emre.perFightWon).toBeNull();
+    expect(ours.map((r) => [r.hero, r.slot, r.ability, r.uses])).toEqual([["Lúcio", 1, "Crossfade", 14], ["0", 1, "Ability 1", 1], ["Nobody", 2, "Ability 2", 1]]);
+    const nobody = ours[2];
+    expect(nobody.with).toEqual({ count: 1, decided: 1, won: 1, rate: 1 });
+    expect(nobody.without).toEqual({ count: 0, decided: 0, won: 0, rate: null });
+    expect(nobody.perFightWon).toBeNull();
     expect(theirs.map((r) => [r.hero, r.ability])).toEqual([["Zarya", "Projected Barrier"]]);
     expect(theirs[0].without).toEqual({ count: 9, decided: 9, won: 4, rate: 4 / 9 });
   });

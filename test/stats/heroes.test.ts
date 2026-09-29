@@ -7,6 +7,11 @@ describe("roleOf", () => {
     expect(roleOf("Soldier: 76")).toBe("Damage");
     expect(roleOf("Lúcio")).toBe("Support");
     expect(roleOf("Domina")).toBe("Tank");
+    expect(roleOf("D.Mon")).toBe("Tank");
+    expect(roleOf("Anran")).toBe("Damage");
+    expect(roleOf("Shion")).toBe("Damage");
+    expect(roleOf("Jetpack Cat")).toBe("Support");
+    expect(roleOf("Mizuki")).toBe("Support");
   });
   it("falls back to Unknown, which sorts last", () => {
     expect(roleOf("Vendetta")).toBe("Damage");
@@ -22,21 +27,22 @@ describe("HEROES", () => {
     expect(HEROES.every((h) => roleOf(h) !== "Unknown")).toBe(true);
     const roles = HEROES.map((h) => ROLE_ORDER.indexOf(roleOf(h)));
     expect([...roles].sort((a, b) => a - b)).toEqual(roles);
-    expect(HEROES[0]).toBe("D.Va");
+    expect(HEROES[0]).toBe("D.Mon");
+    expect(HEROES).toHaveLength(53);
   });
 });
 
 describe("HERO_ABILITIES", () => {
-  it("names only heroes that have a role, in Shift then E order", () => {
-    for (const hero of Object.keys(HERO_ABILITIES)) expect(roleOf(hero)).not.toBe("Unknown");
+  it("names every hero that has a role, in Shift then E order", () => {
+    expect(Object.keys(HERO_ABILITIES).sort()).toEqual([...HEROES].sort());
     expect(HERO_ABILITIES.Tracer).toEqual(["Blink", "Recall"]);
     expect(HERO_ABILITIES.Kiriko).toEqual(["Swift Step", "Protection Suzu"]);
   });
   it("falls back to the slot label for an unnamed hero and for a censored hero", () => {
     expect(abilityName("Tracer", 1)).toBe("Blink");
     expect(abilityName("Tracer", 2)).toBe("Recall");
-    expect(abilityName("Wrecking Ball", 1)).toBe("Ability 1");
+    expect(abilityName("Jetpack Cat", 1)).toBe("Lifeline");
+    expect(abilityName("Nobody", 1)).toBe("Ability 1");
     expect(abilityName("0", 2)).toBe("Ability 2");
-    expect(abilityName("Emre", 1)).toBe("Ability 1");
   });
 });
