@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import { getReplayRows } from "@/lib/db/queries";
+import { getMapImages, getReplayRows } from "@/lib/db/queries";
 import { REPLAY_ENABLED } from "@/lib/flags";
+import { calibratedImages } from "@/lib/map-images";
 import type { SearchParams } from "@/lib/range";
 import { parseTimeParam } from "@/lib/stats/playback";
 import { buildReplay } from "@/lib/stats/replay";
@@ -13,7 +14,8 @@ export default async function ReplayPage({ params, searchParams }: { params: Map
   if (!REPLAY_ENABLED) notFound();
   const { db, map, sides } = await loadMap(params);
   const rows = await getReplayRows(db, map.id);
-  const replay = buildReplay({ map, sides, rows, images: [] });
+  const images = calibratedImages(await getMapImages(db, map.mapName));
+  const replay = buildReplay({ map, sides, rows, images });
   const initialTime = parseTimeParam((await searchParams).t, replay.durationSeconds);
   return <ReplayPanel replay={replay} sides={sides} mapName={map.mapName} initialTime={initialTime} />;
 }
