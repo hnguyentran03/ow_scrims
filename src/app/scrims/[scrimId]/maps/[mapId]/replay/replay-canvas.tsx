@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { TEAM_COLORS } from "@/lib/colors";
 import { heroAbbrev } from "@/lib/hero-abbrev";
+import { stageHref } from "@/lib/map-images-href";
 import { applyAffine, PLANE_SIZE, type Affine } from "@/lib/stats/calibration";
 import { heroAt, positionAt } from "@/lib/stats/playback";
 import type { Replay, ReplayStage } from "@/lib/stats/replay";
@@ -68,7 +70,11 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, children }: { re
           </g>
         )}
       </StageCanvas>
-      {!stage.image && <p className="text-xs text-zinc-500">No calibrated image for {stage.label} yet. Positions are drawn on a plane fitted to this round.</p>}
+      {!stage.image && (
+        <p className="text-xs text-zinc-500">
+          No calibrated image for {stage.label} yet — <Link href={stageHref(mapName, stage.stage)} className="underline">set one up under Maps</Link>. Positions are drawn on a plane fitted to this round.
+        </p>
+      )}
     </div>
   );
 }

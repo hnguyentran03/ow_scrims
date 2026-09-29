@@ -19,12 +19,12 @@ describe("schema", () => {
     }
   });
 
-  it("migrates an in-memory database with 30 public tables", async () => {
+  it("migrates an in-memory database with 31 public tables", async () => {
     const db = await createTestDb();
     const result = (await db.execute(sql`select count(*)::int as n from information_schema.tables where table_schema = 'public'`)) as unknown as {
       rows: Array<{ n: number }>;
     };
-    expect(result.rows[0].n).toBe(30);
+    expect(result.rows[0].n).toBe(31);
     expect(getTableColumns(scrims).opponentName.name).toBe("opponent_name");
     expect(getTableColumns(maps).ourSide.name).toBe("our_side");
   });
