@@ -53,6 +53,42 @@ export function fitBounds(points: Array<{ x: number; z: number }>, padding = 0.1
   return { a: scale, b: 0, c: half - scale * cx, d: 0, e: -scale, f: half + scale * cz };
 }
 
+/** Cramer's rule for a 3×3 system; null when singular. */
+function solve3(m: number[][], rhs: number[]): [number, number, number] | null {
+  const det = (a: number[][]) => a[0][0] * (a[1][1] * a[2][2] - a[1][2] * a[2][1]) - a[0][1] * (a[1][0] * a[2][2] - a[1][2] * a[2][0]) + a[0][2] * (a[1][0] * a[2][1] - a[1][1] * a[2][0]);
+  const d = det(m);
+  if (Math.abs(d) < 1e-9) return null;
+  const col = (i: number) => m.map((row, r) => row.map((v, c) => (c === i ? rhs[r] : v)));
+  return [det(col(0)) / d, det(col(1)) / d, det(col(2)) / d];
+}
+
+/** True when every world point lies on one line (within a small area tolerance), which makes the fit singular. */
+function collinear(points: Array<{ x: number; z: number }>): boolean {
+  const [p0, p1] = points;
+  return points.every((p) => Math.abs((p1.x - p0.x) * (p.z - p0.z) - (p1.z - p0.z) * (p.x - p0.x)) < 1e-6);
+}
+
+/**
+ * Least-squares affine from three or more (world, image) pairs. The six unknowns split into two independent
+ * 3×3 normal-equation systems, one for px = a·x + b·z + c and one for py = d·x + e·z + f.
+ */
+export function solveAffine(pairs: Pair[]): Affine | null {
+  if (pairs.length < 3 || collinear(pairs.map((p) => p.world))) return null;
+  let sxx = 0, sxz = 0, sx = 0, szz = 0, sz = 0;
+  const rx = [0, 0, 0];
+  const ry = [0, 0, 0];
+  for (const { world: w, image: i } of pairs) {
+    sxx += w.x * w.x; sxz += w.x * w.z; sx += w.x; szz += w.z * w.z; sz += w.z;
+    rx[0] += w.x * i.px; rx[1] += w.z * i.px; rx[2] += i.px;
+    ry[0] += w.x * i.py; ry[1] += w.z * i.py; ry[2] += i.py;
+  }
+  const normal = [[sxx, sxz, sx], [sxz, szz, sz], [sx, sz, pairs.length]];
+  const abc = solve3(normal, rx);
+  const def = solve3(normal, ry);
+  if (!abc || !def) return null;
+  return { a: abc[0], b: abc[1], c: abc[2], d: def[0], e: def[1], f: def[2] };
+}
+
 export interface Calibration {
   pairs: Pair[];
   affine: Affine;

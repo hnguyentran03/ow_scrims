@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyAffine, fitBounds, invertAffine, parseCalibration, PLANE_SIZE, type Affine } from "@/lib/stats/calibration";
+import { applyAffine, fitBounds, invertAffine, parseCalibration, solveAffine, PLANE_SIZE, type Affine, type Pair } from "@/lib/stats/calibration";
 
 const near = (got: { px: number; py: number }, px: number, py: number) => {
   expect(got.px).toBeCloseTo(px, 6);
@@ -43,6 +43,37 @@ describe("fitBounds", () => {
   it("centres a single point and an empty set", () => {
     near(applyAffine(fitBounds([{ x: 7, z: -3 }]), { x: 7, z: -3 }), 500, 500);
     near(applyAffine(fitBounds([]), { x: 0, z: 0 }), 500, 500);
+  });
+});
+
+describe("solveAffine", () => {
+  const truth: Affine = { a: 3, b: -1, c: 200, d: 0.5, e: -3, f: 900 };
+  const pair = (x: number, z: number, noise = 0): Pair => {
+    const { px, py } = applyAffine(truth, { x, z });
+    return { world: { x, z }, image: { px: px + noise, py: py - noise } };
+  };
+  const close = (got: Affine | null, want: Affine, digits: number) => {
+    expect(got).not.toBeNull();
+    for (const k of ["a", "b", "c", "d", "e", "f"] as const) expect(got![k], k).toBeCloseTo(want[k], digits);
+  };
+
+  it("recovers a transform exactly from three pairs, including a mirrored one", () => {
+    close(solveAffine([pair(0, 0), pair(50, 10), pair(-20, 40)]), truth, 6);
+    const mirrored: Affine = { a: -2, b: 0, c: 500, d: 0, e: 2, f: 100 };
+    const p = (x: number, z: number): Pair => ({ world: { x, z }, image: applyAffine(mirrored, { x, z }) });
+    close(solveAffine([p(1, 1), p(10, 3), p(4, 9)]), mirrored, 6);
+  });
+
+  it("fits four noisy pairs in least squares", () => {
+    const got = solveAffine([pair(0, 0, 0.5), pair(50, 10, -0.5), pair(-20, 40, 0.5), pair(30, -30, -0.5)])!;
+    expect(got).not.toBeNull();
+    for (const k of ["a", "b", "d", "e"] as const) expect(Math.abs(got[k] - truth[k]), k).toBeLessThan(0.05);
+    for (const k of ["c", "f"] as const) expect(Math.abs(got[k] - truth[k]), k).toBeLessThan(2);
+  });
+
+  it("returns null with fewer than three pairs or collinear world points", () => {
+    expect(solveAffine([pair(0, 0), pair(1, 1)])).toBeNull();
+    expect(solveAffine([pair(0, 0), pair(1, 1), pair(2, 2), pair(3, 3)])).toBeNull();
   });
 });
 
