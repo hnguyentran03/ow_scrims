@@ -6,6 +6,7 @@ import { getDb } from "@/lib/db";
 import { createScrim, deleteMap, deleteScrim, getMap, getReplayRows, setMapBans, setMapWinner } from "@/lib/db/queries";
 import { parseBanInput } from "@/lib/bans";
 import { ghostFrom, type Ghost } from "@/lib/ghost";
+import { REPLAY_ENABLED } from "@/lib/flags";
 import { deleteRawLog } from "@/lib/logs";
 import { buildReplay } from "@/lib/stats/replay";
 import { sides } from "@/lib/stats/sides";
@@ -66,6 +67,8 @@ export async function setMapBansAction(scrimId: number, mapId: number, side: 1 |
 
 /** A ghost overlay source: another window of the same stage on the same base map. Null for anything else, including a source window with no position samples. */
 export async function getGhostAction(input: { mapId: number; window: number; sourceMapId: number; sourceWindow: number }): Promise<Ghost | null> {
+  // Mirrors the replay page's own gate.
+  if (!REPLAY_ENABLED) return null;
   const mapId = requireId(input.mapId);
   const sourceMapId = requireId(input.sourceMapId);
   if (!Number.isInteger(input.window) || !Number.isInteger(input.sourceWindow) || input.window < 0 || input.sourceWindow < 0) return null;
