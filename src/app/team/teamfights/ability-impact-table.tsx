@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { formatPct } from "@/lib/format";
 import type { AbilityImpactRow } from "@/lib/stats/ability-impact";
 import type { SideKey } from "@/lib/stats/sides";
 import { SideToggle } from "../side-toggle";
-import { lift } from "./ult-impact-table";
+import { lift, winLoss } from "./ult-impact-table";
 
 const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
 
@@ -21,7 +20,7 @@ export function AbilityImpactTable({ ours, theirs, hasAbilities }: { ours: Abili
       ) : (
         <table className="w-full text-sm">
           <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-            <tr><th className="py-1">Hero</th><th>Ability</th><th>Uses</th><th>Per fight won</th><th>Per fight lost</th><th>With %</th><th>Without %</th><th>Lift</th></tr>
+            <tr><th className="py-1">Hero</th><th>Ability</th><th>Uses</th><th>Per fight won</th><th>Per fight lost</th><th>With</th><th>Without</th><th>Lift</th></tr>
           </thead>
           <tbody>
             {rows.map((r) => (
@@ -31,8 +30,8 @@ export function AbilityImpactTable({ ours, theirs, hasAbilities }: { ours: Abili
                 <td>{r.uses}</td>
                 <td>{two(r.perFightWon)}</td>
                 <td>{two(r.perFightLost)}</td>
-                <td>{formatPct(r.with.rate)}</td>
-                <td>{formatPct(r.without.rate)}</td>
+                <td>{winLoss(r.with)}</td>
+                <td>{winLoss(r.without)}</td>
                 <td>{lift(r.lift)}</td>
               </tr>
             ))}

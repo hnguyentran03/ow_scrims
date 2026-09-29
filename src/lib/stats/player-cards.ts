@@ -7,6 +7,12 @@ import { finalsByMap, groupByMap, ourRowsByMap, type MapKeyed, type StatLike, ty
 
 /** MVP score, deadlift share, and play style need this many maps in range. */
 export const MIN_PROFILE_MAPS = 3;
+/**
+ * A map counts toward the MVP score and play style only when the player has this much hero time on it
+ * (on the filtered hero under a hero filter), so a short stint's per-10 numbers cannot inflate them.
+ * Same floor as the best-performance card. Deadlift, drought, and records use every map played.
+ */
+export const MIN_PROFILE_SECONDS = 180;
 /** A play-style ratio within ±PLAYSTYLE_BAND of 1 is "even". */
 export const PLAYSTYLE_BAND = 0.1;
 
@@ -39,8 +45,9 @@ export interface MapRef {
 }
 
 export interface MvpScore {
-  /** Mean map score; null below MIN_PROFILE_MAPS. */
+  /** Mean map score over the rated maps; null below MIN_PROFILE_MAPS rated maps. */
   score: number | null;
+  /** Maps with at least MIN_PROFILE_SECONDS of hero time. */
   maps: number;
   /** Maps where the player's score was at least every teammate's. */
   mvpCount: number;
@@ -181,13 +188,16 @@ const gaps = (times: number[], open: number, includeOpen: boolean): number[] => 
 export function buildProfileCards(maps: TeamMapLike[], rows: ProfileRows, name: string, filter: string | null): ProfileCards {
   const byMap = ourRowsByMap(maps, rows.playerStats, name, filter);
   const playerMaps = maps.filter((m) => byMap.has(m.id));
-  const playerRows = playerMaps.flatMap((m) => byMap.get(m.id) ?? []);
+  const timeOn = (m: TeamMapLike) => sum(byMap.get(m.id) ?? [], "heroTimePlayed");
+  const ratedMaps = playerMaps.filter((m) => timeOn(m) >= MIN_PROFILE_SECONDS);
+  const ratedRows = ratedMaps.flatMap((m) => byMap.get(m.id) ?? []);
   const ref = roleReference(maps, rows.playerStats);
   const finals = finalsByMap(rows.playerStats);
   const killsBy = groupByMap(rows.kills);
   const roundsBy = groupByMap(rows.roundStarts);
-  const role = filter === null ? mainRole(playerRows) : roleOf(filter);
+  const role = filter === null ? mainRole(ratedRows) : roleOf(filter);
   const enough = playerMaps.length >= MIN_PROFILE_MAPS;
+  const enoughRated = ratedMaps.length >= MIN_PROFILE_MAPS;
   const mapRef = (m: TeamMapLike): MapRef => ({ mapId: m.id, scrimId: m.scrimId, mapName: m.mapName, scrimDate: m.scrimDate });
   const openOf = (m: TeamMapLike) => dedupeRounds(roundsBy.get(m.id) ?? [])[0]?.matchTime ?? 0;
   const blows = (m: TeamMapLike) => {
@@ -201,10 +211,10 @@ export function buildProfileCards(maps: TeamMapLike[], rows: ProfileRows, name: 
     return (killsBy.get(m.id) ?? []).filter((k) => k.victimTeam === ours && k.victimName === name && (filter === null || k.victimHero === filter)).map((k) => k.matchTime).sort((a, b) => a - b);
   };
 
-  // MVP score: the player's map score against every teammate's, both scored on their own main role for that map.
+  // MVP score over the rated maps: the player's map score against every teammate's, both scored on their own main role for that map.
   const scores: number[] = [];
   let mvpCount = 0;
-  for (const m of playerMaps) {
+  for (const m of ratedMaps) {
     const ours = sides(m).ours;
     const mapRole = filter === null ? mainRole(byMap.get(m.id) ?? []) : roleOf(filter);
     const mine = mvpMapScore(byMap.get(m.id) ?? [], mapRole, ref);
@@ -217,7 +227,7 @@ export function buildProfileCards(maps: TeamMapLike[], rows: ProfileRows, name: 
     const best = Math.max(0, ...[...teammates.values()].map((t) => mvpMapScore(t, mainRole(t), ref)));
     if (mine >= best) mvpCount += 1;
   }
-  const mvp: MvpScore = { score: enough ? mean(scores) : null, maps: playerMaps.length, mvpCount };
+  const mvp: MvpScore = { score: enoughRated ? mean(scores) : null, maps: ratedMaps.length, mvpCount };
 
   // Deadlift: share of our side's hero damage per map.
   const shares: Array<{ share: number; map: TeamMapLike }> = [];
@@ -261,15 +271,15 @@ export function buildProfileCards(maps: TeamMapLike[], rows: ProfileRows, name: 
   }
   if (life) records.push(life);
 
-  // Play style: three ratios to the role reference over every map in range.
-  const p = per10Of(playerRows);
+  // Play style: three ratios to the role reference over the rated maps.
+  const p = per10Of(ratedRows);
   const r = ref[role];
   const outputKey: MvpKey = role === "Support" ? "healingDealt" : "heroDamageDealt";
   const aggression = ratioOf(p.finalBlows + p.eliminations, r.finalBlows + r.eliminations);
   const survival = ratioOf(p.deaths, r.deaths, true);
   const output = ratioOf(p[outputKey], r[outputKey]);
   const bands = { aggression: band(aggression), survival: band(survival), output: band(output) };
-  const playStyle: PlayStyle | null = enough
+  const playStyle: PlayStyle | null = enoughRated
     ? { aggression, survival, output, bands, sentence: `${WORDS.aggression[bands.aggression]}, ${WORDS.survival[bands.survival]}, ${WORDS.output[bands.output]}` }
     : null;
 

@@ -198,7 +198,8 @@ describe("buildPlayerPage", () => {
     expect(p.profile.mvp.score).not.toBeNull();
     // p1's first counted final blow on map 1 is at t=10, measured from the round start at 5.
     expect(p.profile.drought?.longestSeconds).toBeGreaterThanOrEqual(5);
-    expect(genji.profile.mvp.maps).toBe(2);
+    // p1's Genji maps: 5 s on map 2 (under MIN_PROFILE_SECONDS, not rated) and 295 s on map 3.
+    expect(genji.profile.mvp.maps).toBe(1);
     expect(genji.profile.mvp.score).toBeNull();
     expect(buildPlayerPage(maps, rows, "nobody").profile).toEqual({ mvp: { score: null, maps: 0, mvpCount: 0 }, deadlift: null, drought: null, records: [], playStyle: null });
   });
