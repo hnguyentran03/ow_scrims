@@ -1,4 +1,4 @@
-const INT4_MAX = 2147483647;
+export const INT4_MAX = 2147483647;
 
 /** A URL segment as a positive int4: canonical decimal digits only, no sign, no leading zero, no whitespace. */
 export function parsePositiveInt(raw: string): number | null {

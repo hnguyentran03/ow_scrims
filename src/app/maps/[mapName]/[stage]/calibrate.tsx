@@ -27,15 +27,17 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
   const [selected, setSelected] = useState<number | null>(null);
   const [mode, setMode] = useState<Mode>("pair");
   const [error, setError] = useState<string | null>(null);
+  const [imageMissing, setImageMissing] = useState(false);
   const affine = pairs.length >= 3 ? solveAffine(pairs) : null;
   const src = `/api/map-images/${imageId}`;
   const imgRef = useRef<HTMLImageElement>(null);
 
-  // An already-loaded image (e.g. from a hard reload, where the browser starts the fetch from the
-  // SSR HTML before React attaches the load listener) never fires `onLoad` again after hydration.
+  // An already-loaded (or already-failed) image — e.g. from a hard reload, where the browser starts the fetch from
+  // the SSR HTML before React attaches the load/error listener — never fires `onLoad`/`onError` again after hydration.
   useEffect(() => {
     const el = imgRef.current;
     if (el?.complete && el.naturalWidth) setSize({ w: el.naturalWidth, h: el.naturalHeight });
+    else if (el?.complete && !el.naturalWidth) setImageMissing(true);
   }, [src]);
 
   function onClick(e: React.MouseEvent<SVGSVGElement>) {
@@ -56,6 +58,7 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
     const p = points[selected];
     setPairs([...pairs, { world: { x: p.x, z: p.z }, image: { px, py } }]);
     setSelected(null);
+    setError(null);
   }
 
   function save() {
@@ -95,7 +98,15 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
         <div className="lg:col-span-2">
           {/* The hidden img reports the intrinsic size the SVG viewBox and the saved calibration need. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img ref={imgRef} src={src} alt="" className="hidden" onLoad={(e) => setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
+          <img
+            ref={imgRef}
+            src={src}
+            alt=""
+            className="hidden"
+            onLoad={(e) => setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
+            onError={() => setImageMissing(true)}
+          />
+          {!size && imageMissing && <p className="text-sm text-red-400">The image file is missing. Upload it again.</p>}
           {size && (
             <svg viewBox={`0 0 ${size.w} ${size.h}`} className={`w-full rounded border border-zinc-800 ${selected !== null || mode === "objective" ? "cursor-crosshair" : ""}`} onClick={onClick} role="img" aria-label="Stage image">
               <image href={src} width={size.w} height={size.h} />
@@ -138,7 +149,7 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
                 {pairs.map((p, i) => (
                   <li key={i} className="flex items-center gap-2 tabular-nums">
                     <span>({p.world.x.toFixed(1)}, {p.world.z.toFixed(1)}) → ({Math.round(p.image.px)}, {Math.round(p.image.py)})</span>
-                    <button type="button" aria-label="Remove pair" onClick={() => setPairs(pairs.filter((_, j) => j !== i))} className="text-zinc-400 hover:text-zinc-100">×</button>
+                    <button type="button" aria-label="Remove pair" onClick={() => { setPairs(pairs.filter((_, j) => j !== i)); setError(null); }} className="text-zinc-400 hover:text-zinc-100">×</button>
                   </li>
                 ))}
               </ul>

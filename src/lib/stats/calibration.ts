@@ -132,3 +132,8 @@ export function parseCalibration(raw: string | null): Calibration | null {
   const objective = o.objective === null || o.objective === undefined ? null : isNum(o.objective.x) && isNum(o.objective.z) ? { x: o.objective.x, z: o.objective.z } : null;
   return { pairs: o.pairs.map((p) => ({ world: { x: p.world.x, z: p.world.z }, image: { px: p.image.px, py: p.image.py } })), affine: { a: o.affine.a, b: o.affine.b, c: o.affine.c, d: o.affine.d, e: o.affine.e, f: o.affine.f }, objective };
 }
+
+/** True when the row has a parseable calibration and a recorded image size — the one predicate for "calibrated" everywhere. */
+export function isCalibrated(row: { calibration: string | null; width: number | null; height: number | null }): boolean {
+  return parseCalibration(row.calibration) !== null && row.width !== null && row.height !== null;
+}

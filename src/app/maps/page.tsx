@@ -11,9 +11,9 @@ export default async function MapsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold">Maps</h1>
-      <p className="text-sm text-zinc-400">One top-down image per map stage, calibrated against a log with position logging on. Stages appear here once a map has been uploaded.</p>
+      <p className="text-sm text-zinc-400">One top-down image per map stage, calibrated against a log with position logging on. Stages appear here once a scrim log for that map has been uploaded.</p>
       {stages.length === 0 ? (
-        <p className="text-sm text-zinc-400">No maps uploaded yet.</p>
+        <p className="text-sm text-zinc-400">No scrim logs uploaded yet.</p>
       ) : (
         <table className="w-full text-sm">
           <thead className="text-xs uppercase tracking-wide text-zinc-500">

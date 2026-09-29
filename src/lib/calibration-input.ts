@@ -1,3 +1,4 @@
+import { INT4_MAX } from "./ids";
 import type { Pair } from "./stats/calibration";
 
 export const MAX_PAIRS = 50;
@@ -18,7 +19,7 @@ const side = (v: unknown): v is number => Number.isInteger(v) && (v as number) >
 export function parseCalibrationInput(raw: unknown): CalibrationInput | null {
   if (!raw || typeof raw !== "object") return null;
   const o = raw as Record<string, unknown>;
-  if (!Number.isInteger(o.id) || (o.id as number) <= 0) return null;
+  if (!Number.isInteger(o.id) || (o.id as number) <= 0 || (o.id as number) > INT4_MAX) return null;
   if (!side(o.width) || !side(o.height)) return null;
   if (!Array.isArray(o.pairs) || o.pairs.length < 3 || o.pairs.length > MAX_PAIRS) return null;
   const pairs: Pair[] = [];

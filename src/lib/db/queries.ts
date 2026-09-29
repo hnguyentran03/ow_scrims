@@ -5,6 +5,7 @@ import {
   objectiveUpdated, playerStat, roundEnd, roundStart, scrims, ultimateCharged, ultimateEnd, ultimateStart,
 } from "./schema";
 import type { DamageLite } from "@/lib/stats/initiation";
+import { isCalibrated } from "@/lib/stats/calibration";
 
 export type { DamageLite };
 
@@ -298,13 +299,22 @@ export async function getMapImage(db: Db, id: number): Promise<MapImageRow | nul
   return row ?? null;
 }
 
-/** Inserts an image row for the pair, replacing (and un-calibrating) any existing one. The file name is derived from the new id. */
-export async function createMapImage(db: Db, input: { mapName: string; stage: number; ext: string; contentType: string }): Promise<{ id: number; filename: string; replacedFilename: string | null }> {
+/**
+ * Inserts an image row for the pair, replacing (and un-calibrating) any existing one. The file name is derived from
+ * the new id. When given, `persist` is awaited inside the transaction after the filename update, so a failed write
+ * (e.g. disk full) rolls back the delete and insert instead of losing the previous row.
+ */
+export async function createMapImage(
+  db: Db,
+  input: { mapName: string; stage: number; ext: string; contentType: string },
+  persist?: (filename: string) => Promise<void>,
+): Promise<{ id: number; filename: string; replacedFilename: string | null }> {
   return db.transaction(async (tx) => {
     const [old] = await tx.delete(mapImages).where(and(eq(mapImages.mapName, input.mapName), eq(mapImages.stage, input.stage))).returning({ filename: mapImages.filename });
     const [inserted] = await tx.insert(mapImages).values({ mapName: input.mapName, stage: input.stage, filename: "", contentType: input.contentType }).returning({ id: mapImages.id });
     const filename = `${inserted.id}.${input.ext}`;
     await tx.update(mapImages).set({ filename }).where(eq(mapImages.id, inserted.id));
+    if (persist) await persist(filename);
     return { id: inserted.id, filename, replacedFilename: old?.filename ?? null };
   });
 }
@@ -327,7 +337,10 @@ export interface StageSeen {
   image: { id: number; calibrated: boolean } | null;
 }
 
-/** Every (base map, stage) pair any stored map has played, with its image status. The only place images can be created for. */
+/**
+ * Every (base map, stage) pair any stored map has played, with its image status. The only place images can be created for.
+ * Control and Flashpoint maps with no round rows still list stage 0, matching stageWindows' own fallback.
+ */
 export async function listStagesSeen(db: Db): Promise<StageSeen[]> {
   const mapRows = await db.select({ id: maps.id, mapName: maps.mapName, mapType: maps.mapType }).from(maps);
   const ids = mapRows.map((m) => m.id);
@@ -343,8 +356,12 @@ export async function listStagesSeen(db: Db): Promise<StageSeen[]> {
   };
   for (const m of mapRows) {
     if (m.mapType === "Control" || m.mapType === "Flashpoint") {
-      for (const s of starts) if (s.mapId === m.id) add(m, s.stage);
-      if (m.mapType === "Flashpoint") for (const u of updates) if (u.mapId === m.id) add(m, u.stage);
+      // A staged map with no deduped round-start rows (e.g. a log that ended before one) still gets a stage-0 entry,
+      // matching stageWindows' own fallback to a single stage-0 window.
+      let added = false;
+      for (const s of starts) if (s.mapId === m.id) { add(m, s.stage); added = true; }
+      if (m.mapType === "Flashpoint") for (const u of updates) if (u.mapId === m.id) { add(m, u.stage); added = true; }
+      if (!added) add(m, 0);
     } else {
       add(m, 0);
     }
@@ -352,7 +369,7 @@ export async function listStagesSeen(db: Db): Promise<StageSeen[]> {
   return [...seen.values()]
     .map(({ mapIds, ...entry }) => {
       const image = images.find((i) => i.mapName === entry.mapName && i.stage === entry.stage);
-      return { ...entry, mapsPlayed: mapIds.size, image: image ? { id: image.id, calibrated: image.calibration !== null } : null };
+      return { ...entry, mapsPlayed: mapIds.size, image: image ? { id: image.id, calibrated: isCalibrated(image) } : null };
     })
     .sort((a, b) => a.mapName.localeCompare(b.mapName) || a.stage - b.stage);
 }

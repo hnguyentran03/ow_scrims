@@ -13,6 +13,7 @@ describe("parseCalibrationInput", () => {
   it("rejects bad ids, sizes, pair counts, and non-finite numbers", () => {
     expect(parseCalibrationInput({ ...good, id: 0 })).toBeNull();
     expect(parseCalibrationInput({ ...good, id: 1.5 })).toBeNull();
+    expect(parseCalibrationInput({ ...good, id: 2147483648 })).toBeNull();
     expect(parseCalibrationInput({ ...good, width: 0 })).toBeNull();
     expect(parseCalibrationInput({ ...good, height: 16385 })).toBeNull();
     expect(parseCalibrationInput({ ...good, height: 100.5 })).toBeNull();
