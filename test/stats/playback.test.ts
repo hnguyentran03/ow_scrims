@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { heroAt, parseTimeParam, positionAt, ultStateAt } from "@/lib/stats/playback";
+import { activeKillLines, activeUltRings, ghostTime, heroAt, parseTimeParam, positionAt, ultPulse, ultStateAt } from "@/lib/stats/playback";
+import { KILL_LINE_SECONDS, ULT_RING_SECONDS } from "@/lib/stats/replay";
 import type { Segment } from "@/lib/stats/tracks";
 
 const segments: Segment[] = [
@@ -56,5 +57,39 @@ describe("ultStateAt", () => {
     expect(ultStateAt(states, ults, "A", "p", 46)).toBeNull();
     expect(ultStateAt(states, ults, "A", "p", 104)).toBe("using");
     expect(ultStateAt(states, ults, "A", "p", 106)).toBeNull();
+  });
+});
+
+describe("overlays", () => {
+  const kill = (t: number, x: number | null = 1) => ({
+    t, kind: "kill" as const, attacker: { team: "A", name: "a", hero: "Mei", x, z: 1 }, victim: { team: "B", name: "b", hero: "Ana", x: 2, z: 2 }, method: "Primary Fire",
+  });
+  it("shows a kill line for KILL_LINE_SECONDS after the kill when both ends have positions", () => {
+    expect(KILL_LINE_SECONDS).toBe(2);
+    const kills = [kill(10), kill(10, null), { ...kill(11), kind: "suicide" as const, attacker: null }];
+    expect(activeKillLines(kills, 9.9)).toEqual([]);
+    expect(activeKillLines(kills, 10)).toEqual([kills[0]]);
+    expect(activeKillLines(kills, 12)).toEqual([kills[0]]);
+    expect(activeKillLines(kills, 12.01)).toEqual([]);
+  });
+
+  it("rings the caster for the ult's span, or ULT_RING_SECONDS when unpaired, and pulses for a second at the cast", () => {
+    expect(ULT_RING_SECONDS).toBe(5);
+    const paired = { team: "A", name: "a", hero: "Mei", start: 10, end: 13, x: 1, z: 1 };
+    const unpaired = { ...paired, start: 20, end: null, x: null, z: null };
+    expect(activeUltRings([paired, unpaired], 12)).toEqual([paired]);
+    expect(activeUltRings([paired, unpaired], 24)).toEqual([unpaired]);
+    expect(activeUltRings([paired, unpaired], 26)).toEqual([]);
+    expect(ultPulse(paired, 10.5)).toBeCloseTo(0.5, 6);
+    expect(ultPulse(paired, 11.5)).toBeNull();
+    expect(ultPulse(unpaired, 20.5)).toBeNull();
+  });
+
+  it("aligns a ghost by stage start or by first kill, falling back to start when a first kill is missing", () => {
+    const own = { start: 100, firstKill: 130 };
+    const ghost = { start: 400, firstKill: 420 };
+    expect(ghostTime(150, own, ghost, "start")).toBe(450);
+    expect(ghostTime(150, own, ghost, "first-kill")).toBe(440);
+    expect(ghostTime(150, own, { start: 400, firstKill: null }, "first-kill")).toBe(450);
   });
 });
