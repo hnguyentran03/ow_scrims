@@ -4,6 +4,9 @@ import {
   ability1Used, ability2Used, damage, healing, heroSpawn, heroSwap, kill, mapBans, maps, matchEnd, matchStart, mercyRez, objectiveCaptured,
   objectiveUpdated, playerStat, roundEnd, roundStart, scrims, ultimateCharged, ultimateEnd, ultimateStart,
 } from "./schema";
+import type { DamageLite } from "@/lib/stats/initiation";
+
+export type { DamageLite };
 
 export type ScrimRow = typeof scrims.$inferSelect;
 export type MapRow = typeof maps.$inferSelect;
@@ -167,6 +170,17 @@ export async function getTelemetryRows(db: Db, mapId: number): Promise<{ damage:
   const damageRows = await db.select().from(damage).where(eq(damage.mapId, mapId)).orderBy(asc(damage.matchTime), asc(damage.id));
   const playerStats = await playerStatsFor(db, mapId);
   return { damage: damageRows, playerStats };
+}
+
+/** Kills plus the five damage columns fight initiation needs, both in match-time order; the rest of the damage row never leaves the database. */
+export async function getInitiationRows(db: Db, mapId: number): Promise<{ kills: KillRow[]; damage: DamageLite[] }> {
+  const kills = await killsFor(db, mapId);
+  const damageRows = await db
+    .select({ matchTime: damage.matchTime, attackerTeam: damage.attackerTeam, attackerName: damage.attackerName, attackerHero: damage.attackerHero, victimTeam: damage.victimTeam })
+    .from(damage)
+    .where(eq(damage.mapId, mapId))
+    .orderBy(asc(damage.matchTime), asc(damage.id));
+  return { kills, damage: damageRows };
 }
 
 /** Every row the replay tab needs: the events set plus positions (damage, healing, abilities), spawns, charge, and stats. */

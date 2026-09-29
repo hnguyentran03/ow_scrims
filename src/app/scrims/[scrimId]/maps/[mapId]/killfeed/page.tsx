@@ -1,7 +1,9 @@
-import { getKillfeedRows } from "@/lib/db/queries";
+import { getInitiationRows, getKillfeedRows } from "@/lib/db/queries";
 import { formatDuration } from "@/lib/format";
 import { TEAM_COLORS } from "@/lib/colors";
 import { buildKillfeed, type KillfeedBlock, type KillfeedEntry } from "@/lib/stats/killfeed";
+import { groupFights } from "@/lib/stats/fights";
+import { buildInitiation, type FightInitiation } from "@/lib/stats/initiation";
 import { sideOf, type Sides } from "@/lib/stats/sides";
 import { loadMap, type MapParams } from "../load-map";
 import { Stat } from "@/components/stat";
@@ -11,6 +13,9 @@ export const dynamic = "force-dynamic";
 export default async function KillfeedPage({ params }: { params: MapParams }) {
   const { db, map, scrim, sides } = await loadMap(params);
   const rows = await getKillfeedRows(db, map.id);
+  const init = await getInitiationRows(db, map.id);
+  const initiation = buildInitiation(groupFights(rows.kills), init.damage, sides);
+  const byFight = new Map(initiation.fights.map((f) => [f.index, f]));
   const kf = buildKillfeed({ map, kills: rows.kills, rezzes: rows.rezzes, roundEnds: rows.roundEnds, durationSeconds: map.durationSeconds });
   const pair = (p: { ours: number; theirs: number }) => `${p.ours} / ${p.theirs}`;
   const hint = `${sides.ours} / ${sides.theirs}`;
@@ -34,13 +39,17 @@ export default async function KillfeedPage({ params }: { params: MapParams }) {
       {!hasFights ? (
         <p className="text-sm text-zinc-400">No fights recorded.</p>
       ) : (
-        <div className="space-y-4">{kf.blocks.map((block, i) => <Block key={i} block={block} sides={sides} />)}</div>
+        <div className="space-y-4">
+          {kf.blocks.map((block, i) => (
+            <Block key={i} block={block} sides={sides} initiation={byFight.get(block.kind === "fight" ? block.fight.index : -1) ?? null} />
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
-function Block({ block, sides }: { block: KillfeedBlock; sides: Sides }) {
+function Block({ block, sides, initiation }: { block: KillfeedBlock; sides: Sides; initiation: FightInitiation | null }) {
   if (block.kind === "round") {
     const side = block.capturingTeam ? sideOf(block.capturingTeam, sides) : null;
     const color = side ? TEAM_COLORS[side] : "#52525b";
@@ -54,13 +63,25 @@ function Block({ block, sides }: { block: KillfeedBlock; sides: Sides }) {
     );
   }
   const { fight, entries } = block;
+  const seconds = initiation?.secondsToFirstKill ?? null;
+  const secondsLabel =
+    seconds === null
+      ? null
+      : seconds < 0
+        ? `${Math.abs(seconds).toFixed(1)} s after the first kill`
+        : `${seconds.toFixed(1)} s before the first kill`;
   return (
     <section className="rounded border border-zinc-800">
-      <header className="flex items-center justify-between border-b border-zinc-800 px-3 py-2 text-sm">
+      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-zinc-800 px-3 py-2 text-sm">
         <span className="font-medium">Fight {fight.index}</span>
         <span className="text-zinc-400">
           {formatDuration(fight.start)} – {formatDuration(fight.end)} · {fight.winner ? `won by ${fight.winner}` : "even"}
         </span>
+        {initiation?.initiator && (
+          <span className="text-xs" style={{ color: initiation.initiator.side ? TEAM_COLORS[initiation.initiator.side] : undefined }}>
+            Engaged by {initiation.initiator.name} ({initiation.initiator.hero}), {secondsLabel}
+          </span>
+        )}
       </header>
       <table className="w-full text-sm">
         <thead>

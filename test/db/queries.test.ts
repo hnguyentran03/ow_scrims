@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { createTestDb, type Db } from "@/lib/db";
-import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getKillfeedRows, getMap, getMapStats, getReplayRows, getScrim, getTelemetryRows, listScrims, setMapWinner } from "@/lib/db/queries";
+import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getInitiationRows, getKillfeedRows, getMap, getMapStats, getReplayRows, getScrim, getTelemetryRows, listScrims, setMapWinner } from "@/lib/db/queries";
 import { insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
@@ -87,6 +87,20 @@ describe("queries", () => {
     const rows = await getTelemetryRows(db, mapId);
     expect(rows.damage).toHaveLength(0);
     expect(rows.playerStats).toHaveLength(40);
+  });
+
+  it("returns kills and a five-column damage slice for initiation", async () => {
+    const r = await getInitiationRows(db, mapId);
+    expect(r.kills).toHaveLength(58);
+    expect(r.damage).toEqual([]);
+    const s2 = await createScrim(db, { name: "positioned", date: "2026-04-02", opponentName: "X" });
+    const parsed = parseLog(sample("Log-2026-04-02-17-21-48"));
+    const m2 = await insertParsedMap(db, { scrimId: s2, ourSide: 1, parsed, meta: deriveMapMeta(parsed), originalFilename: "b.txt" });
+    const r2 = await getInitiationRows(db, m2);
+    expect(r2.damage).toHaveLength(4350);
+    expect(Object.keys(r2.damage[0]).sort()).toEqual(["attackerHero", "attackerName", "attackerTeam", "matchTime", "victimTeam"]);
+    expect(r2.damage[0].matchTime).toBeLessThanOrEqual(r2.damage[1].matchTime);
+    await deleteScrim(db, s2);
   });
 
   it("loads every row kind the replay needs, ordered by time", async () => {

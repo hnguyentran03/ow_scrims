@@ -1,9 +1,10 @@
 import { Card } from "@/components/card";
 import { TEAM_COLORS } from "@/lib/colors";
-import { getChartRows } from "@/lib/db/queries";
+import { getChartRows, getInitiationRows } from "@/lib/db/queries";
 import { formatDuration } from "@/lib/format";
 import { damageByRound, finalBlowsByRole, killsByFight } from "@/lib/stats/charts";
 import { groupFights } from "@/lib/stats/fights";
+import { buildInitiation, INITIATION_LOOKBACK_SECONDS } from "@/lib/stats/initiation";
 import { sideOf, type Sides } from "@/lib/stats/sides";
 import { buildTempo } from "@/lib/stats/tempo";
 import {
@@ -20,6 +21,7 @@ import {
 import { loadMap, type MapParams } from "../load-map";
 import { DamageByRoundChart } from "./damage-by-round-chart";
 import { FinalBlowsByRoleChart } from "./final-blows-by-role-chart";
+import { InitiationTable } from "./initiation-table";
 import { KillsByFightChart } from "./kills-by-fight-chart";
 import { TempoChart } from "./tempo-chart";
 import { UltAdvantageTable } from "./ult-advantage-table";
@@ -29,7 +31,9 @@ export const dynamic = "force-dynamic";
 export default async function ChartsPage({ params }: { params: MapParams }) {
   const { db, map, sides } = await loadMap(params);
   const rows = await getChartRows(db, map.id);
+  const init = await getInitiationRows(db, map.id);
   const fights = groupFights(rows.kills);
+  const initiation = buildInitiation(fights, init.damage, sides);
   const steps = killsByFight(fights, sides);
   const roles = finalBlowsByRole(rows.kills, sides);
   const rounds = damageByRound(rows.playerStats, sides);
@@ -46,7 +50,7 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
         <TempoChart tempo={tempo} sides={sides} />
       </Card>
       <h2 className="text-lg font-medium">Ultimates</h2>
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Ult advantage per fight" note="Held ults at each fight's first kill; a cast with no logged charge counts as not held">
           <UltAdvantageTable advantage={advantage} sides={sides} />
         </Card>
@@ -55,6 +59,9 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
         </Card>
         <Card title="Counter-ult response" note={`Enemy cast within ${COUNTER_WINDOW_SECONDS} s of an ult`}>
           <CounterList counters={counters} casts={casts} sides={sides} />
+        </Card>
+        <Card title="Fight initiation" note={`First cross-team damage within ${INITIATION_LOOKBACK_SECONDS} s before the first kill`}>
+          <InitiationTable initiation={initiation} sides={sides} />
         </Card>
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
