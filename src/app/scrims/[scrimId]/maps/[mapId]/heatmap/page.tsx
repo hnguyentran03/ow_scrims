@@ -5,6 +5,7 @@ import type { SearchParams } from "@/lib/range";
 import { groupFights } from "@/lib/stats/fights";
 import { buildHeatmap } from "@/lib/stats/heatmap";
 import { buildReplay } from "@/lib/stats/replay";
+import { buildTerritory } from "@/lib/stats/territory";
 import { loadMap, type MapParams } from "../load-map";
 import { NO_POSITIONS } from "../stage-canvas";
 import { HeatmapFilters } from "./heatmap-filters";
@@ -23,6 +24,7 @@ export default async function HeatmapPage({ params, searchParams }: { params: Ma
   const fights = groupFights(rows.kills);
   const heatmap = buildHeatmap({ replay, sides, rows, fights, filter });
   const stage = replay.stages[filter.stage];
+  const territory = buildTerritory({ replay, stage: filter.stage, fights, objective: null });
   const stageOptions = replay.stages.map((s, index) => ({ index, label: s.label }));
   const playerOptions = replay.players.map((p) => ({ key: playerKey(p), label: p.name, side: p.side }));
   const fightOptions = fights.filter((f) => f.start >= stage.start && f.start <= stage.end).map((f) => ({ index: f.index, start: f.start }));
@@ -32,7 +34,7 @@ export default async function HeatmapPage({ params, searchParams }: { params: Ma
       <Suspense fallback={null}>
         <HeatmapFilters stages={stageOptions} players={playerOptions} filter={filter} sides={sides} />
       </Suspense>
-      <HeatmapPanel heatmap={heatmap} stage={stage} sides={sides} fights={fightOptions} hasPositions={replay.hasPositions} filterSide={filter.side} />
+      <HeatmapPanel heatmap={heatmap} stage={stage} sides={sides} fights={fightOptions} hasPositions={replay.hasPositions} filterSide={filter.side} territory={territory} objectiveHref={null} />
     </div>
   );
 }
