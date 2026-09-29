@@ -8,10 +8,8 @@ import { formatDuration, formatInt, formatPct } from "@/lib/format";
 import type { Cell, Heatmap, Marker, Route } from "@/lib/stats/heatmap";
 import type { Replay } from "@/lib/stats/replay";
 import type { SideKey, Sides } from "@/lib/stats/sides";
+import type { Territory } from "@/lib/stats/territory";
 import { markerRadius, NO_POSITIONS, StageCanvas } from "../stage-canvas";
-
-// Replaced by `import type { Territory } from "@/lib/stats/territory"` in PR 3.
-type Territory = { cells: Array<{ c: number; r: number; owner: "ours" | "theirs" | "contested"; seconds: number }>; objective: { stage: { ours: number; theirs: number; contested: number }; byFight: Array<{ index: number; winner: SideKey | null; share: { ours: number; theirs: number; contested: number } }>; observedSeconds: number } | null };
 
 export type Layer = "kills" | "deaths" | "fights" | "damage" | "healing" | "presence" | "routes" | "territory";
 const LAYERS: Array<{ key: Layer; label: string }> = [
@@ -181,7 +179,7 @@ function ObjectiveCard({ territory, objectiveHref, sides }: { territory: Territo
     return (
       <Card title="Objective control">
         <p className="text-sm text-zinc-400">
-          {objectiveHref ? <>Mark the objective centre under <Link href={objectiveHref} className="underline">Maps</Link> to see objective control.</> : "Calibrate this stage under Maps to see objective control."}
+          {objectiveHref ? <>Mark the objective centre under <Link href={objectiveHref} className="underline">Maps</Link> to see objective control.</> : "Objective control needs a calibrated map image with a marked objective centre; map images are not available yet."}
         </p>
       </Card>
     );
