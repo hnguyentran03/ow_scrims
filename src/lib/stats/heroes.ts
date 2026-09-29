@@ -2,7 +2,7 @@ export type Role = "Tank" | "Damage" | "Support" | "Unknown";
 
 export const ROLE_ORDER: Role[] = ["Tank", "Damage", "Support", "Unknown"];
 
-// Domina, Emre, and Sierra were inferred from swap patterns in the 2026 sample logs.
+// Domina, Emre, and Sierra were inferred from swap patterns in the 2026 sample logs; Vendetta is a DPS per the user.
 // Add new heroes here; unknown names fall back to "Unknown" and never break the page.
 const HERO_ROLES: Record<string, Role> = {
   "D.Va": "Tank", Doomfist: "Tank", Domina: "Tank", Hazard: "Tank", "Junker Queen": "Tank", Mauga: "Tank",
@@ -11,7 +11,7 @@ const HERO_ROLES: Record<string, Role> = {
   Ashe: "Damage", Bastion: "Damage", Cassidy: "Damage", Echo: "Damage", Emre: "Damage", Freja: "Damage",
   Genji: "Damage", Hanzo: "Damage", Junkrat: "Damage", Mei: "Damage", Pharah: "Damage", Reaper: "Damage",
   Sierra: "Damage", Sojourn: "Damage", "Soldier: 76": "Damage", Sombra: "Damage", Symmetra: "Damage",
-  Torbjörn: "Damage", Tracer: "Damage", Venture: "Damage", Widowmaker: "Damage",
+  Torbjörn: "Damage", Tracer: "Damage", Vendetta: "Damage", Venture: "Damage", Widowmaker: "Damage",
   Ana: "Support", Baptiste: "Support", Brigitte: "Support", Illari: "Support", Juno: "Support", Kiriko: "Support",
   Lifeweaver: "Support", Lúcio: "Support", Mercy: "Support", Moira: "Support", Wuyang: "Support", Zenyatta: "Support",
 };
@@ -32,7 +32,7 @@ export const HEROES: readonly string[] = Object.keys(HERO_ROLES).sort(
  * cooldown), so slot 1 is the Shift ability and slot 2 is the E ability. A single use can log more
  * than one row (Moira slot 2 repeats within 1.03 s), so counts are approximate. Heroes whose default
  * binding is not known here (Wrecking Ball, Hanzo, Pharah, Lifeweaver, Freja, the inferred heroes
- * Domina, Emre, Sierra, and Wuyang) are left out on purpose and fall back to "Ability <slot>". Entries
+ * Domina, Emre, Sierra, Vendetta, and Wuyang) are left out on purpose and fall back to "Ability <slot>". Entries
  * for heroes outside the sample were checked against the default Overwatch 2 bindings on 2026-09-29.
  */
 export const HERO_ABILITIES: Readonly<Record<string, readonly [string, string]>> = {

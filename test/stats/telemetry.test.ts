@@ -126,8 +126,8 @@ describe("buildTelemetry radar", () => {
 
   it("resolves the Unknown-role bucket for an off-list hero", () => {
     const stats = [
-      stat("Team 1", "d", "Vendetta", { damageTaken: 900 }),
-      stat("Team 2", "d2", "Vendetta", { damageTaken: 300 }),
+      stat("Team 1", "d", "Nobody", { damageTaken: 900 }),
+      stat("Team 2", "d2", "Nobody", { damageTaken: 300 }),
     ];
     const d = buildTelemetry({ map, damage: [], playerStats: stats }).players.find((p) => p.name === "d")!;
     expect(d.radar.opponent?.role).toBe("Unknown");

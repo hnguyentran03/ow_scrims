@@ -9,7 +9,8 @@ describe("roleOf", () => {
     expect(roleOf("Domina")).toBe("Tank");
   });
   it("falls back to Unknown, which sorts last", () => {
-    expect(roleOf("Vendetta")).toBe("Unknown");
+    expect(roleOf("Vendetta")).toBe("Damage");
+    expect(roleOf("Nobody")).toBe("Unknown");
     expect(ROLE_ORDER).toEqual(["Tank", "Damage", "Support", "Unknown"]);
   });
 });
