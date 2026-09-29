@@ -60,7 +60,7 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, children }: { re
           const a = project({ x: k.attacker!.x!, z: k.attacker!.z! });
           const v = project({ x: k.victim.x!, z: k.victim.z! });
           const side = replay.players.find((p) => p.team === k.attacker!.team && p.name === k.attacker!.name)?.side ?? null;
-          return <line key={`${k.t}|${k.victim.name}`} x1={a.px} y1={a.py} x2={v.px} y2={v.py} stroke={colour(side)} strokeWidth={r * 0.25} opacity={1 - (t - k.t) / KILL_LINE_SECONDS} />;
+          return <line key={`${k.t}|${k.victim.team}|${k.victim.name}`} x1={a.px} y1={a.py} x2={v.px} y2={v.py} stroke={colour(side)} strokeWidth={r * 0.25} opacity={1 - (t - k.t) / KILL_LINE_SECONDS} />;
         })}
         {rings.map((u) => {
           const player = replay.players.find((p) => p.team === u.team && p.name === u.name);
@@ -69,7 +69,7 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, children }: { re
           // ultPulse returns non-null only when the ult has a cast position, so u.x/u.z are safe here.
           const cast = pulse !== null ? project({ x: u.x!, z: u.z! }) : null;
           return (
-            <g key={`${u.start}|${u.name}`} fill="none" stroke={colour(player?.side ?? null)}>
+            <g key={`${u.start}|${u.team}|${u.name}`} fill="none" stroke={colour(player?.side ?? null)}>
               {pos && pos.window === windowIndex && <circle cx={project(pos).px} cy={project(pos).py} r={r * 1.8} strokeWidth={r * 0.25} strokeDasharray={`${r * 0.6} ${r * 0.4}`} />}
               {pulse !== null && cast && windowIndexAt(u.start, replay.stages) === windowIndex && (
                 <circle cx={cast.px} cy={cast.py} r={r * (1 + 3 * pulse)} strokeWidth={r * 0.3} opacity={1 - pulse} />
