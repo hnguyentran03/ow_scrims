@@ -63,6 +63,13 @@ function Block({ block, sides, initiation }: { block: KillfeedBlock; sides: Side
     );
   }
   const { fight, entries } = block;
+  const seconds = initiation?.secondsToFirstKill ?? null;
+  const secondsLabel =
+    seconds === null
+      ? null
+      : seconds < 0
+        ? `${Math.abs(seconds).toFixed(1)} s after the first kill`
+        : `${seconds.toFixed(1)} s before the first kill`;
   return (
     <section className="rounded border border-zinc-800">
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-zinc-800 px-3 py-2 text-sm">
@@ -72,7 +79,7 @@ function Block({ block, sides, initiation }: { block: KillfeedBlock; sides: Side
         </span>
         {initiation?.initiator && (
           <span className="text-xs" style={{ color: initiation.initiator.side ? TEAM_COLORS[initiation.initiator.side] : undefined }}>
-            Engaged by {initiation.initiator.name} ({initiation.initiator.hero}), {initiation.secondsToFirstKill?.toFixed(1)} s before the first kill
+            Engaged by {initiation.initiator.name} ({initiation.initiator.hero}), {secondsLabel}
           </span>
         )}
       </header>

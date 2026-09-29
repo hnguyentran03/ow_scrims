@@ -38,7 +38,10 @@ export interface Initiation {
 
 const rate = (won: number, count: number) => (count === 0 ? null : won / count);
 
-/** Who engaged first in each fight: the earliest cross-team damage row from up to INITIATION_LOOKBACK_SECONDS before the first kill to the fight's end, never one inside the previous fight. */
+/**
+ * Who engaged first in each fight: the earliest cross-team damage row from up to INITIATION_LOOKBACK_SECONDS before the first kill to the fight's end, never one inside the previous fight.
+ * `damage` must be in ascending match-time order (as `getInitiationRows` returns it); the earliest candidate is the first match in array order.
+ */
 export function buildInitiation(fights: Fight[], damage: DamageLite[], sides: Sides): Initiation {
   const cross = damage.filter((d) => d.attackerTeam !== d.victimTeam);
   const acc: Record<SideKey, { initiated: number; wonWhenInitiated: number; fightsNotInitiated: number; wonWhenNotInitiated: number; decidedInitiated: number; decidedNotInitiated: number }> = {

@@ -50,6 +50,22 @@ describe("buildInitiation", () => {
     expect(r.summary.theirs).toEqual({ initiated: 1, wonWhenInitiated: 0, fightsNotInitiated: 2, wonWhenNotInitiated: 1, initiationWinRate: null, nonInitiationWinRate: 0.5 });
   });
 
+  it("shows an initiator on neither side without crediting either summary", () => {
+    const fights = groupFights([kill(100, "A", "B")]);
+    const r = buildInitiation(fights, [dmg(95, "C", "A")], s);
+    expect(r.fights[0].initiator).toMatchObject({ side: null, team: "C", t: 95 });
+    const empty = { initiated: 0, wonWhenInitiated: 0, fightsNotInitiated: 0, wonWhenNotInitiated: 0, initiationWinRate: null, nonInitiationWinRate: null };
+    expect(r.summary.ours).toEqual(empty);
+    expect(r.summary.theirs).toEqual(empty);
+  });
+
+  it("leaves firstKillSide null when a fight has no counted kill", () => {
+    const fights = groupFights([{ ...kill(100, "A", "A"), attackerName: "Ap", victimName: "Ap" }]);
+    const r = buildInitiation(fights, [], s);
+    expect(r.fights[0].firstKillSide).toBeNull();
+    expect(r.fights[0].winner).toBeNull();
+  });
+
   it("reports hasDamage false and all-null initiators with no damage rows", () => {
     const r = buildInitiation(groupFights([kill(1, "A", "B")]), [], s);
     expect(r.hasDamage).toBe(false);
