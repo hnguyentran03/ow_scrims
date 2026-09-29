@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { createTestDb, type Db } from "@/lib/db";
-import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getInitiationRows, getKillfeedRows, getMap, getMapStats, getReplayRows, getScrim, getTelemetryRows, listScrims, setMapWinner } from "@/lib/db/queries";
+import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getInitiationRows, getKillfeedRows, getMap, getMapStats, getReplayRows, getScrim, getTelemetryRows, listSameMapReplays, listScrims, setMapWinner } from "@/lib/db/queries";
 import { insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
@@ -129,6 +129,17 @@ describe("queries", () => {
       expect(cur.matchTime).toBeGreaterThanOrEqual(prev.matchTime);
       if (cur.matchTime === prev.matchTime) expect(cur.id).toBeGreaterThan(prev.id);
     }
+  });
+
+  it("lists other maps with the same name, newest scrim first, with their round rows", async () => {
+    const s2 = await createScrim(db, { name: "vs Cerberus again", date: "2026-09-15", opponentName: "Cerberus" });
+    const parsed = parseLog(sample("Log-2026-04-15-21-12-58"));
+    const m2 = await insertParsedMap(db, { scrimId: s2, ourSide: 2, parsed, meta: deriveMapMeta(parsed), originalFilename: "c.txt" });
+    const rows = await listSameMapReplays(db, "Antarctic Peninsula", mapId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].map.id).toBe(m2);
+    expect(rows[0].roundStarts).toHaveLength(3);
+    await deleteScrim(db, s2);
   });
 
   it("sets a manual winner", async () => {
