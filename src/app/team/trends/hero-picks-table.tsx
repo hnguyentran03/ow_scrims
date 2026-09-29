@@ -4,19 +4,14 @@ import { useState } from "react";
 import { formatDuration, formatPct } from "@/lib/format";
 import type { HeroPick } from "@/lib/stats/trends";
 import type { SideKey } from "@/lib/stats/sides";
+import { SideToggle } from "../side-toggle";
 
 export function HeroPicksTable({ ours, theirs }: { ours: HeroPick[]; theirs: HeroPick[] }) {
   const [side, setSide] = useState<SideKey>("ours");
   const rows = side === "ours" ? ours : theirs;
   return (
     <div className="space-y-2">
-      <div className="flex gap-2 text-xs">
-        {(["ours", "theirs"] as const).map((s) => (
-          <button key={s} type="button" onClick={() => setSide(s)} aria-pressed={side === s} className={`rounded px-2 py-0.5 ${side === s ? "bg-zinc-100 text-black" : "bg-zinc-800 text-zinc-300"}`}>
-            {s === "ours" ? "Our picks" : "Their picks"}
-          </button>
-        ))}
-      </div>
+      <SideToggle side={side} onChange={setSide} labels={{ ours: "Our picks", theirs: "Their picks" }} />
       {rows.length === 0 ? (
         <p className="text-sm text-zinc-400">No heroes played.</p>
       ) : (

@@ -1,18 +1,25 @@
+import { Card } from "@/components/card";
 import { Stat } from "@/components/stat";
 import { TEAM_COLORS } from "@/lib/colors";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
 import { formatPct } from "@/lib/format";
 import { parseRange, type SearchParams } from "@/lib/range";
+import { MIN_ABILITY_FIGHTS, buildAbilityImpact } from "@/lib/stats/ability-impact";
 import { buildTeamfights, type TeamFightStats } from "@/lib/stats/teamfights";
+import { MIN_IMPACT_FIGHTS, buildUltImpact } from "@/lib/stats/ult-impact";
 import { EmptyRange } from "../empty-range";
+import { AbilityImpactTable } from "./ability-impact-table";
+import { UltImpactTable } from "./ult-impact-table";
 
 export const dynamic = "force-dynamic";
 
 export default async function TeamfightsPage({ searchParams }: { searchParams: SearchParams }) {
-  const rows = await getTeamRows(await getDb(), parseRange(await searchParams), { kills: true, ults: true });
+  const rows = await getTeamRows(await getDb(), parseRange(await searchParams), { kills: true, ults: true, playerStats: true, abilities: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const t = buildTeamfights(rows.maps, rows.kills, rows.ultStarts, rows.ultEnds);
+  const ultImpact = buildUltImpact(rows.maps, rows.kills, rows.ultStarts, rows.ultEnds, rows.playerStats);
+  const abilityImpact = buildAbilityImpact(rows.maps, rows.kills, rows.abilities, rows.playerStats);
 
   return (
     <div className="space-y-8">
@@ -35,6 +42,12 @@ export default async function TeamfightsPage({ searchParams }: { searchParams: S
           </tbody>
         </table>
       </section>
+      <Card title="Ultimate impact" note={`Fight win rate with and without each hero's ultimate; draws count as fights but not wins. Lift needs ${MIN_IMPACT_FIGHTS} decided fights in each column.`}>
+        <UltImpactTable ours={ultImpact.ours} theirs={ultImpact.theirs} />
+      </Card>
+      <Card title="Ability impact" note={`Uses per decided fight won and lost. Means and lift need ${MIN_ABILITY_FIGHTS} fights in each column. A use can log more than one row.`}>
+        <AbilityImpactTable ours={abilityImpact.ours} theirs={abilityImpact.theirs} hasAbilities={abilityImpact.hasAbilities} />
+      </Card>
     </div>
   );
 }
