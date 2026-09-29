@@ -28,7 +28,7 @@ export function UltImpactTable({ ours, theirs }: { ours: UltImpactRow[]; theirs:
             {rows.map((r) => (
               <tr key={r.hero} className="border-t border-zinc-800 tabular-nums">
                 <td className="py-1">{r.hero} <span className="text-zinc-500">{r.role}</span></td>
-                <td>{r.casts}{r.unattributed > 0 && <span className="text-zinc-500"> ({r.unattributed} outside fights)</span>}</td>
+                <td>{r.casts}{r.unattributed > 0 && <span className="text-zinc-500"> ({r.unattributed} after the last fight)</span>}</td>
                 <td>{winLoss(r.with)}</td>
                 <td>{winLoss(r.without)}</td>
                 <td>{lift(r.lift)}</td>

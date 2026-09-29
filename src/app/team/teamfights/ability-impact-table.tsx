@@ -12,7 +12,7 @@ const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
 export function AbilityImpactTable({ ours, theirs, hasAbilities }: { ours: AbilityImpactRow[]; theirs: AbilityImpactRow[]; hasAbilities: boolean }) {
   const [side, setSide] = useState<SideKey>("ours");
   const rows = side === "ours" ? ours : theirs;
-  if (!hasAbilities) return <p className="text-sm text-zinc-400">No ability events in this range. Ability logging is on in the 2026 logs; older logs do not have it.</p>;
+  if (!hasAbilities) return <p className="text-sm text-zinc-400">No ability events in this range. Ability logging depends on the Workshop mode version; many older logs do not have it.</p>;
   return (
     <div className="space-y-2">
       <SideToggle side={side} onChange={setSide} labels={{ ours: "Our abilities", theirs: "Their abilities" }} />

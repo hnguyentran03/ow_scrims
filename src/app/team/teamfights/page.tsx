@@ -45,7 +45,7 @@ export default async function TeamfightsPage({ searchParams }: { searchParams: S
       <Card title="Ultimate impact" note={`Fight win rate with and without each hero's ultimate; draws count as fights but not wins. Lift needs ${MIN_IMPACT_FIGHTS} decided fights in each column.`}>
         <UltImpactTable ours={ultImpact.ours} theirs={ultImpact.theirs} />
       </Card>
-      <Card title="Ability impact" note={`Uses per decided fight won and lost. Means and lift need ${MIN_ABILITY_FIGHTS} fights in each column. A use can log more than one row.`}>
+      <Card title="Ability impact" note={`Uses per decided fight won and lost. Means and lift need ${MIN_ABILITY_FIGHTS} fights in each column. A use can log more than one row. A use in the lull before a fight counts toward that fight.`}>
         <AbilityImpactTable ours={abilityImpact.ours} theirs={abilityImpact.theirs} hasAbilities={abilityImpact.hasAbilities} />
       </Card>
     </div>
