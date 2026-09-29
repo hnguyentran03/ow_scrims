@@ -1,10 +1,11 @@
 import { and, asc, count, desc, eq, getTableColumns, gte, inArray, lte, ne, sql, type SQL } from "drizzle-orm";
 import type { Db } from "./index";
 import {
-  ability1Used, ability2Used, damage, healing, heroSpawn, heroSwap, kill, mapBans, maps, matchEnd, matchStart, mercyRez, objectiveCaptured,
+  ability1Used, ability2Used, damage, healing, heroSpawn, heroSwap, kill, mapBans, mapImages, maps, matchEnd, matchStart, mercyRez, objectiveCaptured,
   objectiveUpdated, playerStat, roundEnd, roundStart, scrims, ultimateCharged, ultimateEnd, ultimateStart,
 } from "./schema";
 import type { DamageLite } from "@/lib/stats/initiation";
+import { isCalibrated } from "@/lib/stats/calibration";
 
 export type { DamageLite };
 
@@ -28,6 +29,7 @@ export type HealingRow = typeof healing.$inferSelect;
 export type AbilityRow = typeof ability1Used.$inferSelect;
 export type SpawnRow = typeof heroSpawn.$inferSelect;
 export type ObjectiveUpdatedRow = typeof objectiveUpdated.$inferSelect;
+export type MapImageRow = typeof mapImages.$inferSelect;
 
 /** Inclusive YYYY-MM-DD bounds on the scrim date; either may be absent. */
 export interface DateRange {
@@ -286,6 +288,125 @@ export async function deleteScrim(db: Db, id: number): Promise<string[]> {
   const rows = await db.select({ rawLogPath: maps.rawLogPath }).from(maps).where(eq(maps.scrimId, id));
   await db.delete(scrims).where(eq(scrims.id, id));
   return rows.map((r) => r.rawLogPath).filter((p): p is string => p !== null);
+}
+
+export async function getMapImages(db: Db, mapName: string): Promise<MapImageRow[]> {
+  return db.select().from(mapImages).where(eq(mapImages.mapName, mapName)).orderBy(asc(mapImages.stage));
+}
+
+export async function getMapImage(db: Db, id: number): Promise<MapImageRow | null> {
+  const [row] = await db.select().from(mapImages).where(eq(mapImages.id, id));
+  return row ?? null;
+}
+
+/**
+ * Inserts an image row for the pair, replacing (and un-calibrating) any existing one. The file name is derived from
+ * the new id. When given, `persist` is awaited inside the transaction after the filename update, so a failed write
+ * (e.g. disk full) rolls back the delete and insert instead of losing the previous row.
+ */
+export async function createMapImage(
+  db: Db,
+  input: { mapName: string; stage: number; ext: string; contentType: string },
+  persist?: (filename: string) => Promise<void>,
+): Promise<{ id: number; filename: string; replacedFilename: string | null }> {
+  return db.transaction(async (tx) => {
+    const [old] = await tx.delete(mapImages).where(and(eq(mapImages.mapName, input.mapName), eq(mapImages.stage, input.stage))).returning({ filename: mapImages.filename });
+    const [inserted] = await tx.insert(mapImages).values({ mapName: input.mapName, stage: input.stage, filename: "", contentType: input.contentType }).returning({ id: mapImages.id });
+    const filename = `${inserted.id}.${input.ext}`;
+    await tx.update(mapImages).set({ filename }).where(eq(mapImages.id, inserted.id));
+    if (persist) await persist(filename);
+    return { id: inserted.id, filename, replacedFilename: old?.filename ?? null };
+  });
+}
+
+export async function setCalibration(db: Db, id: number, calibration: string | null, size?: { width: number; height: number }): Promise<boolean> {
+  const rows = await db.update(mapImages).set({ calibration, ...(size ?? {}) }).where(eq(mapImages.id, id)).returning({ id: mapImages.id });
+  return rows.length > 0;
+}
+
+export async function deleteMapImage(db: Db, id: number): Promise<MapImageRow | null> {
+  const [row] = await db.delete(mapImages).where(eq(mapImages.id, id)).returning();
+  return row ?? null;
+}
+
+export interface StageSeen {
+  mapName: string;
+  mapType: string;
+  stage: number;
+  mapsPlayed: number;
+  image: { id: number; calibrated: boolean } | null;
+}
+
+/**
+ * Every (base map, stage) pair any stored map has played, with its image status. The only place images can be created for.
+ * Control and Flashpoint maps with no round rows still list stage 0, matching stageWindows' own fallback.
+ */
+export async function listStagesSeen(db: Db): Promise<StageSeen[]> {
+  const mapRows = await db.select({ id: maps.id, mapName: maps.mapName, mapType: maps.mapType }).from(maps);
+  const ids = mapRows.map((m) => m.id);
+  const starts = ids.length === 0 ? [] : await db.select({ mapId: roundStart.mapId, stage: roundStart.objectiveIndex }).from(roundStart).where(inArray(roundStart.mapId, ids));
+  const updates = ids.length === 0 ? [] : await db.select({ mapId: objectiveUpdated.mapId, stage: objectiveUpdated.currentObjectiveIndex }).from(objectiveUpdated).where(inArray(objectiveUpdated.mapId, ids));
+  const images = await db.select().from(mapImages);
+  const seen = new Map<string, StageSeen & { mapIds: Set<number> }>();
+  const add = (m: (typeof mapRows)[number], stage: number) => {
+    const key = `${m.mapName}|${stage}`;
+    const entry = seen.get(key) ?? { mapName: m.mapName, mapType: m.mapType, stage, mapsPlayed: 0, image: null, mapIds: new Set<number>() };
+    entry.mapIds.add(m.id);
+    seen.set(key, entry);
+  };
+  for (const m of mapRows) {
+    if (m.mapType === "Control" || m.mapType === "Flashpoint") {
+      // A staged map with no deduped round-start rows (e.g. a log that ended before one) still gets a stage-0 entry,
+      // matching stageWindows' own fallback to a single stage-0 window.
+      let added = false;
+      for (const s of starts) if (s.mapId === m.id) { add(m, s.stage); added = true; }
+      if (m.mapType === "Flashpoint") for (const u of updates) if (u.mapId === m.id) { add(m, u.stage); added = true; }
+      if (!added) add(m, 0);
+    } else {
+      add(m, 0);
+    }
+  }
+  return [...seen.values()]
+    .map(({ mapIds, ...entry }) => {
+      const image = images.find((i) => i.mapName === entry.mapName && i.stage === entry.stage);
+      return { ...entry, mapsPlayed: mapIds.size, image: image ? { id: image.id, calibrated: isCalibrated(image) } : null };
+    })
+    .sort((a, b) => a.mapName.localeCompare(b.mapName) || a.stage - b.stage);
+}
+
+export interface PositionedMap {
+  map: MapRow;
+  scrimName: string;
+  scrimDate: string;
+  roundStarts: RoundStartRow[];
+  roundEnds: RoundEndRow[];
+  objectiveUpdated: ObjectiveUpdatedRow[];
+}
+
+/** Maps of a base name that logged at least one position (kill, damage, or healing), newest scrim first, with the rows stageWindows needs. */
+export async function listPositionedStages(db: Db, mapName: string): Promise<PositionedMap[]> {
+  const positioned = sql`(
+    exists (select 1 from ${kill} where ${kill.mapId} = ${maps.id} and ${kill.attackerPosition} is not null)
+    or exists (select 1 from ${damage} where ${damage.mapId} = ${maps.id} and ${damage.attackerPosition} is not null)
+    or exists (select 1 from ${healing} where ${healing.mapId} = ${maps.id} and ${healing.healerPosition} is not null)
+  )`;
+  const rows = await db
+    .select({ map: maps, scrimName: scrims.name, scrimDate: scrims.date })
+    .from(maps)
+    .innerJoin(scrims, eq(scrims.id, maps.scrimId))
+    .where(and(eq(maps.mapName, mapName), positioned))
+    .orderBy(desc(scrims.date), desc(scrims.id), desc(maps.order));
+  const ids = rows.map((r) => r.map.id);
+  if (ids.length === 0) return [];
+  const starts = await db.select().from(roundStart).where(inArray(roundStart.mapId, ids)).orderBy(asc(roundStart.matchTime), asc(roundStart.id));
+  const ends = await db.select().from(roundEnd).where(inArray(roundEnd.mapId, ids)).orderBy(asc(roundEnd.matchTime), asc(roundEnd.id));
+  const updates = await db.select().from(objectiveUpdated).where(inArray(objectiveUpdated.mapId, ids)).orderBy(asc(objectiveUpdated.matchTime), asc(objectiveUpdated.id));
+  return rows.map((r) => ({
+    ...r,
+    roundStarts: starts.filter((s) => s.mapId === r.map.id),
+    roundEnds: ends.filter((e) => e.mapId === r.map.id),
+    objectiveUpdated: updates.filter((u) => u.mapId === r.map.id),
+  }));
 }
 
 /**

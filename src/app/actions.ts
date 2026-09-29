@@ -3,11 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/lib/db";
-import { createScrim, deleteMap, deleteScrim, getMap, getReplayRows, setMapBans, setMapWinner } from "@/lib/db/queries";
+import { createScrim, deleteMap, deleteMapImage, deleteScrim, getMap, getReplayRows, setCalibration, setMapBans, setMapWinner } from "@/lib/db/queries";
 import { parseBanInput } from "@/lib/bans";
-import { ghostFrom, type Ghost } from "@/lib/ghost";
+import { parseCalibrationInput } from "@/lib/calibration-input";
 import { REPLAY_ENABLED } from "@/lib/flags";
+import { ghostFrom, type Ghost } from "@/lib/ghost";
 import { deleteRawLog } from "@/lib/logs";
+import { deleteImageFile } from "@/lib/map-images";
+import { applyAffine, invertAffine, solveAffine, type Calibration } from "@/lib/stats/calibration";
 import { buildReplay } from "@/lib/stats/replay";
 import { sides } from "@/lib/stats/sides";
 
@@ -88,4 +91,43 @@ export async function getGhostAction(input: { mapId: number; window: number; sou
   const ghost = ghostFrom(sourceReplay, input.sourceWindow, input.window, label);
   if (!ghost || !ghost.players.some((p) => p.segments.length > 0)) return null;
   return ghost;
+}
+
+const MAPS_PATHS = () => {
+  revalidatePath("/maps", "layout");
+  revalidatePath("/scrims/[scrimId]/maps/[mapId]", "layout");
+};
+
+/** Solves and stores a stage calibration. Returns an error message instead of throwing so the client can show it. */
+export async function setCalibrationAction(raw: unknown): Promise<{ error: string } | null> {
+  const input = parseCalibrationInput(raw);
+  if (!input) return { error: "Invalid calibration." };
+  const affine = solveAffine(input.pairs);
+  if (!affine) return { error: "Pick points that are not on one line." };
+  let objective: Calibration["objective"] = null;
+  if (input.objective) {
+    const inverse = invertAffine(affine);
+    if (!inverse) return { error: "Pick points that are not on one line." };
+    // The inverse maps pixels to world: feed (px, py) through the x/z slots and read (x, z) back out of px/py.
+    const w = applyAffine(inverse, { x: input.objective.px, z: input.objective.py });
+    objective = { x: w.px, z: w.py };
+  }
+  const calibration: Calibration = { pairs: input.pairs, affine, objective };
+  const ok = await setCalibration(await getDb(), input.id, JSON.stringify(calibration), { width: input.width, height: input.height });
+  if (!ok) return { error: "Image not found." };
+  MAPS_PATHS();
+  return null;
+}
+
+export async function clearCalibrationAction(id: number): Promise<void> {
+  id = requireId(id);
+  await setCalibration(await getDb(), id, null);
+  MAPS_PATHS();
+}
+
+export async function deleteMapImageAction(id: number): Promise<void> {
+  id = requireId(id);
+  const row = await deleteMapImage(await getDb(), id);
+  if (row) await deleteImageFile(row.filename);
+  MAPS_PATHS();
 }

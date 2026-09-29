@@ -45,6 +45,23 @@ export const mapBans = pgTable(
   (t) => [index("map_ban_map_id_idx").on(t.mapId), unique("map_ban_map_side_hero").on(t.mapId, t.side, t.hero)],
 );
 
+/** One top-down image per (base map name, stage) with its calibration JSON; files live under MAP_IMAGE_DIR. */
+export const mapImages = pgTable(
+  "map_image",
+  {
+    id: serial("id").primaryKey(),
+    mapName: text("map_name").notNull(),
+    stage: integer("stage").notNull(),
+    filename: text("filename").notNull(),
+    contentType: text("content_type").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    calibration: text("calibration"),
+    uploadedAt: timestamp("uploaded_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("map_image_map_stage").on(t.mapName, t.stage)],
+);
+
 const base = () => ({
   id: serial("id").primaryKey(),
   mapId: integer("map_id").notNull().references(() => maps.id, { onDelete: "cascade" }),
