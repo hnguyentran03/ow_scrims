@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { clearCalibrationAction, setCalibrationAction } from "@/app/actions";
 import { formatDuration } from "@/lib/format";
 import { applyAffine, solveAffine, type Calibration, type Pair } from "@/lib/stats/calibration";
@@ -29,12 +29,24 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
   const [error, setError] = useState<string | null>(null);
   const affine = pairs.length >= 3 ? solveAffine(pairs) : null;
   const src = `/api/map-images/${imageId}`;
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // An already-loaded image (e.g. from a hard reload, where the browser starts the fetch from the
+  // SSR HTML before React attaches the load listener) never fires `onLoad` again after hydration.
+  useEffect(() => {
+    const el = imgRef.current;
+    if (el?.complete && el.naturalWidth) setSize({ w: el.naturalWidth, h: el.naturalHeight });
+  }, [src]);
 
   function onClick(e: React.MouseEvent<SVGSVGElement>) {
     if (!size) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const px = ((e.clientX - rect.left) / rect.width) * size.w;
-    const py = ((e.clientY - rect.top) / rect.height) * size.h;
+    const svg = e.currentTarget;
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return;
+    const { x: px, y: py } = pt.matrixTransform(ctm.inverse());
     if (mode === "objective") {
       setObjective({ px, py });
       setMode("pair");
@@ -83,7 +95,7 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
         <div className="lg:col-span-2">
           {/* The hidden img reports the intrinsic size the SVG viewBox and the saved calibration need. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt="" className="hidden" onLoad={(e) => setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
+          <img ref={imgRef} src={src} alt="" className="hidden" onLoad={(e) => setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })} />
           {size && (
             <svg viewBox={`0 0 ${size.w} ${size.h}`} className={`w-full rounded border border-zinc-800 ${selected !== null || mode === "objective" ? "cursor-crosshair" : ""}`} onClick={onClick} role="img" aria-label="Stage image">
               <image href={src} width={size.w} height={size.h} />
@@ -116,6 +128,7 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
           </div>
           {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
           {!affine && pairs.length > 0 && pairs.length < 3 && <p className="mt-1 text-sm text-zinc-400">{3 - pairs.length} more pair{pairs.length === 2 ? "" : "s"} needed for a preview.</p>}
+          {!affine && pairs.length >= 3 && <p className="mt-1 text-sm text-zinc-400">These pairs lie on one line; add a pair somewhere else.</p>}
         </div>
         <div className="space-y-3 text-sm">
           <div>

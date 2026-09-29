@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { deleteMapImageAction } from "@/app/actions";
 import { getDb } from "@/lib/db";
 import { getKillfeedRows, getMapImages, listPositionedStages, listStagesSeen } from "@/lib/db/queries";
+import { nameCandidates } from "@/lib/player-name";
 import { parseCalibration } from "@/lib/stats/calibration";
 import { parsePosition } from "@/lib/stats/positions";
 import { stageLabel, stageWindows } from "@/lib/stats/stages";
@@ -13,12 +14,13 @@ export const dynamic = "force-dynamic";
 
 export default async function StagePage({ params }: { params: Promise<{ mapName: string; stage: string }> }) {
   const p = await params;
-  const mapName = decodeURIComponent(p.mapName);
+  const candidates = nameCandidates(p.mapName);
   if (!/^\d{1,3}$/.test(p.stage)) notFound();
   const stage = Number(p.stage);
   const db = await getDb();
-  const seen = (await listStagesSeen(db)).find((s) => s.mapName === mapName && s.stage === stage);
+  const seen = (await listStagesSeen(db)).find((s) => candidates.includes(s.mapName) && s.stage === stage);
   if (!seen) notFound();
+  const mapName = seen.mapName;
   const image = (await getMapImages(db, mapName)).find((i) => i.stage === stage) ?? null;
   const calibration = image ? parseCalibration(image.calibration) : null;
 
@@ -54,7 +56,7 @@ export default async function StagePage({ params }: { params: Promise<{ mapName:
         )}
       </section>
       {image ? (
-        <Calibrate imageId={image.id} calibration={calibration} points={points} sourceLabel={sourceLabel} />
+        <Calibrate key={image.id} imageId={image.id} calibration={calibration} points={points} sourceLabel={sourceLabel} />
       ) : (
         <p className="text-sm text-zinc-400">Upload a top-down image of this stage to calibrate it.</p>
       )}
