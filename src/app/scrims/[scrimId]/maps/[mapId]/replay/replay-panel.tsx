@@ -140,6 +140,7 @@ export function ReplayPanel({ replay, sides, mapName, initialTime, ghostSources,
           <ReplayControls t={t} duration={duration} playing={playing} speed={speed} onToggle={toggle} onScrub={(v) => setT(clamp(v))} onSeek={seek} onStep={step} onSpeed={setSpeed} />
           {replay.hasPositions && (
             <GhostSelect
+              key={windowIndex}
               options={ghostSources[windowIndex] ?? []}
               mapId={mapId}
               windowIndex={windowIndex}

@@ -99,7 +99,19 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, ghost, ghostT, c
           const pos = positionAt(p.segments, ghostT);
           if (!pos) return null;
           const { px, py } = project(pos);
-          return <circle key={`g|${p.team}|${p.name}`} cx={px} cy={py} r={r} fill={colour(p.side)} opacity={0.4} stroke={colour(p.side)} strokeDasharray={`${r * 0.5} ${r * 0.3}`} />;
+          return (
+            <circle
+              key={`g|${p.team}|${p.name}`}
+              cx={px}
+              cy={py}
+              r={r}
+              fill={colour(p.side)}
+              opacity={0.4}
+              stroke={colour(p.side)}
+              strokeDasharray={`${r * 0.5} ${r * 0.3}`}
+              pointerEvents="none"
+            />
+          );
         })}
         {children}
         {hover && (
@@ -110,7 +122,11 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, ghost, ghostT, c
         )}
       </StageCanvas>
       {!stage.image && <p className="text-xs text-zinc-500">No calibrated image for {stage.label} yet. Positions are drawn on a plane fitted to this round.</p>}
-      {ghost && <p className="text-xs text-zinc-500">Ghost: {ghost.label} at {formatDuration(ghostT ?? 0)}</p>}
+      {ghost && (
+        <p className="text-xs text-zinc-500">
+          Ghost: {ghost.label} {ghostT !== null && ghostT !== undefined && ghostT >= 0 ? `at ${formatDuration(ghostT)}` : "(before this round)"}
+        </p>
+      )}
     </div>
   );
 }

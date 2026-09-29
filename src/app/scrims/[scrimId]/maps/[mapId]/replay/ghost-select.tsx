@@ -27,9 +27,14 @@ export function GhostSelect({ options, mapId, windowIndex, alignment, onAlignmen
     }
     const [sourceMapId, sourceWindow] = value.split(":").map(Number);
     start(async () => {
-      const ghost = await getGhostAction({ mapId, window: windowIndex, sourceMapId, sourceWindow });
-      if (!ghost) setNote("Not available");
-      onGhost(ghost);
+      try {
+        const ghost = await getGhostAction({ mapId, window: windowIndex, sourceMapId, sourceWindow });
+        if (!ghost) setNote("Not available");
+        onGhost(ghost);
+      } catch {
+        setNote("Not available");
+        onGhost(null);
+      }
     });
   }
 
