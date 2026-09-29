@@ -8,7 +8,7 @@ import { formatDuration, formatInt, formatPct } from "@/lib/format";
 import type { Cell, Heatmap, Marker, Route } from "@/lib/stats/heatmap";
 import type { Replay } from "@/lib/stats/replay";
 import type { SideKey, Sides } from "@/lib/stats/sides";
-import type { Territory } from "@/lib/stats/territory";
+import { OBJECTIVE_RADIUS_METERS, TERRITORY_MAJORITY, type Territory } from "@/lib/stats/territory";
 import { markerRadius, NO_POSITIONS, StageCanvas } from "../stage-canvas";
 
 export type Layer = "kills" | "deaths" | "fights" | "damage" | "healing" | "presence" | "routes" | "territory";
@@ -87,17 +87,19 @@ export function HeatmapPanel({ heatmap, stage, sides, fights, hasPositions, filt
       )}
 
       <StageCanvas stage={stage}>
-        <defs>
-          <pattern id="contested" width={grid.cellW / 2} height={grid.cellH / 2} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <line x1={0} y1={0} x2={0} y2={grid.cellH / 2} stroke="#e4e4e7" strokeWidth={grid.cellW / 12} />
-          </pattern>
-        </defs>
         {on("territory") && territory && (
-          <g opacity={0.35}>
-            {territory.cells.map((c) => (
-              <rect key={`t${c.c},${c.r}`} x={c.c * grid.cellW} y={c.r * grid.cellH} width={grid.cellW} height={grid.cellH} fill={c.owner === "contested" ? "url(#contested)" : TEAM_COLORS[c.owner]} />
-            ))}
-          </g>
+          <>
+            <defs>
+              <pattern id="contested" width={grid.cellW / 2} height={grid.cellH / 2} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <line x1={0} y1={0} x2={0} y2={grid.cellH / 2} stroke="#e4e4e7" strokeWidth={grid.cellW / 12} />
+              </pattern>
+            </defs>
+            <g opacity={0.35}>
+              {territory.cells.map((c) => (
+                <rect key={`t${c.c},${c.r}`} x={c.c * grid.cellW} y={c.r * grid.cellH} width={grid.cellW} height={grid.cellH} fill={c.owner === "contested" ? "url(#contested)" : TEAM_COLORS[c.owner]} />
+              ))}
+            </g>
+          </>
         )}
         {densityOn.map((l, i) => {
           const cells = heatmap.density[l as "damage" | "healing" | "presence"];
@@ -170,7 +172,7 @@ function legend(layers: Set<Layer>, heatmap: Heatmap, sides: Sides, filterSide: 
   if (layers.has("healing")) parts.push(`healing (green) up to ${formatInt(Math.max(0, ...heatmap.density.healing.map((c) => c.v)))} per cell`);
   if (layers.has("presence")) parts.push(`presence (grey) up to ${Math.max(0, ...heatmap.density.presence.map((c) => c.v)).toFixed(1)} s per cell`);
   if (layers.has("routes")) parts.push("lines are movement between position samples, dot at the end");
-  if (layers.has("territory")) parts.push("tint is the side with at least 60% of presence in a cell, hatched is contested");
+  if (layers.has("territory")) parts.push(`tint is the side with at least ${Math.round(TERRITORY_MAJORITY * 100)}% of presence in a cell, hatched is contested`);
   return parts.length ? `${parts.join(" · ")}. Presence is measured while players deal or receive damage or healing.` : "";
 }
 
@@ -193,7 +195,7 @@ function ObjectiveCard({ territory, objectiveHref, sides }: { territory: Territo
     </div>
   );
   return (
-    <Card title="Objective control" note={`Observed ${formatDuration(o.observedSeconds)} · within 10 m of the marked centre`}>
+    <Card title="Objective control" note={`Observed ${formatDuration(o.observedSeconds)} · within ${OBJECTIVE_RADIUS_METERS} m of the marked centre`}>
       <div className="space-y-3 text-sm">
         {bar(o.stage)}
         <p className="text-xs text-zinc-400">{sides.ours} {formatPct(o.stage.ours)} · contested {formatPct(o.stage.contested)} · {sides.theirs} {formatPct(o.stage.theirs)}</p>
@@ -207,7 +209,7 @@ function ObjectiveCard({ territory, objectiveHref, sides }: { territory: Territo
                 <tr key={f.index} className="border-t border-zinc-800 tabular-nums">
                   <td className="py-1">{f.index}</td>
                   <td style={{ color: f.winner ? TEAM_COLORS[f.winner] : undefined }}>{f.winner ? sides[f.winner] : "even"}</td>
-                  <td>{formatPct(f.share.ours)}</td><td>{formatPct(f.share.contested)}</td><td>{formatPct(f.share.theirs)}</td>
+                  <td>{f.share ? formatPct(f.share.ours) : "—"}</td><td>{f.share ? formatPct(f.share.contested) : "—"}</td><td>{f.share ? formatPct(f.share.theirs) : "—"}</td>
                 </tr>
               ))}
             </tbody>

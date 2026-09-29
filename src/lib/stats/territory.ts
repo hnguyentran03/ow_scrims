@@ -22,7 +22,7 @@ export interface Territory {
   cells: Array<{ c: number; r: number; owner: Owner; seconds: number }>;
   objective: {
     stage: Share;
-    byFight: Array<{ index: number; winner: SideKey | null; share: Share }>;
+    byFight: Array<{ index: number; winner: SideKey | null; share: Share | null }>;
     observedSeconds: number;
   } | null;
 }
@@ -113,11 +113,14 @@ function buildObjective(input: TerritoryInput): NonNullable<Territory["objective
   }
   const byFight = input.fights
     .filter((f) => f.end >= window.start && f.start <= window.end)
-    .map((f) => ({
-      index: f.index,
-      winner: (f.winner === null ? null : f.winner === oursTeam ? "ours" : f.winner === theirsTeam ? "theirs" : null) as SideKey | null,
-      share: share(observed.filter((o) => o.t >= f.start && o.t <= f.end).map((o) => o.state)),
-    }));
+    .map((f) => {
+      const instants = observed.filter((o) => o.t >= f.start && o.t <= f.end).map((o) => o.state);
+      return {
+        index: f.index,
+        winner: (f.winner === null ? null : f.winner === oursTeam ? "ours" : f.winner === theirsTeam ? "theirs" : null) as SideKey | null,
+        share: instants.length === 0 ? null : share(instants),
+      };
+    });
   return { stage: share(observed.map((o) => o.state)), byFight, observedSeconds: observed.length * SAMPLE_STEP_SECONDS };
 }
 

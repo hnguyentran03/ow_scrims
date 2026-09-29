@@ -4,6 +4,7 @@ import type { Replay } from "@/lib/stats/replay";
 import { buildReplay } from "@/lib/stats/replay";
 import { groupFights } from "@/lib/stats/fights";
 import type { KillLike } from "@/lib/stats/fights";
+import { buildHeatmap } from "@/lib/stats/heatmap";
 import { sides } from "@/lib/stats/sides";
 import { replayRowsFromLog } from "./replay-rows";
 
@@ -84,6 +85,13 @@ describe("objective control", () => {
     expect(t.objective?.byFight).toEqual([{ index: 1, winner: "ours", share: { ours: 1, theirs: 0, contested: 0 } }]);
   });
 
+  it("reports a null share for a fight with no observed instant on the sample grid", () => {
+    const fights = groupFights([kill(0.3, "A", "B")]);
+    const t = buildTerritory({ replay, stage: 0, fights, ...objective });
+    expect(t.objective?.byFight).toEqual([{ index: 1, winner: "ours", share: null }]);
+    expect(t.objective?.stage).toEqual({ ours: 1, theirs: 0, contested: 0 });
+  });
+
   it("returns a null objective section when no centre is marked", () => {
     expect(buildTerritory({ replay, stage: 0, fights: [], objective: null }).objective).toBeNull();
   });
@@ -103,9 +111,13 @@ describe("territory against the Lijiang sample", () => {
   it("produces owned cells in the first round window and no objective section without a centre", () => {
     const { map, rows } = replayRowsFromLog("Log-2026-04-02-17-21-48");
     const replay = buildReplay({ map, sides: sides(map), rows, images: [] });
-    const t = buildTerritory({ replay, stage: 0, fights: groupFights(rows.kills), objective: null });
+    const fights = groupFights(rows.kills);
+    const t = buildTerritory({ replay, stage: 0, fights, objective: null });
     expect(t.cells.length).toBeGreaterThan(0);
-    expect(new Set(t.cells.map((c) => c.owner))).toEqual(new Set(["ours", "theirs", "contested"].filter((o) => t.cells.some((c) => c.owner === o))));
+    const h = buildHeatmap({ replay, sides: sides(map), rows, fights, filter: { stage: 0, side: "both", player: null } });
+    expect(t.cells.reduce((n, c) => n + c.seconds, 0)).toBeCloseTo(h.totals.presenceSeconds, 6);
+    expect(new Set(t.cells.map((c) => `${c.c},${c.r}`))).toEqual(new Set(h.density.presence.map((c) => `${c.c},${c.r}`)));
+    for (const owner of ["ours", "theirs", "contested"] as const) expect(t.cells.some((c) => c.owner === owner)).toBe(true);
     expect(t.objective).toBeNull();
   });
 });

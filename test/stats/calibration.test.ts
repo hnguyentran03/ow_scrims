@@ -69,6 +69,16 @@ describe("parseCalibration", () => {
     expect(parseCalibration(raw)).toBeNull();
   });
 
+  it("keeps the calibration but nulls out a non-numeric objective", () => {
+    const raw = JSON.stringify({ pairs: [pair], affine: identity, objective: { x: "1", z: 2 } });
+    expect(parseCalibration(raw)).toEqual({ pairs: [pair], affine: identity, objective: null });
+  });
+
+  it("keeps the calibration but nulls out a non-finite objective", () => {
+    const raw = JSON.stringify({ pairs: [pair], affine: identity, objective: { x: NaN, z: 0 } });
+    expect(parseCalibration(raw)).toEqual({ pairs: [pair], affine: identity, objective: null });
+  });
+
   it("returns null for unparsable JSON", () => {
     expect(parseCalibration("not json")).toBeNull();
   });
