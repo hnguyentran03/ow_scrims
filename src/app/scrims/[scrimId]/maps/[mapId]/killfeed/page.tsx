@@ -58,7 +58,7 @@ function Block({ block, sides, initiation }: { block: KillfeedBlock; sides: Side
     const side = block.capturingTeam ? sideOf(block.capturingTeam, sides) : null;
     const color = side ? TEAM_COLORS[side] : "var(--color-muted)";
     return (
-      <div className="rounded-control py-2 text-center text-sm font-medium" style={{ backgroundImage: `repeating-linear-gradient(135deg, ${color}33 0 8px, transparent 8px 16px)`, border: `1px solid ${color}66` }}>
+      <div className="rounded-control py-2 text-center text-sm font-medium" style={{ backgroundImage: `repeating-linear-gradient(135deg, color-mix(in srgb, ${color} 20%, transparent) 0 8px, transparent 8px 16px)`, border: `1px solid color-mix(in srgb, ${color} 40%, transparent)` }}>
         Round {block.roundNumber}{block.capturingTeam ? `, captured by ${block.capturingTeam}` : " ended"}
       </div>
     );
