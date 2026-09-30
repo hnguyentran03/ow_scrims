@@ -36,7 +36,7 @@ export function DamageByRoundChart({ points, sides }: { points: RoundPoint[]; si
           <g key={p.roundNumber}>
             <circle cx={x(i)} cy={y(p.ours)} r={4} fill={TEAM_COLORS.ours} />
             <circle cx={x(i)} cy={y(p.theirs)} r={4} fill={TEAM_COLORS.theirs} />
-            <text x={x(i)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} fill="#a1a1aa">Round {p.roundNumber}</text>
+            <text x={x(i)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} className="fill-muted">Round {p.roundNumber}</text>
           </g>
         ))}
         {hover && <Tooltip x={hover.x} y={hover.y} lines={[`Round ${hover.point.roundNumber}`, `${sides.ours}: ${formatInt(hover.point.ours)}`, `${sides.theirs}: ${formatInt(hover.point.theirs)}`]} />}

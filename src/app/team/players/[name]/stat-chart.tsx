@@ -27,14 +27,14 @@ export function StatChart({ points }: { points: ChartPoint[] }) {
     <div className="space-y-2">
       <label className="flex items-center gap-2 text-sm">
         Stat per 10 minutes
-        <select value={stat} onChange={(e) => setStat(e.target.value as ChartStat)} className="rounded bg-zinc-900 px-2 py-1">
+        <select value={stat} onChange={(e) => setStat(e.target.value as ChartStat)} className="rounded border border-line bg-raised px-2 py-1 text-ink">
           {CHART_STAT_KEYS.map((k) => (
             <option key={k} value={k}>{CHART_STATS[k]}</option>
           ))}
         </select>
       </label>
       {points.length <= 1 ? (
-        <p className="text-sm text-zinc-500">Need at least two scrims in range to draw a trend.</p>
+        <p className="text-sm text-muted">Need at least two scrims in range to draw a trend.</p>
       ) : (
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`${CHART_STATS[stat]} per 10 minutes by scrim`} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
           <Axes yTicks={ticks(0, max, 5)} yScale={y} yFormat={formatPer10} />
@@ -42,11 +42,11 @@ export function StatChart({ points }: { points: ChartPoint[] }) {
           {points.map((p, i) => (
             <g key={p.scrimId}>
               <circle cx={x(i)} cy={y(value(p))} r={4} fill={TEAM_COLORS.ours} />
-              <text x={x(i)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} fill="#a1a1aa">{p.date.slice(5)}</text>
+              <text x={x(i)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} className="fill-muted">{p.date.slice(5)}</text>
             </g>
           ))}
           {hover && (
-            <Tooltip x={hover.x} y={hover.y} lines={[`${hover.point.name} · ${hover.point.date}`, `${CHART_STATS[stat]}: ${formatPer10(value(hover.point))} per 10`, `${hover.point.maps} map${hover.point.maps === 1 ? "" : "s"}`]} />
+            <Tooltip x={hover.x} y={hover.y} lines={[`${hover.point.name}, ${hover.point.date}`, `${CHART_STATS[stat]}: ${formatPer10(value(hover.point))} per 10`, `${hover.point.maps} map${hover.point.maps === 1 ? "" : "s"}`]} />
           )}
         </svg>
       )}

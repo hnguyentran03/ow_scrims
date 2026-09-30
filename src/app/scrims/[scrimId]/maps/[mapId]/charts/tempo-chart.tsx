@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/button";
 import { TEAM_COLORS } from "@/lib/colors";
 import { formatDuration } from "@/lib/format";
 import type { Sides } from "@/lib/stats/sides";
@@ -44,14 +45,15 @@ export function TempoChart({ tempo, sides }: { tempo: Tempo; sides: Sides }) {
         <Legend sides={sides} />
         <div className="flex gap-2">
           {VARIANTS.map((v) => (
-            <button
+            <Button
               key={v.key}
-              type="button"
+              size="sm"
+              variant={variant === v.key ? "primary" : "secondary"}
               onClick={() => setVariant(v.key)}
-              className={`rounded border px-2 py-1 text-sm ${variant === v.key ? "border-zinc-100" : "border-zinc-700 text-zinc-400 hover:text-zinc-200"}`}
+              aria-pressed={variant === v.key}
             >
               {v.label}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -63,42 +65,42 @@ export function TempoChart({ tempo, sides }: { tempo: Tempo; sides: Sides }) {
             width={Math.max(1, x(f.end) - x(f.start))}
             y={M.top}
             height={innerH}
-            fill={f.winner ? TEAM_COLORS[f.winner] : "#71717a"}
+            fill={f.winner ? TEAM_COLORS[f.winner] : "var(--color-muted)"}
             opacity={0.12}
           />
         ))}
         <Axes yTicks={ticks(-peak, peak, 6)} yScale={y} yFormat={(v) => v.toFixed(1)} />
-        <line x1={M.left} x2={W - M.right} y1={y(0)} y2={y(0)} stroke="#71717a" />
-        <path d={path} fill="none" stroke="#e4e4e7" strokeWidth={2} />
+        <line x1={M.left} x2={W - M.right} y1={y(0)} y2={y(0)} className="stroke-muted" />
+        <path d={path} fill="none" className="stroke-ink" strokeWidth={2} />
         {markers.map((m, i) => (
           <circle
             key={i}
             cx={x(m.t)}
             cy={y(points[Math.min(points.length - 1, Math.max(0, Math.round(m.t / TEMPO_STEP_SECONDS)))].value)}
             r={m.kind === "ult" ? 4 : 3}
-            fill={m.kind === "ult" ? "#18181b" : TEAM_COLORS[m.team]}
+            fill={m.kind === "ult" ? "var(--color-raised)" : TEAM_COLORS[m.team]}
             stroke={TEAM_COLORS[m.team]}
             strokeWidth={m.kind === "ult" ? 2 : 0}
           />
         ))}
         {ticks(0, tMax, 6).map((t) => (
-          <text key={t} x={x(t)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} fill="#a1a1aa">{formatDuration(t)}</text>
+          <text key={t} x={x(t)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} className="fill-muted">{formatDuration(t)}</text>
         ))}
         {hover && (
           <>
-            <line x1={x(hover.point.t)} x2={x(hover.point.t)} y1={M.top} y2={M.top + innerH} stroke="#52525b" />
+            <line x1={x(hover.point.t)} x2={x(hover.point.t)} y1={M.top} y2={M.top + innerH} className="stroke-line" />
             <Tooltip
               x={hover.x}
               y={hover.y}
               lines={[
-                `${formatDuration(hover.point.t)} · score ${hover.point.value.toFixed(1)}`,
-                fight ? `Fight ${fight.index} · ${sides.ours} ${ours} – ${theirs} ${sides.theirs} so far` : "Between fights",
+                `${formatDuration(hover.point.t)}, score ${hover.point.value.toFixed(1)}`,
+                fight ? `Fight ${fight.index}, ${sides.ours} ${ours} – ${theirs} ${sides.theirs} so far` : "Between fights",
               ]}
             />
           </>
         )}
       </svg>
-      <p className="text-xs text-zinc-500">Filled dots are kills, rings are ultimate casts. Fight spans are shaded by winner.</p>
+      <p className="text-xs text-muted">Filled dots are kills, rings are ultimate casts. Fight spans are shaded by winner.</p>
     </div>
   );
 }

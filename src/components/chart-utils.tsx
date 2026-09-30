@@ -38,12 +38,12 @@ export function Axes({ yTicks, yScale, yFormat = String }: { yTicks: number[]; y
     <g>
       {yTicks.map((t) => (
         <g key={t}>
-          <line x1={M.left} x2={W - M.right} y1={yScale(t)} y2={yScale(t)} stroke="#27272a" />
-          <text x={M.left - 6} y={yScale(t)} textAnchor="end" dominantBaseline="middle" fontSize={10} fill="#a1a1aa">{yFormat(t)}</text>
+          <line x1={M.left} x2={W - M.right} y1={yScale(t)} y2={yScale(t)} className="stroke-line" />
+          <text x={M.left - 6} y={yScale(t)} textAnchor="end" dominantBaseline="middle" fontSize={10} className="fill-muted">{yFormat(t)}</text>
         </g>
       ))}
-      <line x1={M.left} x2={M.left} y1={M.top} y2={H - M.bottom} stroke="#3f3f46" />
-      <line x1={M.left} x2={W - M.right} y1={H - M.bottom} y2={H - M.bottom} stroke="#3f3f46" />
+      <line x1={M.left} x2={M.left} y1={M.top} y2={H - M.bottom} className="stroke-line" />
+      <line x1={M.left} x2={W - M.right} y1={H - M.bottom} y2={H - M.bottom} className="stroke-line" />
     </g>
   );
 }
@@ -55,9 +55,9 @@ export function Tooltip({ x, y, lines }: { x: number; y: number; lines: string[]
   const top = Math.min(Math.max(y - height - 6, M.top), H - M.bottom - height);
   return (
     <g transform={`translate(${left},${top})`} pointerEvents="none">
-      <rect width={width} height={height} rx={4} fill="#18181b" stroke="#3f3f46" />
+      <rect width={width} height={height} rx={4} className="fill-raised stroke-line" />
       {lines.map((l, i) => (
-        <text key={i} x={8} y={14 + i * 14} fontSize={10} fill="#e4e4e7">{l}</text>
+        <text key={i} x={8} y={14 + i * 14} fontSize={10} className="fill-ink">{l}</text>
       ))}
     </g>
   );
@@ -65,7 +65,7 @@ export function Tooltip({ x, y, lines }: { x: number; y: number; lines: string[]
 
 export function Legend({ sides }: { sides: Sides }) {
   return (
-    <div className="flex gap-4 text-xs text-zinc-400">
+    <div className="flex gap-4 text-xs text-muted">
       <span><span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ background: TEAM_COLORS.ours }} />{sides.ours}</span>
       <span><span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ background: TEAM_COLORS.theirs }} />{sides.theirs}</span>
     </div>

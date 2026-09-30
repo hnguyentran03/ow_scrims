@@ -30,7 +30,7 @@ export function FinalBlowsByRoleChart({ bars, sides }: { bars: RoleBars[]; sides
             <g key={b.role}>
               <rect x={cx - barW - 2} y={y(b.ours)} width={barW} height={y(0) - y(b.ours)} fill={TEAM_COLORS.ours} />
               <rect x={cx + 2} y={y(b.theirs)} width={barW} height={y(0) - y(b.theirs)} fill={TEAM_COLORS.theirs} />
-              <text x={cx} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} fill="#a1a1aa">{b.role}</text>
+              <text x={cx} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} className="fill-muted">{b.role}</text>
             </g>
           );
         })}
