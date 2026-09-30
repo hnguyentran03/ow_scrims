@@ -5,16 +5,19 @@ import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
 import { formatPct } from "@/lib/format";
 import { parseRange, type SearchParams } from "@/lib/range";
+import { buildPerformance } from "@/lib/stats/performance";
 import { buildTeamOverview, MIN_MAP_PLAYS, type ModeExtremes } from "@/lib/stats/team-overview";
 import type { MapRecord, TypeRecord } from "@/lib/stats/trends";
 import { EmptyRange } from "./empty-range";
+import { RoleCards, TriosTable } from "./performance-cards";
 
 export const dynamic = "force-dynamic";
 
 export default async function TeamOverviewPage({ searchParams }: { searchParams: SearchParams }) {
-  const rows = await getTeamRows(await getDb(), parseRange(await searchParams), { playerStats: true });
+  const rows = await getTeamRows(await getDb(), parseRange(await searchParams), { playerStats: true, kills: true, ults: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const o = buildTeamOverview(rows.maps, rows.playerStats);
+  const perf = buildPerformance(rows.maps, rows.playerStats, rows.kills, rows.ultStarts, rows.ultEnds);
 
   return (
     <div className="space-y-6">
@@ -55,6 +58,9 @@ export default async function TeamOverviewPage({ searchParams }: { searchParams:
           </tbody>
         </Table>
       </Card>
+
+      <RoleCards roles={perf.roles} />
+      <TriosTable trios={perf.trios} />
     </div>
   );
 }

@@ -4,7 +4,15 @@ import { expect, test } from "./fixtures";
 import { createScrim, deleteScrim, newPage, SAMPLES, uploadLog } from "./helpers";
 
 const TABS: Array<{ label: string; suffix: string; check: (page: Page) => Promise<void> }> = [
-  { label: "Overview", suffix: "", check: async (page) => expect(page.getByText("Record", { exact: true })).toBeVisible() },
+  {
+    label: "Overview",
+    suffix: "",
+    check: async (page) => {
+      await expect(page.getByText("Record", { exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Performance by role", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Best trios", exact: true })).toBeVisible();
+    },
+  },
   { label: "Trends", suffix: "/trends", check: async (page) => expect(page.getByRole("heading", { name: "Win rate by map", exact: true })).toBeVisible() },
   { label: "Teamfights", suffix: "/teamfights", check: async (page) => expect(page.getByRole("heading", { name: "By scrim", exact: true })).toBeVisible() },
   { label: "Players", suffix: "/players", check: async (page) => expect(page.getByRole("heading", { name: "Roster", exact: true })).toBeVisible() },
