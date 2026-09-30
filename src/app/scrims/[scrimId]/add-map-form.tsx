@@ -2,6 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Badge } from "@/components/badge";
+import { Button } from "@/components/button";
+import type { BadgeTone } from "@/lib/result";
 import { orderUploads } from "@/lib/upload-order";
 
 type SideChoice = "auto" | "1" | "2";
@@ -90,36 +93,33 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-3 rounded border border-dashed border-zinc-700 p-4">
-      <h2 className="font-medium">Add maps</h2>
-      <label className="block text-sm">
+    <form onSubmit={onSubmit} className="space-y-3">
+      <label className="block text-base">
         Log files
-        <input name="files" type="file" accept=".txt,.log" multiple required className="mt-1 block text-sm" />
+        <input name="files" type="file" accept=".txt,.log" multiple required className="mt-1 block text-sm text-muted" />
       </label>
-      <fieldset className="flex flex-wrap gap-4 text-sm">
-        <label><input type="radio" name="ourSide" value="auto" defaultChecked /> Detect from players</label>
-        <label><input type="radio" name="ourSide" value="1" /> We were Team 1</label>
-        <label><input type="radio" name="ourSide" value="2" /> We were Team 2</label>
+      <fieldset className="flex flex-wrap gap-4 text-base">
+        <label className="flex items-center gap-1"><input type="radio" name="ourSide" value="auto" defaultChecked /> Detect from players</label>
+        <label className="flex items-center gap-1"><input type="radio" name="ourSide" value="1" /> We were Team 1</label>
+        <label className="flex items-center gap-1"><input type="radio" name="ourSide" value="2" /> We were Team 2</label>
       </fieldset>
-      <button type="submit" disabled={busy} className="rounded bg-orange-500 px-3 py-1 font-medium text-black disabled:opacity-50">
-        {busy ? "Uploading..." : "Upload"}
-      </button>
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      <Button type="submit" variant="primary" pending={busy} pendingLabel="Uploading…">Upload</Button>
+      {error && <p role="alert" className="text-sm text-lost">{error}</p>}
       {items.length > 0 && (
         <ul className="space-y-2 text-sm">
           {items.map((item, i) => (
-            <li key={item.file.name + i} className="rounded border border-zinc-800 p-2">
+            <li key={item.file.name + i} className="rounded-control border border-line bg-raised p-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate">{item.file.name}</span>
                 <StatusBadge status={item.status} />
               </div>
               {item.status.kind === "done" && item.status.warnings.length > 0 && (
-                <ul className="mt-1 text-yellow-400">{item.status.warnings.map((w) => <li key={w}>{w}</li>)}</ul>
+                <ul className="mt-1 text-accent">{item.status.warnings.map((w) => <li key={w}>{w}</li>)}</ul>
               )}
-              {item.status.kind === "error" && <p className="mt-1 text-red-400">{item.status.message}</p>}
+              {item.status.kind === "error" && <p className="mt-1 text-lost">{item.status.message}</p>}
               {item.status.kind === "needs-side" && (
                 <div className="mt-2 space-y-1 text-xs">
-                  <p className="text-zinc-400">Could not tell which team was yours.</p>
+                  <p className="text-muted">Could not tell which team was yours.</p>
                   {(["1", "2"] as const).map((s) => {
                     const st = item.status as Extract<Status, { kind: "needs-side" }>;
                     const name = s === "1" ? st.team1Name : st.team2Name;
@@ -130,7 +130,7 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
                       </label>
                     );
                   })}
-                  <button type="button" disabled={busy} onClick={() => retry(i)} className="rounded bg-zinc-700 px-2 py-0.5">Upload with this side</button>
+                  <Button type="button" disabled={busy} onClick={() => retry(i)} className="text-xs">Upload with this side</Button>
                 </div>
               )}
             </li>
@@ -143,10 +143,11 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
 
 function StatusBadge({ status }: { status: Status }) {
   const text: Record<Status["kind"], string> = { queued: "Queued", uploading: "Uploading…", done: "Done", "needs-side": "Needs side", duplicate: "Already uploaded", error: "Failed" };
-  const tone: Record<Status["kind"], string> = { queued: "bg-zinc-700", uploading: "bg-zinc-700", done: "bg-green-700", "needs-side": "bg-yellow-700", duplicate: "bg-zinc-700", error: "bg-red-700" };
+  const tone: Record<Status["kind"], BadgeTone> = { queued: "neutral", uploading: "neutral", done: "won", "needs-side": "warning", duplicate: "neutral", error: "error" };
   return (
-    <span className={`rounded px-2 py-0.5 text-xs ${tone[status.kind]}`}>
-      {status.kind === "done" ? `Done · ${status.mapName}` : text[status.kind]}
+    <span className="flex items-center gap-2">
+      <Badge tone={tone[status.kind]}>{text[status.kind]}</Badge>
+      {status.kind === "done" && <span className="text-muted">{status.mapName}</span>}
     </span>
   );
 }

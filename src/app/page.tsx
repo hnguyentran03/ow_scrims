@@ -1,4 +1,11 @@
 import Link from "next/link";
+import { Badge } from "@/components/badge";
+import { Button } from "@/components/button";
+import { Card } from "@/components/card";
+import { EmptyState } from "@/components/empty-state";
+import { Field, Input } from "@/components/field";
+import { PageHeader } from "@/components/page-header";
+import { Table, Td, Th } from "@/components/table";
 import { getDb } from "@/lib/db";
 import { listScrims } from "@/lib/db/queries";
 import { createScrimAction } from "./actions";
@@ -9,35 +16,50 @@ export default async function HomePage() {
   const scrims = await listScrims(await getDb());
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-semibold">Scrims</h1>
+      <PageHeader title="Scrims" />
 
-      <form action={createScrimAction} className="flex flex-wrap items-end gap-3 rounded border border-zinc-800 p-4">
-        <label className="flex flex-col text-sm">
-          Name
-          <input name="name" required className="rounded bg-zinc-900 px-2 py-1" placeholder="vs Cerberus" />
-        </label>
-        <label className="flex flex-col text-sm">
-          Date
-          <input name="date" type="date" required className="rounded bg-zinc-900 px-2 py-1" />
-        </label>
-        <label className="flex flex-col text-sm">
-          Opponent
-          <input name="opponentName" required className="rounded bg-zinc-900 px-2 py-1" />
-        </label>
-        <button type="submit" className="rounded bg-orange-500 px-3 py-1 font-medium text-black">Create scrim</button>
-      </form>
+      <Card title="New scrim">
+        <form action={createScrimAction} className="flex flex-wrap items-end gap-3">
+          <Field label="Name">
+            <Input name="name" required placeholder="vs Cerberus" />
+          </Field>
+          <Field label="Date">
+            <Input name="date" type="date" required />
+          </Field>
+          <Field label="Opponent">
+            <Input name="opponentName" required />
+          </Field>
+          <Button type="submit" variant="primary">Create scrim</Button>
+        </form>
+      </Card>
 
       {scrims.length === 0 ? (
-        <p className="text-zinc-400">No scrims yet. Create one above, then upload a map log.</p>
+        <EmptyState>No scrims yet. Create one above, then upload a map log.</EmptyState>
       ) : (
-        <ul className="divide-y divide-zinc-800 rounded border border-zinc-800">
-          {scrims.map((s) => (
-            <li key={s.id} className="flex items-center justify-between px-4 py-3">
-              <Link href={`/scrims/${s.id}`} className="font-medium hover:underline">{s.name}</Link>
-              <span className="text-sm text-zinc-400">{s.date} · vs {s.opponentName} · {s.mapCount} maps · {s.wins}-{s.losses}</span>
-            </li>
-          ))}
-        </ul>
+        <Table>
+          <thead>
+            <tr>
+              <Th>Scrim</Th>
+              <Th>Date</Th>
+              <Th>Opponent</Th>
+              <Th numeric>Maps</Th>
+              <Th numeric>Record</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {scrims.map((s) => (
+              <tr key={s.id}>
+                <Td><Link href={`/scrims/${s.id}`} className="font-medium hover:underline">{s.name}</Link></Td>
+                <Td muted>{s.date}</Td>
+                <Td muted>{s.opponentName}</Td>
+                <Td numeric>{s.mapCount}</Td>
+                <Td numeric>
+                  <Badge tone={s.wins > s.losses ? "won" : s.losses > s.wins ? "lost" : "neutral"}>{s.wins}-{s.losses}</Badge>
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       )}
     </div>
   );
