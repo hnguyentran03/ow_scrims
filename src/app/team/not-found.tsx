@@ -1,10 +1,16 @@
 import Link from "next/link";
+import { EmptyState } from "@/components/empty-state";
 
 export default function TeamNotFound() {
   return (
-    <div className="space-y-2">
-      <p className="text-zinc-400">No player by that name is on our roster in this range. Widen the dates above, or pick someone from the roster.</p>
-      <Link href="/team/players" className="text-zinc-400 hover:underline">Back to players</Link>
-    </div>
+    <EmptyState
+      action={
+        <Link href="/team/players" className="text-accent hover:underline">
+          Back to players
+        </Link>
+      }
+    >
+      No player by that name is on our roster in this range. Widen the dates above, or pick someone from the roster.
+    </EmptyState>
   );
 }

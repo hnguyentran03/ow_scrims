@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { EmptyState } from "@/components/empty-state";
+import { Table, Td, Th } from "@/components/table";
 import type { AbilityImpactRow } from "@/lib/stats/ability-impact";
 import type { SideKey } from "@/lib/stats/sides";
 import { SideToggle } from "../side-toggle";
@@ -11,32 +13,32 @@ const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
 export function AbilityImpactTable({ ours, theirs, hasAbilities }: { ours: AbilityImpactRow[]; theirs: AbilityImpactRow[]; hasAbilities: boolean }) {
   const [side, setSide] = useState<SideKey>("ours");
   const rows = side === "ours" ? ours : theirs;
-  if (!hasAbilities) return <p className="text-sm text-zinc-400">No ability events in this range. Ability logging depends on the Workshop mode version; many older logs do not have it.</p>;
+  if (!hasAbilities) return <EmptyState>No ability events in this range. Ability logging depends on the Workshop mode version; many older logs do not have it.</EmptyState>;
   return (
     <div className="space-y-2">
       <SideToggle side={side} onChange={setSide} labels={{ ours: "Our abilities", theirs: "Their abilities" }} />
       {rows.length === 0 ? (
-        <p className="text-sm text-zinc-400">No abilities used.</p>
+        <EmptyState>No abilities used.</EmptyState>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-            <tr><th className="py-1">Hero</th><th>Ability</th><th>Uses</th><th>Per fight won</th><th>Per fight lost</th><th>With</th><th>Without</th><th>Lift</th></tr>
+        <Table>
+          <thead>
+            <tr><Th>Hero</Th><Th>Ability</Th><Th numeric>Uses</Th><Th numeric>Per fight won</Th><Th numeric>Per fight lost</Th><Th numeric>With</Th><Th numeric>Without</Th><Th numeric>Lift</Th></tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={`${r.hero}|${r.slot}`} className="border-t border-zinc-800 tabular-nums">
-                <td className="py-1">{r.hero}</td>
-                <td>{r.ability}</td>
-                <td>{r.uses}</td>
-                <td>{two(r.perFightWon)}</td>
-                <td>{two(r.perFightLost)}</td>
-                <td>{winLoss(r.with)}</td>
-                <td>{winLoss(r.without)}</td>
-                <td>{lift(r.lift)}</td>
+              <tr key={`${r.hero}|${r.slot}`}>
+                <Td>{r.hero}</Td>
+                <Td>{r.ability}</Td>
+                <Td numeric>{r.uses}</Td>
+                <Td numeric>{two(r.perFightWon)}</Td>
+                <Td numeric>{two(r.perFightLost)}</Td>
+                <Td numeric>{winLoss(r.with)}</Td>
+                <Td numeric>{winLoss(r.without)}</Td>
+                <Td numeric>{lift(r.lift)}</Td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Table>
       )}
     </div>
   );

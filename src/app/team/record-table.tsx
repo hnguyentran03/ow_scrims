@@ -1,3 +1,4 @@
+import { Table, Td, Th } from "@/components/table";
 import { formatPct } from "@/lib/format";
 import type { MapRecord, TypeRecord } from "@/lib/stats/trends";
 import { Empty } from "./empty";
@@ -19,18 +20,18 @@ export const typeRecordRows = (rows: TypeRecord[]): RecordRow[] => rows.map((r) 
 export function RecordTable({ rows, head }: { rows: RecordRow[]; head: string }) {
   if (rows.length === 0) return <Empty />;
   return (
-    <table className="w-full text-sm">
-      <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-        <tr><th className="py-1">{head}</th><th>Played</th><th>W</th><th>L</th><th>N/A</th><th>Win %</th></tr>
+    <Table>
+      <thead>
+        <tr><Th>{head}</Th><Th numeric>Played</Th><Th numeric>W</Th><Th numeric>L</Th><Th numeric>N/A</Th><Th numeric>Win %</Th></tr>
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={r.key} className="border-t border-zinc-800 tabular-nums">
-            <td className="py-1">{r.label}{r.sub && <span className="ml-2 text-xs text-zinc-500">{r.sub}</span>}</td>
-            <td>{r.played}</td><td>{r.won}</td><td>{r.lost}</td><td>{r.undecided}</td><td>{formatPct(r.winRate)}</td>
+          <tr key={r.key}>
+            <Td>{r.label}{r.sub && <span className="ml-2 text-xs text-muted">{r.sub}</span>}</Td>
+            <Td numeric>{r.played}</Td><Td numeric>{r.won}</Td><Td numeric>{r.lost}</Td><Td numeric>{r.undecided}</Td><Td numeric>{formatPct(r.winRate)}</Td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 }

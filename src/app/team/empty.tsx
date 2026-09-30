@@ -1,3 +1,5 @@
+import { EmptyState } from "@/components/empty-state";
+
 export function Empty() {
-  return <p className="text-sm text-zinc-500">Nothing in range.</p>;
+  return <EmptyState>Nothing in range.</EmptyState>;
 }

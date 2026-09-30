@@ -1,3 +1,5 @@
+import { EmptyState } from "@/components/empty-state";
+
 export function EmptyRange() {
-  return <p className="text-zinc-400">No maps in this range. Upload map logs to a scrim, or widen the dates.</p>;
+  return <EmptyState>No maps in this range. Upload map logs to a scrim, or widen the dates.</EmptyState>;
 }

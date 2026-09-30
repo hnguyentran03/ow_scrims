@@ -1,5 +1,6 @@
 import { Card } from "@/components/card";
 import { Stat } from "@/components/stat";
+import { Table, Td, Th } from "@/components/table";
 import { TEAM_COLORS } from "@/lib/colors";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
@@ -27,21 +28,26 @@ export default async function TeamfightsPage({ searchParams }: { searchParams: S
         <Column title="Ours" color={TEAM_COLORS.ours} stats={t.ours} />
         <Column title="Theirs" color={TEAM_COLORS.theirs} stats={t.theirs} />
       </div>
-      <section className="space-y-2">
-        <h2 className="text-lg font-medium">By scrim</h2>
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-            <tr><th className="py-1">Scrim</th><th>Date</th><th>Fights</th><th>W</th><th>L</th><th>Draw</th><th>Win %</th></tr>
+      <Card title="By scrim">
+        <Table>
+          <thead>
+            <tr><Th>Scrim</Th><Th>Date</Th><Th numeric>Fights</Th><Th numeric>W</Th><Th numeric>L</Th><Th numeric>Draw</Th><Th numeric>Win %</Th></tr>
           </thead>
           <tbody>
             {t.byScrim.map((s) => (
-              <tr key={s.scrimId} className="border-t border-zinc-800 tabular-nums">
-                <td className="py-1">{s.name}</td><td className="text-zinc-400">{s.date}</td><td>{s.fights}</td><td>{s.won}</td><td>{s.lost}</td><td>{s.drawn}</td><td>{formatPct(s.winRate)}</td>
+              <tr key={s.scrimId}>
+                <Td>{s.name}</Td>
+                <Td muted>{s.date}</Td>
+                <Td numeric>{s.fights}</Td>
+                <Td numeric>{s.won}</Td>
+                <Td numeric>{s.lost}</Td>
+                <Td numeric>{s.drawn}</Td>
+                <Td numeric>{formatPct(s.winRate)}</Td>
               </tr>
             ))}
           </tbody>
-        </table>
-      </section>
+        </Table>
+      </Card>
       <Card title="Ultimate impact" note={`Fight win rate with and without each hero's ultimate; draws count as fights but not wins. Lift needs ${MIN_IMPACT_FIGHTS} decided fights in each column.`}>
         <UltImpactTable ours={ultImpact.ours} theirs={ultImpact.theirs} />
       </Card>
@@ -57,7 +63,7 @@ const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
 function Column({ title, color, stats: s }: { title: string; color: string; stats: TeamFightStats }) {
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-medium"><span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: color }} />{title}</h2>
+      <h2 className="text-md font-medium"><span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: color }} />{title}</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <Stat label="Fight win rate" value={formatPct(s.winRate)} hint={`${s.won}-${s.lost}, ${s.drawn} even of ${s.fights}`} />
         <Stat label="First pick win rate" value={formatPct(s.firstPick.rate)} hint={`${s.firstPick.won} of ${s.firstPick.count} fights`} />

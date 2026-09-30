@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { EmptyState } from "@/components/empty-state";
+import { Table, Td, Th } from "@/components/table";
 import { formatPct } from "@/lib/format";
 import type { SideKey } from "@/lib/stats/sides";
 import type { ImpactRatio, UltImpactRow } from "@/lib/stats/ult-impact";
@@ -18,25 +20,25 @@ export function UltImpactTable({ ours, theirs }: { ours: UltImpactRow[]; theirs:
     <div className="space-y-2">
       <SideToggle side={side} onChange={setSide} labels={{ ours: "Our ults", theirs: "Their ults" }} />
       {rows.length === 0 ? (
-        <p className="text-sm text-zinc-400">No ultimates cast.</p>
+        <EmptyState>No ultimates cast.</EmptyState>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-            <tr><th className="py-1">Hero</th><th>Casts</th><th>With</th><th>Without</th><th>Lift</th><th>Conv. kills / cast</th></tr>
+        <Table>
+          <thead>
+            <tr><Th>Hero</Th><Th numeric>Casts</Th><Th numeric>With</Th><Th numeric>Without</Th><Th numeric>Lift</Th><Th numeric>Conv. kills / cast</Th></tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.hero} className="border-t border-zinc-800 tabular-nums">
-                <td className="py-1">{r.hero} <span className="text-zinc-500">{r.role}</span></td>
-                <td>{r.casts}{r.unattributed > 0 && <span className="text-zinc-500"> ({r.unattributed} after the last fight)</span>}</td>
-                <td>{winLoss(r.with)}</td>
-                <td>{winLoss(r.without)}</td>
-                <td>{lift(r.lift)}</td>
-                <td>{two(r.conversionKillsPerCast)}</td>
+              <tr key={r.hero}>
+                <Td>{r.hero} <span className="text-muted">{r.role}</span></Td>
+                <Td numeric>{r.casts}{r.unattributed > 0 && <span className="text-muted"> ({r.unattributed} after the last fight)</span>}</Td>
+                <Td numeric>{winLoss(r.with)}</Td>
+                <Td numeric>{winLoss(r.without)}</Td>
+                <Td numeric>{lift(r.lift)}</Td>
+                <Td numeric>{two(r.conversionKillsPerCast)}</Td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Table>
       )}
     </div>
   );

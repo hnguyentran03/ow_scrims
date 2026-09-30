@@ -1,4 +1,6 @@
+import { Card } from "@/components/card";
 import { Stat } from "@/components/stat";
+import { Table, Td, Th } from "@/components/table";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
 import { formatPct } from "@/lib/format";
@@ -35,88 +37,95 @@ export default async function TeamOverviewPage({ searchParams }: { searchParams:
 
       <ByModeTable rows={o.byMode} />
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-medium">Role balance</h2>
-        <p className="text-xs text-zinc-500">Our share of team totals by role.</p>
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-            <tr><th className="py-1">Role</th><th>Final blows</th><th>Deaths</th><th>Hero damage</th><th>Healing</th></tr>
+      <Card title="Role balance" note="Our share of team totals by role.">
+        <Table>
+          <thead>
+            <tr><Th>Role</Th><Th numeric>Final blows</Th><Th numeric>Deaths</Th><Th numeric>Hero damage</Th><Th numeric>Healing</Th></tr>
           </thead>
           <tbody>
             {o.roleBalance.map((r) => (
-              <tr key={r.role} className="border-t border-zinc-800 tabular-nums">
-                <td className="py-1">{r.role}</td><td>{formatPct(r.finalBlows)}</td><td>{formatPct(r.deaths)}</td><td>{formatPct(r.heroDamage)}</td><td>{formatPct(r.healing)}</td>
+              <tr key={r.role}>
+                <Td>{r.role}</Td>
+                <Td numeric>{formatPct(r.finalBlows)}</Td>
+                <Td numeric>{formatPct(r.deaths)}</Td>
+                <Td numeric>{formatPct(r.heroDamage)}</Td>
+                <Td numeric>{formatPct(r.healing)}</Td>
               </tr>
             ))}
           </tbody>
-        </table>
-      </section>
+        </Table>
+      </Card>
     </div>
   );
 }
 
 function ByModeTable({ rows }: { rows: ModeExtremes[] }) {
   return (
-    <section className="space-y-2">
-      <h2 className="text-lg font-medium">By game mode</h2>
-      <p className="text-xs text-zinc-500">Strongest and blind-spot map within each mode, among maps played at least {MIN_MAP_PLAYS} times.</p>
-      <table className="w-full text-sm">
-        <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-          <tr><th className="py-1">Mode</th><th>Played</th><th>Strongest map</th><th>Blind spot map</th></tr>
+    <Card title="By game mode" note={`Strongest and blind-spot map within each mode, among maps played at least ${MIN_MAP_PLAYS} times.`}>
+      <Table>
+        <thead>
+          <tr><Th>Mode</Th><Th numeric>Played</Th><Th>Strongest map</Th><Th>Blind spot map</Th></tr>
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.mapType} className="border-t border-zinc-800 tabular-nums">
-              <td className="py-1">{r.mapType}</td>
-              <td>{r.played}</td>
+            <tr key={r.mapType}>
+              <Td>{r.mapType}</Td>
+              <Td numeric>{r.played}</Td>
               <ModeMapCell record={r.strongest} />
               <ModeMapCell record={r.blindSpot} />
             </tr>
           ))}
         </tbody>
-      </table>
-    </section>
+      </Table>
+    </Card>
   );
 }
 
 function ModeMapCell({ record }: { record: MapRecord | null }) {
-  if (!record) return <td className="text-zinc-500">Needs {MIN_MAP_PLAYS} plays of a map</td>;
+  if (!record) return <Td muted>Needs {MIN_MAP_PLAYS} plays of a map</Td>;
   return (
-    <td>
+    <Td>
       <span className="font-medium">{record.mapName}</span>
-      <span className="text-zinc-400"> · {record.won}-{record.lost} · {formatPct(record.winRate)}</span>
-    </td>
+      <span className="ml-2 text-muted">{record.won}-{record.lost}, {formatPct(record.winRate)}</span>
+    </Td>
   );
 }
 
 function TypeCard({ title, record }: { title: string; record: TypeRecord | null }) {
   return (
-    <section className="rounded border border-zinc-800 p-4">
-      <h2 className="text-xs uppercase tracking-wide text-zinc-500">{title}</h2>
+    <Card title={title}>
       {record ? (
-        <>
-          <div className="text-lg font-semibold">{record.mapType}</div>
-          <div className="text-sm text-zinc-400">{record.played} played · {record.won}-{record.lost} · {formatPct(record.winRate)}</div>
-        </>
+        <div className="space-y-1">
+          <div className="text-lg font-semibold text-ink">{record.mapType}</div>
+          <div className="flex flex-wrap gap-x-3 text-sm text-muted">
+            <span>{record.played} played</span>
+            <span>{record.won}-{record.lost}</span>
+            <span>{formatPct(record.winRate)}</span>
+          </div>
+        </div>
       ) : (
-        <p className="text-sm text-zinc-400">Play a game mode at least {MIN_MAP_PLAYS} times to see this.</p>
+        <p className="text-sm text-muted">Play a game mode at least {MIN_MAP_PLAYS} times to see this.</p>
       )}
-    </section>
+    </Card>
   );
 }
 
 function MapCard({ title, record }: { title: string; record: MapRecord | null }) {
   return (
-    <section className="rounded border border-zinc-800 p-4">
-      <h2 className="text-xs uppercase tracking-wide text-zinc-500">{title}</h2>
+    <Card title={title}>
       {record ? (
-        <>
-          <div className="text-lg font-semibold">{record.mapName}</div>
-          <div className="text-sm text-zinc-400">{record.mapType} · {record.played} played · {record.won}-{record.lost} · {formatPct(record.winRate)}</div>
-        </>
+        <div className="space-y-1">
+          <div className="text-lg font-semibold text-ink">{record.mapName}</div>
+          <div className="flex flex-wrap gap-x-3 text-sm text-muted">
+            <span>{record.mapType}</span>
+            <span>{record.played} played</span>
+            <span>{record.won}-{record.lost}</span>
+            <span>{formatPct(record.winRate)}</span>
+          </div>
+        </div>
       ) : (
-        <p className="text-sm text-zinc-400">Play a map at least {MIN_MAP_PLAYS} times to see this.</p>
+        <p className="text-sm text-muted">Play a map at least {MIN_MAP_PLAYS} times to see this.</p>
       )}
-    </section>
+    </Card>
   );
 }
