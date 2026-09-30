@@ -57,7 +57,7 @@ export function UltEconomyChart({ points, kind }: { points: UltEconomyPoint[]; k
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-4 text-xs text-zinc-400">
+      <div className="flex gap-4 text-xs text-muted">
         <span><span className="mr-1 inline-block h-0.5 w-4 align-middle" style={{ background: TEAM_COLORS.ours }} />{series[0].label}</span>
         <span><span className="mr-1 inline-block h-0.5 w-4 border-t-2 border-dashed align-middle" style={{ borderColor: TEAM_COLORS.ours }} />{series[1].label}</span>
       </div>
@@ -69,13 +69,13 @@ export function UltEconomyChart({ points, kind }: { points: UltEconomyPoint[]; k
           <g key={p.scrimId}>
             {series.map((s, k) => {
               const v = s.value(p);
-              return v === null ? null : <circle key={k} cx={x(i)} cy={y(v)} r={4} fill={k === 0 ? TEAM_COLORS.ours : "#09090b"} stroke={TEAM_COLORS.ours} strokeWidth={2} />;
+              return v === null ? null : <circle key={k} cx={x(i)} cy={y(v)} r={4} fill={k === 0 ? TEAM_COLORS.ours : "var(--color-raised)"} stroke={TEAM_COLORS.ours} strokeWidth={2} />;
             })}
-            <text x={x(i)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} fill="#a1a1aa">{p.date.slice(5)}</text>
+            <text x={x(i)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} className="fill-muted">{p.date.slice(5)}</text>
           </g>
         ))}
         {hover && (
-          <Tooltip x={hover.x} y={hover.y} lines={[`${hover.point.name} · ${hover.point.date}`, ...series.map((s) => { const v = s.value(hover.point); return `${s.label}: ${v === null ? "–" : s.format(v)}`; })]} />
+          <Tooltip x={hover.x} y={hover.y} lines={[`${hover.point.name}, ${hover.point.date}`, ...series.map((s) => { const v = s.value(hover.point); return `${s.label}: ${v === null ? "–" : s.format(v)}`; })]} />
         )}
       </svg>
     </div>

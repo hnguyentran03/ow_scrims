@@ -1,3 +1,5 @@
+import type { ResultLabel } from "@/lib/result";
+
 export function formatDuration(seconds: number): string {
   const total = Math.floor(seconds);
   const mm = String(Math.floor(total / 60)).padStart(2, "0");
@@ -14,7 +16,7 @@ export function formatPer10(v: number): string {
   return v >= 100 ? formatInt(v) : v.toFixed(1);
 }
 
-export function resultLabel(map: { ourSide: number; winnerSide: number | null }): "Won" | "Lost" | "N/A" {
+export function resultLabel(map: { ourSide: number; winnerSide: number | null }): ResultLabel {
   if (map.winnerSide === null) return "N/A";
   return map.winnerSide === map.ourSide ? "Won" : "Lost";
 }

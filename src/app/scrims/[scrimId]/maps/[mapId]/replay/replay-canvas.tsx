@@ -14,7 +14,7 @@ import { windowIndexAt } from "@/lib/stats/stages";
 import { DEATH_MARKER_SECONDS } from "@/lib/stats/tracks";
 import { StageCanvas } from "../stage-canvas";
 
-const NEUTRAL = "#71717a";
+const NEUTRAL = "var(--color-muted)";
 
 /** Everything the canvas needs to place a world point on the current stage. */
 export function stageFrame(stage: ReplayStage): { width: number; height: number; affine: Affine; size: number } {
@@ -55,7 +55,7 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, ghost, ghostT, c
 
   return (
     <div className="space-y-1">
-      <StageCanvas stage={stage} className="w-full rounded border border-zinc-800 bg-zinc-950" aria-label={`Replay of ${mapName}, ${stage.label}`} onMouseLeave={() => setHoverKey(null)}>
+      <StageCanvas stage={stage} className="w-full rounded-card border border-line bg-ground" aria-label={`Replay of ${mapName}, ${stage.label}`} onMouseLeave={() => setHoverKey(null)}>
         {deaths.map((d) => {
           const { px, py } = project({ x: d.x!, z: d.z! });
           const side = replay.players.find((p) => p.team === d.team && p.name === d.name)?.side ?? null;
@@ -91,8 +91,8 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, ghost, ghostT, c
         })}
         {markers.map((m) => (
           <g key={m.key} onMouseEnter={() => setHoverKey(m.key)} onMouseLeave={() => setHoverKey(null)}>
-            <circle cx={m.px} cy={m.py} r={r} fill={m.colour} stroke="#09090b" strokeWidth={r * 0.15} />
-            <text x={m.px} y={m.py} textAnchor="middle" dominantBaseline="central" fontSize={r * 1.1} fontWeight={600} fill="#fafafa" pointerEvents="none">
+            <circle cx={m.px} cy={m.py} r={r} fill={m.colour} className="stroke-ground" strokeWidth={r * 0.15} />
+            <text x={m.px} y={m.py} textAnchor="middle" dominantBaseline="central" fontSize={r * 1.1} fontWeight={600} className="fill-ink" pointerEvents="none">
               {heroAbbrev(m.hero)}
             </text>
           </g>
@@ -118,18 +118,18 @@ export function ReplayCanvas({ replay, t, windowIndex, mapName, ghost, ghostT, c
         {children}
         {hover && (
           <g transform={`translate(${Math.min(hover.px + r, width - size * 0.25)},${Math.max(hover.py - r * 3, r)})`} pointerEvents="none">
-            <rect width={size * 0.25} height={r * 2.2} rx={r * 0.3} fill="#18181b" stroke="#3f3f46" />
-            <text x={r * 0.6} y={r * 1.45} fontSize={r} fill="#e4e4e7">{hover.name} · {hover.hero || "?"}</text>
+            <rect width={size * 0.25} height={r * 2.2} rx={r * 0.3} className="fill-raised stroke-line" />
+            <text x={r * 0.6} y={r * 1.45} fontSize={r} className="fill-ink">{hover.name}, {hover.hero || "?"}</text>
           </g>
         )}
       </StageCanvas>
       {!stage.image && (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
           No calibrated image for {stage.label} yet — <Link href={stageHref(mapName, stage.stage)} className="underline">set one up under Maps</Link>. Positions are drawn on a plane fitted to this round.
         </p>
       )}
       {ghost && (
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted">
           Ghost: {ghost.label} {ghostT !== null && ghostT !== undefined && ghostT >= ghost.start && ghostT <= ghost.end ? `at ${formatDuration(ghostT)}` : "(outside this round)"}
         </p>
       )}

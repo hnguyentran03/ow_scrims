@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Card } from "@/components/card";
 import { TEAM_COLORS } from "@/lib/colors";
 import { formatDuration } from "@/lib/format";
 import type { FeedEntry } from "@/lib/stats/replay";
@@ -24,23 +25,22 @@ export function ReplayFeed({ feed, sides, t, playing, onSeek }: { feed: FeedEntr
     if (playing && listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [visible.length, playing]);
   return (
-    <section className="space-y-2 rounded border border-zinc-800 p-3">
-      <h2 className="text-sm font-medium">Feed</h2>
+    <Card title="Feed">
       {visible.length === 0 ? (
-        <p className="text-sm text-zinc-400">Nothing yet.</p>
+        <p className="text-sm text-muted">Nothing yet.</p>
       ) : (
         <ul ref={listRef} className="max-h-80 space-y-1 overflow-y-auto text-sm">
           {visible.map((e, i) => (
             <li key={i}>
-              <button type="button" onClick={() => onSeek(e.time)} className="flex w-full items-center gap-2 text-left hover:bg-zinc-900">
-                <span className="w-12 shrink-0 tabular-nums text-zinc-400">{formatDuration(e.time)}</span>
-                <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: e.team ? TEAM_COLORS[e.team] : "#52525b" }} />
+              <button type="button" onClick={() => onSeek(e.time)} className="flex w-full items-center gap-2 text-left hover:bg-raised">
+                <span className="w-12 shrink-0 tabular-nums text-muted">{formatDuration(e.time)}</span>
+                <span className="inline-block h-2 w-2 shrink-0 rounded-full" style={{ background: e.team ? TEAM_COLORS[e.team] : "var(--color-muted)" }} />
                 <span>{feedLabel(e, sides)}</span>
               </button>
             </li>
           ))}
         </ul>
       )}
-    </section>
+    </Card>
   );
 }

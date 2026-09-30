@@ -3,6 +3,9 @@
 import { useMemo, useState } from "react";
 import type { PlayerRow } from "@/lib/stats/overview";
 import { formatDuration, formatInt } from "@/lib/format";
+import { Field, Select } from "@/components/field";
+import { Table, Td, Th } from "@/components/table";
+import { compareBy } from "@/lib/sort";
 
 type NumericKey = Exclude<keyof PlayerRow, "team" | "name" | "hero" | "role">;
 type SortKey = "name" | "hero" | NumericKey;
@@ -34,52 +37,40 @@ export function StatTable({ rows, ourTeam }: { rows: PlayerRow[]; ourTeam: strin
 
   const visible = useMemo(() => {
     const filtered = hero ? rows.filter((r) => r.hero === hero) : rows;
-    if (!sort) return filtered;
-    return [...filtered].sort((a, b) => {
-      const av = a[sort.key];
-      const bv = b[sort.key];
-      const cmp = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
-      return cmp * sort.dir;
-    });
+    return sort ? [...filtered].sort(compareBy<PlayerRow>(sort.key, sort.dir)) : filtered;
   }, [rows, hero, sort]);
 
-  function toggle(key: SortKey) {
-    setSort((s) => (s?.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: -1 }));
-  }
+  const toggle = (key: SortKey) => setSort((s) => (s?.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: -1 }));
+  const sortFor = (key: SortKey) => ({ active: sort?.key === key, dir: sort?.key === key ? sort.dir : (-1 as const), onToggle: () => toggle(key) });
 
   return (
-    <div className="space-y-2">
-      <label className="text-sm">
-        Hero filter{" "}
-        <select value={hero} onChange={(e) => setHero(e.target.value)} className="rounded bg-zinc-900 px-2 py-1">
+    <div className="space-y-3">
+      <Field label="Hero filter">
+        <Select value={hero} onChange={(e) => setHero(e.target.value)}>
           <option value="">All heroes</option>
           {heroes.map((h) => <option key={h} value={h}>{h}</option>)}
-        </select>
-      </label>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-zinc-400">
-              <th className="px-2 py-1">Team</th>
-              <th className="px-2 py-1 cursor-pointer" onClick={() => toggle("name")}>Player</th>
-              {COLUMNS.map((c) => (
-                <th key={c.key} className="px-2 py-1 cursor-pointer whitespace-nowrap" onClick={() => toggle(c.key)}>
-                  {c.label}{sort?.key === c.key ? (sort.dir === 1 ? " ▲" : " ▼") : ""}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((r) => (
-              <tr key={`${r.team}-${r.name}-${r.hero}`} className={r.team === ourTeam ? "bg-zinc-900/60" : ""}>
-                <td className="px-2 py-1 text-zinc-400">{r.team}</td>
-                <td className="px-2 py-1 font-medium">{r.name}</td>
-                {COLUMNS.map((c) => <td key={c.key} className="px-2 py-1 tabular-nums">{c.render(r)}</td>)}
-              </tr>
+        </Select>
+      </Field>
+      <Table>
+        <thead>
+          <tr>
+            <Th pin="first">Team</Th>
+            <Th pin="second" sort={sortFor("name")}>Player</Th>
+            {COLUMNS.map((c) => (
+              <Th key={c.key} numeric={c.key !== "hero"} sort={sortFor(c.key)}>{c.label}</Th>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        </thead>
+        <tbody>
+          {visible.map((r) => (
+            <tr key={`${r.team}-${r.name}-${r.hero}`} className={r.team === ourTeam ? "bg-ours/8" : ""}>
+              <Td pin="first" tint={r.team === ourTeam} muted>{r.team}</Td>
+              <Td pin="second" tint={r.team === ourTeam} className="font-medium">{r.name}</Td>
+              {COLUMNS.map((c) => <Td key={c.key} numeric={c.key !== "hero"}>{c.render(r)}</Td>)}
+            </tr>
+          ))}
+        </tbody>
+      </Table>
     </div>
   );
 }

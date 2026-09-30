@@ -31,20 +31,20 @@ export function KillsByFightChart({ points, sides }: { points: StepPoint[]; side
       <Legend sides={sides} />
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Kills by fight" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         <Axes yTicks={yTicks} yScale={y} yFormat={(v) => String(Math.abs(v))} />
-        <line x1={M.left} x2={W - M.right} y1={y(0)} y2={y(0)} stroke="#71717a" />
+        <line x1={M.left} x2={W - M.right} y1={y(0)} y2={y(0)} className="stroke-muted" />
         <path d={path(1, "ours")} fill="none" stroke={TEAM_COLORS.ours} strokeWidth={2} />
         <path d={path(-1, "theirs")} fill="none" stroke={TEAM_COLORS.theirs} strokeWidth={2} />
         {ticks(0, tMax, 6).map((t) => (
-          <text key={t} x={x(t)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} fill="#a1a1aa">{formatDuration(t)}</text>
+          <text key={t} x={x(t)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} className="fill-muted">{formatDuration(t)}</text>
         ))}
         {hover && (
           <>
-            <line x1={x(hover.point.time)} x2={x(hover.point.time)} y1={M.top} y2={M.top + innerH} stroke="#52525b" />
+            <line x1={x(hover.point.time)} x2={x(hover.point.time)} y1={M.top} y2={M.top + innerH} className="stroke-line" />
             <Tooltip
               x={hover.x}
               y={hover.y}
               lines={[
-                `Fight ${hover.point.fightIndex} · ${formatDuration(hover.point.start)}–${formatDuration(hover.point.end)}`,
+                `Fight ${hover.point.fightIndex}, ${formatDuration(hover.point.start)}–${formatDuration(hover.point.end)}`,
                 `${sides.ours}: ${hover.point.ours}`,
                 `${sides.theirs}: ${hover.point.theirs}`,
               ]}

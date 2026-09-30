@@ -1,4 +1,5 @@
 import { Card } from "@/components/card";
+import { EmptyState } from "@/components/empty-state";
 import { TEAM_COLORS } from "@/lib/colors";
 import { getChartRows, getInitiationRows } from "@/lib/db/queries";
 import { formatDuration } from "@/lib/format";
@@ -42,15 +43,15 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
   const combos = ultCombos(rows.ultStarts, rows.ultEnds, fights);
   const counters = counterUlts(rows.ultStarts, rows.ultEnds);
   const advantage = ultAdvantageByFight(rows.ultCharged, rows.ultStarts, rows.ultEnds, fights, sides);
-  const tempoNote = tempo.markers.length === 0 ? "No kills or ultimates recorded" : `${fights.length} fights · ${casts.length} ults`;
+  const tempoNote = tempo.markers.length === 0 ? "No kills or ultimates recorded" : `${fights.length} fights, ${casts.length} ults`;
 
   return (
     <div className="space-y-6">
       <Card title="Tempo" note={tempoNote}>
         <TempoChart tempo={tempo} sides={sides} />
       </Card>
-      <h2 className="text-lg font-medium">Ultimates</h2>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <h2 className="font-display text-lg tracking-[0.03em] text-ink">Ultimates</h2>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Ult advantage per fight" note="Held ults at each fight's first kill; a cast with no logged charge counts as not held">
           <UltAdvantageTable advantage={advantage} sides={sides} />
         </Card>
@@ -64,7 +65,7 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
           <InitiationTable initiation={initiation} sides={sides} />
         </Card>
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Kills by fight" note={`${fights.length} fights`}>
           <KillsByFightChart points={steps} sides={sides} />
         </Card>
@@ -81,18 +82,18 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
 
 function teamColor(team: string, sides: Sides): string {
   const side = sideOf(team, sides);
-  return side ? TEAM_COLORS[side] : "#71717a";
+  return side ? TEAM_COLORS[side] : "var(--color-muted)";
 }
 
 function ComboList({ combos, sides }: { combos: UltCombo[]; sides: Sides }) {
-  if (combos.length === 0) return <p className="text-sm text-zinc-400">None on this map.</p>;
+  if (combos.length === 0) return <EmptyState>None on this map.</EmptyState>;
   return (
     <ul className="space-y-1 text-sm">
       {combos.map((c, i) => (
-        <li key={i}>
-          <span className="tabular-nums text-zinc-400">{formatDuration(c.casts[0].time)}</span>{" "}
+        <li key={i} className="flex flex-wrap gap-x-3">
+          <span className="tabular-nums text-muted">{formatDuration(c.casts[0].time)}</span>
           <span style={{ color: teamColor(c.team, sides) }}>{c.casts.map((x) => `${x.player} (${x.hero})`).join(" + ")}</span>
-          {c.fightIndex ? <span className="text-zinc-500"> · fight {c.fightIndex}</span> : null}
+          {c.fightIndex ? <span className="text-muted">fight {c.fightIndex}</span> : null}
         </li>
       ))}
     </ul>
@@ -105,21 +106,22 @@ function CounterList({ counters, casts, sides }: { counters: CounterUlt[]; casts
   const mean = (list: CounterUlt[]) => (list.length ? `${(list.reduce((n, c) => n + c.delaySeconds, 0) / list.length).toFixed(1)} s` : "–");
   return (
     <div className="space-y-2 text-sm">
-      <p className="text-xs text-zinc-500">
-        {sides.ours} answered {answeredBy("ours").length} of {castsBy("theirs")} enemy ults, avg {mean(answeredBy("ours"))} · {sides.theirs} answered{" "}
-        {answeredBy("theirs").length} of {castsBy("ours")} enemy ults, avg {mean(answeredBy("theirs"))} · {casts.length} ults total
+      <p className="flex flex-wrap gap-x-3 text-xs text-muted">
+        <span>{sides.ours} answered {answeredBy("ours").length} of {castsBy("theirs")} enemy ults, avg {mean(answeredBy("ours"))}</span>
+        <span>{sides.theirs} answered {answeredBy("theirs").length} of {castsBy("ours")} enemy ults, avg {mean(answeredBy("theirs"))}</span>
+        <span>{casts.length} ults total</span>
       </p>
       {counters.length === 0 ? (
-        <p className="text-zinc-400">None on this map.</p>
+        <EmptyState>None on this map.</EmptyState>
       ) : (
         <ul className="space-y-1">
           {counters.map((c, i) => (
             <li key={i}>
-              <span className="tabular-nums text-zinc-400">{formatDuration(c.ult.time)}</span>{" "}
+              <span className="tabular-nums text-muted">{formatDuration(c.ult.time)}</span>{" "}
               <span style={{ color: teamColor(c.answer.team, sides) }}>{c.answer.player} ({c.answer.hero})</span>
-              <span className="text-zinc-400"> answered </span>
+              <span className="text-muted"> answered </span>
               <span style={{ color: teamColor(c.ult.team, sides) }}>{c.ult.player} ({c.ult.hero})</span>
-              <span className="text-zinc-500"> in {c.delaySeconds.toFixed(1)} s</span>
+              <span className="text-muted"> in {c.delaySeconds.toFixed(1)} s</span>
             </li>
           ))}
         </ul>

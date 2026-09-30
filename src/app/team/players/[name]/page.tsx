@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/page-header";
 import { Stat } from "@/components/stat";
+import { Table, Td, Th } from "@/components/table";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
 import { formatDuration, formatInt, formatPct, formatPer10, formatSeconds } from "@/lib/format";
@@ -36,22 +38,21 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold">{p.name}</h2>
-          {p.hero && <p className="text-xs text-zinc-500">Showing {p.hero} only</p>}
-        </div>
-        <HeroSelect action={`/team/players/${encodeURIComponent(name)}`} hidden={hidden} heroes={p.heroes} hero={p.hero} />
-      </header>
+      <PageHeader
+        title={p.name}
+        level={2}
+        meta={p.hero ? [`Showing ${p.hero} only`] : undefined}
+        actions={<HeroSelect action={`/team/players/${encodeURIComponent(name)}`} hidden={hidden} heroes={p.heroes} hero={p.hero} />}
+      />
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Maps" value={String(o.maps)} />
         <Stat label="Time played" value={formatDuration(o.timePlayed)} />
         <Stat label="Record" value={`${o.record.won}-${o.record.lost}`} hint={`${o.record.undecided} undecided`} />
         <Stat label="Win rate" value={formatPct(o.winRate)} hint="decided maps" />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Elims / 10" value={formatPer10(o.per10.eliminations)} />
         <Stat label="Final blows / 10" value={formatPer10(o.per10.finalBlows)} />
         <Stat label="Deaths / 10" value={formatPer10(o.per10.deaths)} />
@@ -69,37 +70,37 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
         <Records rows={p.profile.records} />
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Most played heroes">
           {p.mostPlayed.length === 0 ? <Empty /> : (
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-                <tr><th className="py-1">Hero</th><th>Role</th><th>Time</th><th>Share</th></tr>
+            <Table>
+              <thead>
+                <tr><Th>Hero</Th><Th>Role</Th><Th numeric>Time</Th><Th numeric>Share</Th></tr>
               </thead>
               <tbody>
                 {p.mostPlayed.map((h) => (
-                  <tr key={h.hero} className="border-t border-zinc-800 tabular-nums">
-                    <td className="py-1">{h.hero}</td><td>{h.role}</td><td>{formatDuration(h.playtime)}</td><td>{formatPct(h.share)}</td>
+                  <tr key={h.hero} className="tabular-nums">
+                    <Td>{h.hero}</Td><Td>{h.role}</Td><Td numeric>{formatDuration(h.playtime)}</Td><Td numeric>{formatPct(h.share)}</Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Table>
           )}
         </Card>
         <Card title="Time per role">
           {p.timeByRole.length === 0 ? <Empty /> : (
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-                <tr><th className="py-1">Role</th><th>Time</th><th>Share</th></tr>
+            <Table>
+              <thead>
+                <tr><Th>Role</Th><Th numeric>Time</Th><Th numeric>Share</Th></tr>
               </thead>
               <tbody>
                 {p.timeByRole.map((r) => (
-                  <tr key={r.role} className="border-t border-zinc-800 tabular-nums">
-                    <td className="py-1">{r.role}</td><td>{formatDuration(r.playtime)}</td><td>{formatPct(o.timePlayed > 0 ? r.playtime / o.timePlayed : null)}</td>
+                  <tr key={r.role} className="tabular-nums">
+                    <Td>{r.role}</Td><Td numeric>{formatDuration(r.playtime)}</Td><Td numeric>{formatPct(o.timePlayed > 0 ? r.playtime / o.timePlayed : null)}</Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Table>
           )}
         </Card>
       </div>
@@ -108,7 +109,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
         <Best best={p.bestPerformance} />
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Win rate by map">
           <RecordTable head="Map" rows={mapRecordRows(p.winRateByMap)} />
         </Card>
@@ -117,7 +118,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card title="Final blows by method"><MethodList rows={p.finalBlowsByMethod} /></Card>
         <Card title="Died to most" note="any kill row"><HeroList rows={p.diedToMost} /></Card>
         <Card title="Final blows on most"><HeroList rows={p.finalBlowsOnMost} /></Card>
@@ -132,7 +133,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
 
 function Cards({ c }: { c: PlayerCards }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       <Stat label="First pick %" value={formatPct(c.firstPick.rate)} hint={`${c.firstPick.count} of ${c.firstPick.fights} fights on maps played; won ${c.firstPick.won}`} />
       <Stat label="First death %" value={formatPct(c.firstDeath.rate)} hint={`${c.firstDeath.count} of ${c.firstDeath.fights} fights on maps played`} />
       <Stat label="Reversal %" value={formatPct(c.reversal.rate)} hint={`${c.reversal.won} won of ${c.reversal.count} first deaths`} />
@@ -144,11 +145,14 @@ function Cards({ c }: { c: PlayerCards }) {
 }
 
 function Best({ best }: { best: BestPerformance | null }) {
-  if (!best) return <p className="text-sm text-zinc-500">No map-hero pair with enough time yet.</p>;
+  if (!best) return <p className="text-sm text-muted">No map-hero pair with enough time yet.</p>;
   return (
     <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
       <Link href={`/scrims/${best.scrimId}/maps/${best.mapId}`} className="text-lg font-semibold hover:underline">{best.mapName}</Link>
-      <span className="text-zinc-400">{best.scrimName} · {best.scrimDate}</span>
+      <span className="flex flex-wrap gap-x-3 text-muted">
+        <span>{best.scrimName}</span>
+        <span>{best.scrimDate}</span>
+      </span>
       <span>{best.hero}</span>
       <span className="tabular-nums">{formatDuration(best.timePlayed)}</span>
       <span className="tabular-nums">{formatPer10(best.fbPer10)} final blows / 10 ({best.finalBlows})</span>
@@ -160,22 +164,32 @@ function Best({ best }: { best: BestPerformance | null }) {
 function MethodList({ rows }: { rows: MethodCount[] }) {
   if (rows.length === 0) return <Empty />;
   return (
-    <ul className="space-y-1 text-sm tabular-nums">
-      {rows.map((r) => (
-        <li key={r.method} className="flex justify-between gap-2"><span>{r.method}</span><span>{r.count} <span className="text-zinc-500">({formatPct(r.share)})</span></span></li>
-      ))}
-    </ul>
+    <Table>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.method} className="tabular-nums">
+            <Td>{r.method}</Td>
+            <Td numeric>{r.count} <span className="text-muted">({formatPct(r.share)})</span></Td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
   );
 }
 
 function HeroList({ rows }: { rows: HeroCount[] }) {
   if (rows.length === 0) return <Empty />;
   return (
-    <ul className="space-y-1 text-sm tabular-nums">
-      {rows.map((r) => (
-        <li key={r.hero} className="flex justify-between gap-2"><span>{r.hero}</span><span>{r.count}</span></li>
-      ))}
-    </ul>
+    <Table>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.hero} className="tabular-nums">
+            <Td>{r.hero}</Td>
+            <Td numeric>{r.count}</Td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
   );
 }
 
@@ -186,7 +200,7 @@ const one = (v: number) => v.toFixed(1);
 function Profile({ profile: pr, hero }: { profile: ProfileCards; hero: string | null }) {
   const droughtScope = hero === null ? "" : `; gaps between ${hero} final blows only`;
   return (
-    <div className="grid gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <Stat label="MVP score" value={pr.mvp.score === null ? "–" : String(Math.round(pr.mvp.score))} hint={pr.mvp.score === null ? needRatedMaps : `MVP on ${pr.mvp.mvpCount} of ${pr.mvp.maps} maps; 100 is the role average`} />
       <Stat label="Deadlift share" value={formatPct(pr.deadlift?.meanShare ?? null)} hint={pr.deadlift ? `best ${formatPct(pr.deadlift.best.share)} of our hero damage on ${pr.deadlift.best.mapName}` : needMaps} />
       <Stat label="Final-blow drought" value={formatSeconds(pr.drought?.longestSeconds ?? null)} hint={pr.drought ? `longest on ${pr.drought.longestMap.mapName}; mean ${formatSeconds(pr.drought.meanSeconds)}${droughtScope}` : "No final blows in range"} />
@@ -203,20 +217,20 @@ const RECORD_VALUE: Record<PersonalRecord["key"], (v: number) => string> = {
 function Records({ rows }: { rows: PersonalRecord[] }) {
   if (rows.length === 0) return <Empty />;
   return (
-    <table className="w-full text-sm">
-      <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-        <tr><th className="py-1">Record</th><th>Value</th><th>Map</th><th>Date</th></tr>
+    <Table>
+      <thead>
+        <tr><Th>Record</Th><Th numeric>Value</Th><Th>Map</Th><Th>Date</Th></tr>
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={r.key} className="border-t border-zinc-800 tabular-nums">
-            <td className="py-1">{r.label}</td>
-            <td>{RECORD_VALUE[r.key](r.value)}</td>
-            <td><Link href={`/scrims/${r.scrimId}/maps/${r.mapId}`} className="hover:underline">{r.mapName}</Link></td>
-            <td className="text-zinc-400">{r.scrimDate}</td>
+          <tr key={r.key} className="tabular-nums">
+            <Td>{r.label}</Td>
+            <Td numeric>{RECORD_VALUE[r.key](r.value)}</Td>
+            <Td><Link href={`/scrims/${r.scrimId}/maps/${r.mapId}`} className="hover:underline">{r.mapName}</Link></Td>
+            <Td muted>{r.scrimDate}</Td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 }

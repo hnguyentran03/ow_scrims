@@ -1,6 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { deleteMapImageAction } from "@/app/actions";
+import { Button } from "@/components/button";
+import { Card } from "@/components/card";
+import { EmptyState } from "@/components/empty-state";
+import { PageHeader } from "@/components/page-header";
 import { getDb } from "@/lib/db";
 import { POSITION_FEATURES_ENABLED } from "@/lib/flags";
 import { getKillfeedRows, getMapImages, listPositionedStages, listStagesSeen } from "@/lib/db/queries";
@@ -38,7 +41,7 @@ export default async function StagePage({ params }: { params: Promise<{ mapName:
       if (pos && windows.some((w) => k.matchTime >= w.start && k.matchTime <= w.end)) points.push({ t: k.matchTime, attacker: k.attackerName, victim: k.victimName, x: pos.x, z: pos.z });
     }
     if (points.length > 0) {
-      sourceLabel = `${pm.scrimName} · ${pm.scrimDate}`;
+      sourceLabel = `${pm.scrimName}, ${pm.scrimDate}`;
       break;
     }
     points = [];
@@ -46,21 +49,19 @@ export default async function StagePage({ params }: { params: Promise<{ mapName:
 
   return (
     <div className="space-y-6">
-      <Link href="/maps" className="text-sm text-zinc-400 hover:underline">← Maps</Link>
-      <h1 className="text-2xl font-semibold">{mapName} · {stageLabel(seen, stage)}</h1>
-      <section className="space-y-2 rounded border border-zinc-800 p-4">
-        <h2 className="text-lg font-medium">Image</h2>
+      <PageHeader back={{ href: "/maps", label: "Maps" }} title={mapName} meta={[stageLabel(seen, stage)]} />
+      <Card title="Image">
         <UploadForm mapName={mapName} stage={stage} />
         {image && (
           <form action={deleteMapImageAction.bind(null, image.id)}>
-            <button type="submit" className="text-sm text-red-400 hover:underline">Delete image and calibration</button>
+            <Button type="submit" variant="danger">Delete image and calibration</Button>
           </form>
         )}
-      </section>
+      </Card>
       {image ? (
         <Calibrate key={image.id} imageId={image.id} calibration={calibration} points={points} sourceLabel={sourceLabel} />
       ) : (
-        <p className="text-sm text-zinc-400">Upload a top-down image of this stage to calibrate it.</p>
+        <EmptyState>Upload a top-down image of this stage to calibrate it.</EmptyState>
       )}
     </div>
   );

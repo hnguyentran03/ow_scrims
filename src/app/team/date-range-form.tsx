@@ -1,30 +1,35 @@
 "use client";
 
+import Form from "next/form";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { Button } from "@/components/button";
+import { Field, Input } from "@/components/field";
 import { extraParams } from "@/lib/range";
 
-/** GET form to the current tab; the page reads ?from=&to=, and every other query param (e.g. a player page's hero) rides along as a hidden input. */
+/** GET form to the current tab through next/form; the page reads ?from=&to=, and every other query param rides along as a hidden input. */
 export function DateRangeForm() {
   const pathname = usePathname();
   const params = useSearchParams();
   const extra = extraParams(params, ["from", "to"]);
   const clearQuery = new URLSearchParams(extra).toString();
   return (
-    <form key={params.toString()} method="get" action={pathname} className="flex flex-wrap items-end gap-3 text-sm">
-      {extra.map(([k, v], i) => (
-        <input key={i} type="hidden" name={k} value={v} />
-      ))}
-      <label className="flex flex-col">
-        From
-        <input type="date" name="from" defaultValue={params.get("from") ?? ""} className="rounded bg-zinc-900 px-2 py-1" />
-      </label>
-      <label className="flex flex-col">
-        To
-        <input type="date" name="to" defaultValue={params.get("to") ?? ""} className="rounded bg-zinc-900 px-2 py-1" />
-      </label>
-      <button type="submit" className="rounded bg-orange-500 px-3 py-1 font-medium text-black">Apply</button>
-      <Link href={clearQuery ? `${pathname}?${clearQuery}` : pathname} className="text-zinc-400 hover:underline">Clear</Link>
-    </form>
+    <div key={params.toString()}>
+      <Form action={pathname} className="flex flex-wrap items-end gap-3">
+        {extra.map(([k, v], i) => (
+          <input key={i} type="hidden" name={k} value={v} />
+        ))}
+        <Field label="From">
+          <Input type="date" name="from" defaultValue={params.get("from") ?? ""} />
+        </Field>
+        <Field label="To">
+          <Input type="date" name="to" defaultValue={params.get("to") ?? ""} />
+        </Field>
+        <Button type="submit" variant="primary">Apply</Button>
+        <Link href={clearQuery ? `${pathname}?${clearQuery}` : pathname} className="py-1.5 text-base text-muted hover:text-ink">
+          Clear
+        </Link>
+      </Form>
+    </div>
   );
 }

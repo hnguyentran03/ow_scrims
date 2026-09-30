@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/button";
 import type { Ghost, GhostOption } from "@/lib/ghost";
 import { ghostTime } from "@/lib/stats/playback";
 import type { Replay, ReplayStage } from "@/lib/stats/replay";
@@ -119,23 +120,24 @@ export function ReplayPanel({ replay, sides, mapName, initialTime, ghostSources,
       {replay.stages.length > 1 && (
         <div className="flex flex-wrap gap-2">
           {replay.stages.map((s, i) => (
-            <button
+            <Button
               key={i}
-              type="button"
+              size="sm"
+              variant={i === windowIndex ? "primary" : "secondary"}
               onClick={() => selectWindow(s)}
-              className={`rounded border px-2 py-1 text-sm ${i === windowIndex ? "border-zinc-100" : "border-zinc-700 text-zinc-400 hover:text-zinc-200"}`}
+              aria-pressed={i === windowIndex}
             >
               {s.label}
-            </button>
+            </Button>
           ))}
         </div>
       )}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-2">
           {replay.hasPositions ? (
             <ReplayCanvas replay={replay} t={t} windowIndex={windowIndex} mapName={mapName} ghost={ghost} ghostT={ghostT} />
           ) : (
-            <p className="rounded border border-zinc-800 p-4 text-sm text-zinc-400">{NO_POSITIONS}</p>
+            <p className="rounded-card border border-line p-4 text-sm text-muted">{NO_POSITIONS}</p>
           )}
           <ReplayControls t={t} duration={duration} playing={playing} speed={speed} onToggle={toggle} onScrub={(v) => setT(clamp(v))} onSeek={seek} onStep={step} onSpeed={setSpeed} />
           {replay.hasPositions && (
@@ -155,7 +157,7 @@ export function ReplayPanel({ replay, sides, mapName, initialTime, ghostSources,
           <ReplayFeed feed={replay.feed} sides={sides} t={t} playing={playing} onSeek={seek} />
         </div>
       </div>
-      <p className="text-xs text-zinc-500">Space plays and pauses; ← and → step one second, five with Shift. {mapName} · {sides.ours} vs {sides.theirs}.</p>
+      <p className="text-xs text-muted">Space plays and pauses; ← and → step one second, five with Shift. {mapName}, {sides.ours} vs {sides.theirs}.</p>
     </div>
   );
 }

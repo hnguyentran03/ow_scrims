@@ -7,6 +7,10 @@ import { buildInitiation, type FightInitiation } from "@/lib/stats/initiation";
 import { sideOf, type Sides } from "@/lib/stats/sides";
 import { loadMap, type MapParams } from "../load-map";
 import { Stat } from "@/components/stat";
+import { Badge } from "@/components/badge";
+import { Card } from "@/components/card";
+import { EmptyState } from "@/components/empty-state";
+import { Table, Th, Td } from "@/components/table";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +28,7 @@ export default async function KillfeedPage({ params }: { params: MapParams }) {
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <a href={`/api/scrims/${scrim.id}/maps/${map.id}/killfeed.csv`} download className="text-sm text-zinc-400 hover:underline">
+        <a href={`/api/scrims/${scrim.id}/maps/${map.id}/killfeed.csv`} download className="text-sm text-muted hover:text-ink">
           Download CSV
         </a>
       </div>
@@ -37,7 +41,7 @@ export default async function KillfeedPage({ params }: { params: MapParams }) {
       </section>
 
       {!hasFights ? (
-        <p className="text-sm text-zinc-400">No fights recorded.</p>
+        <EmptyState>No fights recorded on this map.</EmptyState>
       ) : (
         <div className="space-y-4">
           {kf.blocks.map((block, i) => (
@@ -52,87 +56,74 @@ export default async function KillfeedPage({ params }: { params: MapParams }) {
 function Block({ block, sides, initiation }: { block: KillfeedBlock; sides: Sides; initiation: FightInitiation | null }) {
   if (block.kind === "round") {
     const side = block.capturingTeam ? sideOf(block.capturingTeam, sides) : null;
-    const color = side ? TEAM_COLORS[side] : "#52525b";
+    const color = side ? TEAM_COLORS[side] : "var(--color-muted)";
     return (
-      <div
-        className="rounded py-2 text-center text-xs font-medium uppercase tracking-wide"
-        style={{ backgroundImage: `repeating-linear-gradient(135deg, ${color}33 0 8px, transparent 8px 16px)`, border: `1px solid ${color}66` }}
-      >
+      <div className="rounded-control py-2 text-center text-sm font-medium" style={{ backgroundImage: `repeating-linear-gradient(135deg, color-mix(in srgb, ${color} 20%, transparent) 0 8px, transparent 8px 16px)`, border: `1px solid color-mix(in srgb, ${color} 40%, transparent)` }}>
         Round {block.roundNumber}{block.capturingTeam ? `, captured by ${block.capturingTeam}` : " ended"}
       </div>
     );
   }
   const { fight, entries } = block;
   const seconds = initiation?.secondsToFirstKill ?? null;
-  const secondsLabel =
-    seconds === null
-      ? null
-      : seconds < 0
-        ? `${Math.abs(seconds).toFixed(1)} s after the first kill`
-        : `${seconds.toFixed(1)} s before the first kill`;
+  const secondsLabel = seconds === null ? null : seconds < 0 ? `${Math.abs(seconds).toFixed(1)} s after the first kill` : `${seconds.toFixed(1)} s before the first kill`;
   return (
-    <section className="rounded border border-zinc-800">
-      <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-zinc-800 px-3 py-2 text-sm">
-        <span className="font-medium">Fight {fight.index}</span>
-        <span className="text-zinc-400">
-          {formatDuration(fight.start)} – {formatDuration(fight.end)} · {fight.winner ? `won by ${fight.winner}` : "even"}
-        </span>
-        {initiation?.initiator && (
-          <span className="text-xs" style={{ color: initiation.initiator.side ? TEAM_COLORS[initiation.initiator.side] : undefined }}>
+    <Card
+      title={`Fight ${fight.index}`}
+      note={`${formatDuration(fight.start)} – ${formatDuration(fight.end)}, ${fight.winner ? `won by ${fight.winner}` : "even"}`}
+      actions={
+        initiation?.initiator ? (
+          <span className="text-xs" style={{ color: initiation.initiator.side ? TEAM_COLORS[initiation.initiator.side] : "var(--color-muted)" }}>
             Engaged by {initiation.initiator.name} ({initiation.initiator.hero}), {secondsLabel}
           </span>
-        )}
-      </header>
-      <table className="w-full text-sm">
+        ) : undefined
+      }
+    >
+      <Table>
         <thead>
-          <tr className="text-left text-zinc-400">
-            <th className="px-3 py-1 w-16">Time</th>
-            <th className="px-3 py-1">Attacker</th>
-            <th className="px-3 py-1">Victim</th>
-            <th className="px-3 py-1">Method</th>
-            <th className="px-3 py-1 w-40"></th>
+          <tr>
+            <Th>Time</Th>
+            <Th>Attacker</Th>
+            <Th>Victim</Th>
+            <Th>Method</Th>
+            <Th></Th>
           </tr>
         </thead>
         <tbody>{entries.map((e, i) => <Row key={i} entry={e} sides={sides} />)}</tbody>
-      </table>
-    </section>
+      </Table>
+    </Card>
   );
 }
 
 function Row({ entry, sides }: { entry: KillfeedEntry; sides: Sides }) {
-  const tint = (team: string) => (team === sides.ours ? "bg-zinc-900/60" : "");
+  const tint = (team: string) => (team === sides.ours ? "bg-ours/8" : "");
   const actor = (a: { team: string; name: string; hero: string }) => (
     <span style={{ color: TEAM_COLORS[sideOf(a.team, sides) ?? "ours"] }}>
       {a.name}
-      <span className="text-zinc-500"> {a.hero}</span>
+      <span className="text-muted"> {a.hero}</span>
     </span>
   );
   if (entry.kind === "rez") {
     return (
       <tr className={tint(entry.resurrecter.team)}>
-        <td className="px-3 py-1 tabular-nums text-zinc-400">{formatDuration(entry.time)}</td>
-        <td className="px-3 py-1">{actor(entry.resurrecter)}</td>
-        <td className="px-3 py-1">{actor(entry.resurrectee)}</td>
-        <td className="px-3 py-1 text-zinc-400">Resurrect</td>
-        <td className="px-3 py-1"><Badge>Resurrection</Badge></td>
+        <Td muted>{formatDuration(entry.time)}</Td>
+        <Td>{actor(entry.resurrecter)}</Td>
+        <Td>{actor(entry.resurrectee)}</Td>
+        <Td muted>Resurrect</Td>
+        <Td><Badge>Resurrection</Badge></Td>
       </tr>
     );
   }
   return (
     <tr className={tint(entry.attacker.team)}>
-      <td className="px-3 py-1 tabular-nums text-zinc-400">{formatDuration(entry.time)}</td>
-      <td className="px-3 py-1">{entry.kind === "kill" ? actor(entry.attacker) : <span className="text-zinc-500">—</span>}</td>
-      <td className="px-3 py-1">{actor(entry.victim)}</td>
-      <td className="px-3 py-1 text-zinc-400">{entry.method}</td>
-      <td className="px-3 py-1 space-x-1">
+      <Td muted>{formatDuration(entry.time)}</Td>
+      <Td>{entry.kind === "kill" ? actor(entry.attacker) : <span className="text-muted">—</span>}</Td>
+      <Td>{actor(entry.victim)}</Td>
+      <Td muted>{entry.method}</Td>
+      <Td className="space-x-1">
         {entry.kind === "suicide" && <Badge>Suicide</Badge>}
         {entry.kind === "environmental" && <Badge>Environmental</Badge>}
         {entry.critical && <Badge>Critical</Badge>}
-      </td>
+      </Td>
     </tr>
   );
-}
-
-function Badge({ children }: { children: React.ReactNode }) {
-  return <span className="rounded bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-300">{children}</span>;
 }

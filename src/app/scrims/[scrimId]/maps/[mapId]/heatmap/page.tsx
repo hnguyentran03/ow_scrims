@@ -25,7 +25,7 @@ export default async function HeatmapPage({ params, searchParams }: { params: Ma
   const images = calibratedImages(imageRows);
   const replay = buildReplay({ map, sides, rows, images });
   if (!replay.hasPositions) {
-    return <p className="text-sm text-zinc-400">{NO_POSITIONS}</p>;
+    return <p className="text-sm text-muted">{NO_POSITIONS}</p>;
   }
   const filter = parseHeatmapFilters(await searchParams, replay);
   const fights = groupFights(rows.kills);

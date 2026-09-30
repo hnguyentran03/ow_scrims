@@ -14,7 +14,7 @@ export function Tabs({ base, tabs }: { base: string; tabs: readonly Tab[] }) {
   const pathname = usePathname();
   const query = useSearchParams().toString();
   return (
-    <nav className="flex gap-4 border-b border-zinc-800 text-sm">
+    <nav className="flex gap-5 overflow-x-auto border-b border-line text-base whitespace-nowrap">
       {tabs.map(({ suffix, label }) => {
         const path = `${base}${suffix}`;
         const active = isActiveTab(pathname, path, suffix);
@@ -23,7 +23,11 @@ export function Tabs({ base, tabs }: { base: string; tabs: readonly Tab[] }) {
             key={path}
             href={query ? `${path}?${query}` : path}
             aria-current={active ? "page" : undefined}
-            className={active ? "-mb-px border-b-2 border-zinc-100 pb-2 font-medium" : "pb-2 text-zinc-400 hover:text-zinc-200"}
+            className={
+              active
+                ? "relative pb-2 font-display text-md tracking-[0.06em] text-ink after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:-skew-x-[20deg] after:bg-accent after:content-['']"
+                : "relative pb-2 font-display text-md tracking-[0.06em] text-muted hover:text-ink"
+            }
           >
             {label}
           </Link>

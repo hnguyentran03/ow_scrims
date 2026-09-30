@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { EmptyState } from "@/components/empty-state";
+import { Table, Td, Th } from "@/components/table";
 import { formatDuration, formatPct } from "@/lib/format";
 import type { HeroPick } from "@/lib/stats/trends";
 import type { SideKey } from "@/lib/stats/sides";
@@ -13,20 +15,26 @@ export function HeroPicksTable({ ours, theirs }: { ours: HeroPick[]; theirs: Her
     <div className="space-y-2">
       <SideToggle side={side} onChange={setSide} labels={{ ours: "Our picks", theirs: "Their picks" }} />
       {rows.length === 0 ? (
-        <p className="text-sm text-zinc-400">No heroes played.</p>
+        <EmptyState>No heroes played.</EmptyState>
       ) : (
-        <table className="w-full text-sm">
-          <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-            <tr><th className="py-1">Hero</th><th>Role</th><th>Picks</th><th>Available</th><th>Pick %</th><th>Playtime</th><th>Share</th></tr>
+        <Table>
+          <thead>
+            <tr><Th>Hero</Th><Th>Role</Th><Th numeric>Picks</Th><Th numeric>Available</Th><Th numeric>Pick %</Th><Th numeric>Playtime</Th><Th numeric>Share</Th></tr>
           </thead>
           <tbody>
             {rows.map((p) => (
-              <tr key={p.hero} className="border-t border-zinc-800 tabular-nums">
-                <td className="py-1">{p.hero}</td><td className="text-zinc-400">{p.role}</td><td>{p.picks}</td><td>{p.available}</td><td>{formatPct(p.pickRate)}</td><td>{formatDuration(p.playtime)}</td><td>{formatPct(p.playtimeShare)}</td>
+              <tr key={p.hero}>
+                <Td>{p.hero}</Td>
+                <Td muted>{p.role}</Td>
+                <Td numeric>{p.picks}</Td>
+                <Td numeric>{p.available}</Td>
+                <Td numeric>{formatPct(p.pickRate)}</Td>
+                <Td numeric>{formatDuration(p.playtime)}</Td>
+                <Td numeric>{formatPct(p.playtimeShare)}</Td>
               </tr>
             ))}
           </tbody>
-        </table>
+        </Table>
       )}
     </div>
   );

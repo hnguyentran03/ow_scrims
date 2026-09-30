@@ -23,19 +23,19 @@ export function Radar({ axes, playerLabel, opponentLabel, playerColor, opponentC
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-4 text-xs text-zinc-400">
+      <div className="flex gap-4 text-xs text-muted">
         <span><span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ background: playerColor }} />{playerLabel}</span>
         {opponentLabel && <span><span className="mr-1 inline-block h-2 w-2 rounded-full" style={{ background: opponentColor }} />{opponentLabel}</span>}
       </div>
       <svg viewBox={`-60 -10 ${SIZE + 120} ${SIZE + 20}`} className="mx-auto w-full max-w-sm" role="img" aria-label="Matchup radar">
-        {[0.25, 0.5, 0.75, 1].map((v) => <polygon key={v} points={ring(v)} fill="none" stroke="#27272a" />)}
-        {axes.map((_, i) => { const p = point(i, 1); return <line key={i} x1={C} y1={C} x2={p.x} y2={p.y} stroke="#3f3f46" />; })}
+        {[0.25, 0.5, 0.75, 1].map((v) => <polygon key={v} points={ring(v)} fill="none" className="stroke-line" />)}
+        {axes.map((_, i) => { const p = point(i, 1); return <line key={i} x1={C} y1={C} x2={p.x} y2={p.y} className="stroke-line" />; })}
         {opponentLabel && <polygon points={polygon((a) => a.opponent)} fill={opponentColor} fillOpacity={0.2} stroke={opponentColor} strokeWidth={2} />}
         <polygon points={polygon((a) => a.player)} fill={playerColor} fillOpacity={0.25} stroke={playerColor} strokeWidth={2} />
         {axes.map((a, i) => {
           const p = point(i, 1.22);
           return (
-            <text key={a.label} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" fontSize={10} fill="#a1a1aa">
+            <text key={a.label} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" fontSize={10} className="fill-muted">
               {a.label}: {formatPer10(a.player)}{opponentLabel ? ` / ${formatPer10(a.opponent)}` : ""}
             </text>
           );

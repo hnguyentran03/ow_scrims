@@ -1,3 +1,4 @@
+import { Table, Td, Th } from "@/components/table";
 import { TEAM_COLORS } from "@/lib/colors";
 import { formatPct } from "@/lib/format";
 import type { Initiation, InitiationSummary } from "@/lib/stats/initiation";
@@ -19,38 +20,38 @@ function summaryLine(side: SideKey, s: InitiationSummary, sides: Sides, total: n
 
 export function InitiationTable({ initiation, sides }: { initiation: Initiation; sides: Sides }) {
   if (!initiation.hasDamage) {
-    return <p className="text-sm text-zinc-400">Damage logging was off for this map. Turn on damage logging in the ScrimTime Workshop settings before hosting.</p>;
+    return <p className="text-sm text-muted">Damage logging was off for this map. Turn on damage logging in the ScrimTime Workshop settings before hosting.</p>;
   }
-  if (initiation.fights.length === 0) return <p className="text-sm text-zinc-400">No fights recorded.</p>;
+  if (initiation.fights.length === 0) return <p className="text-sm text-muted">No fights recorded.</p>;
   return (
     <div className="space-y-2">
-      <p className="text-xs text-zinc-500">{summaryLine("ours", initiation.summary.ours, sides, initiation.fights.length)}</p>
-      <p className="text-xs text-zinc-500">{summaryLine("theirs", initiation.summary.theirs, sides, initiation.fights.length)}</p>
-      <table className="w-full text-sm">
+      <p className="text-xs text-muted">{summaryLine("ours", initiation.summary.ours, sides, initiation.fights.length)}</p>
+      <p className="text-xs text-muted">{summaryLine("theirs", initiation.summary.theirs, sides, initiation.fights.length)}</p>
+      <Table>
         <thead>
-          <tr className="text-left text-zinc-400">
-            <th className="px-2 py-1">Fight</th>
-            <th className="px-2 py-1">Engaged by</th>
-            <th className="px-2 py-1 text-right">Before first kill</th>
-            <th className="px-2 py-1">Winner</th>
+          <tr>
+            <Th>Fight</Th>
+            <Th>Engaged by</Th>
+            <Th numeric>Before first kill</Th>
+            <Th>Winner</Th>
           </tr>
         </thead>
         <tbody>
           {initiation.fights.map((f) => (
-            <tr key={f.index} className="border-t border-zinc-800">
-              <td className="px-2 py-1 tabular-nums">{f.index}</td>
-              <td className="px-2 py-1" style={{ color: f.initiator?.side ? TEAM_COLORS[f.initiator.side] : undefined }}>
-                {f.initiator ? `${f.initiator.name} (${f.initiator.hero})` : <span className="text-zinc-500">unknown</span>}
-              </td>
-              <td className="px-2 py-1 text-right tabular-nums">
+            <tr key={f.index}>
+              <Td className="tabular-nums">{f.index}</Td>
+              <Td style={{ color: f.initiator?.side ? TEAM_COLORS[f.initiator.side] : undefined }}>
+                {f.initiator ? `${f.initiator.name} (${f.initiator.hero})` : <span className="text-muted">unknown</span>}
+              </Td>
+              <Td numeric className="tabular-nums">
                 {f.secondsToFirstKill === null ? "–" : f.secondsToFirstKill < 0 ? `${Math.abs(f.secondsToFirstKill).toFixed(1)} s after` : `${f.secondsToFirstKill.toFixed(1)} s`}
-              </td>
-              <td className="px-2 py-1" style={{ color: f.winner ? TEAM_COLORS[f.winner] : undefined }}>{f.winner ? sides[f.winner] : "even"}</td>
+              </Td>
+              <Td style={{ color: f.winner ? TEAM_COLORS[f.winner] : undefined }}>{f.winner ? sides[f.winner] : "even"}</Td>
             </tr>
           ))}
         </tbody>
-      </table>
-      <p className="text-xs text-zinc-500">A fight starts at its first kill.</p>
+      </Table>
+      <p className="text-xs text-muted">A fight starts at its first kill.</p>
     </div>
   );
 }

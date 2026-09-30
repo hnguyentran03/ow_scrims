@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Button } from "@/components/button";
+import { EmptyState } from "@/components/empty-state";
 import { TEAM_COLORS } from "@/lib/colors";
 import { FILTER_KEYS, FILTERS, type EventEntry, type Events, type FilterKey } from "@/lib/stats/events";
 import { formatDuration } from "@/lib/format";
@@ -21,27 +23,34 @@ export function EventsList({ events, sides }: { events: Events; sides: Sides }) 
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
         {FILTER_KEYS.map((key) => (
-          <button
+          <Button
             key={key}
-            type="button"
+            size="sm"
+            variant={filter === key ? "primary" : "secondary"}
             onClick={() => setFilter(key)}
-            className={`rounded border px-2 py-1 text-sm ${filter === key ? "border-zinc-100" : "border-zinc-700 text-zinc-400 hover:text-zinc-200"}`}
+            aria-pressed={filter === key}
           >
             {LABELS[key]}
-          </button>
+          </Button>
         ))}
       </div>
-      <p className="text-sm text-zinc-400">
-        {t.rounds} rounds · {t.fights} fights · {t.ults} ults · {t.ultKills} ults with kills · {t.multikills} multikills · {t.swaps} swaps · {t.captures} captures
-      </p>
+      <div className="flex flex-wrap gap-x-3 text-sm text-muted">
+        <span>{t.rounds} rounds</span>
+        <span>{t.fights} fights</span>
+        <span>{t.ults} ults</span>
+        <span>{t.ultKills} ults with kills</span>
+        <span>{t.multikills} multikills</span>
+        <span>{t.swaps} swaps</span>
+        <span>{t.captures} captures</span>
+      </div>
       {visible.length === 0 ? (
-        <p className="text-sm text-zinc-400">No events.</p>
+        <EmptyState>No events match this filter.</EmptyState>
       ) : (
-        <ul className="divide-y divide-zinc-800 text-sm">
+        <ul className="divide-y divide-line text-sm">
           {visible.map((e, i) => (
             <li key={i} className="flex items-center gap-3 py-1">
-              <span className="w-14 tabular-nums text-zinc-400">{formatDuration(e.time)}</span>
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: e.team ? TEAM_COLORS[e.team] : "#52525b" }} />
+              <span className="w-14 tabular-nums text-muted">{formatDuration(e.time)}</span>
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: e.team ? TEAM_COLORS[e.team] : "var(--color-muted)" }} />
               <span>{describeEvent(e, sides)}</span>
             </li>
           ))}
@@ -66,11 +75,11 @@ export function describeEvent(e: EventEntry, sides: Sides): string {
       if (e.conversionKills) parts.push(`${plural(e.conversionKills, "team kill")} in ${CONVERSION_WINDOW_SECONDS} s`);
       if (e.diedDuringUlt) parts.push("died during ult");
       if (e.fightIndex) parts.push(`fight ${e.fightIndex}`);
-      return parts.join(" · ");
+      return parts.join(", ");
     }
     case "ult_kill": return `${e.player} (${e.hero}) got ${e.kills} kill${e.kills === 1 ? "" : "s"} with ultimate`;
-    case "fight": return `Fight ${e.fightIndex} · ${e.winner ? `won by ${e.winner}` : "even"} (${sides.ours} ${e.ours} – ${e.theirs} ${sides.theirs})`;
+    case "fight": return `Fight ${e.fightIndex}, ${e.winner ? `won by ${e.winner}` : "even"} (${sides.ours} ${e.ours} – ${e.theirs} ${sides.theirs})`;
     case "multikill": return `${e.player} (${e.hero}) multikill, ${e.kills} kills in fight ${e.fightIndex}`;
-    case "ajax": return `Ajax: ${e.player} (${teamName(e.team)}) died during Sound Barrier${e.fightIndex ? ` · fight ${e.fightIndex}` : ""}`;
+    case "ajax": return `Ajax: ${e.player} (${teamName(e.team)}) died during Sound Barrier${e.fightIndex ? `, fight ${e.fightIndex}` : ""}`;
   }
 }
