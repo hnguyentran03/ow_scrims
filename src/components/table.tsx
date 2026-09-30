@@ -7,7 +7,11 @@ export interface SortState {
 }
 
 type Pin = "first" | "second";
-const PIN: Record<Pin, string> = { first: "sticky left-0 z-10 w-24 bg-surface", second: "sticky left-24 z-10 bg-surface" };
+// w-24 fixes the first pinned column's width so the second pin's left-24 offset lines up with its right edge.
+const PIN: Record<Pin, string> = {
+  first: "sticky left-0 z-10 w-24 max-w-24 truncate bg-surface",
+  second: "sticky left-24 z-10 border-r border-line bg-surface",
+};
 
 /** The scroll container and table. Rows are plain <tr>; our rows pass className="bg-ours/8". */
 export function Table({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -20,7 +24,7 @@ export function Table({ children, className = "" }: { children: React.ReactNode;
 
 /** Header cell. With `sort`, the label becomes a button and the <th> carries aria-sort; pass `sort` only from client components. */
 export function Th({ numeric, pin, sort, className = "", children, ...rest }: ThHTMLAttributes<HTMLTableCellElement> & { numeric?: boolean; pin?: Pin; sort?: SortState }) {
-  const ariaSort = sort?.active ? (sort.dir === 1 ? "ascending" : "descending") : undefined;
+  const ariaSort = sort ? (sort.active ? (sort.dir === 1 ? "ascending" : "descending") : "none") : undefined;
   return (
     <th
       {...rest}

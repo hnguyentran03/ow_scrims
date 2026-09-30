@@ -35,6 +35,10 @@
 }
 
 @layer base {
+  :root {
+    color-scheme: dark;
+  }
+
   body {
     background: var(--color-ground);
     color: var(--color-ink);

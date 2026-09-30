@@ -57,7 +57,7 @@ export default async function ScrimPage({ params }: { params: Promise<{ scrimId:
                 </div>
                 <BansEditor scrimId={scrim.id} mapId={m.id} ourSide={m.ourSide} bans={bans.filter((b) => b.mapId === m.id)} />
                 <form action={deleteMapAction.bind(null, scrim.id, m.id)}>
-                  <Button type="submit" variant="danger" className="text-xs">Delete map</Button>
+                  <Button type="submit" variant="danger" size="sm">Delete map</Button>
                 </form>
               </li>
             );

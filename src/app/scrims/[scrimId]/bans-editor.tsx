@@ -2,6 +2,7 @@
 
 import { useTransition } from "react";
 import { setMapBansAction } from "@/app/actions";
+import { Select } from "@/components/field";
 import { HEROES } from "@/lib/stats/heroes";
 
 interface Props {
@@ -28,10 +29,10 @@ export function BansEditor({ scrimId, mapId, ourSide, bans }: Props) {
             <button type="button" aria-label={`Remove ${h}`} disabled={pending} onClick={() => save(heroes.filter((x) => x !== h))} className="text-muted hover:text-ink">×</button>
           </span>
         ))}
-        <select aria-label={`Add ${label.toLowerCase()} ban`} value="" disabled={pending} onChange={(e) => { if (e.target.value) save([...heroes, e.target.value]); }} className="rounded-control border border-line bg-raised px-1 py-0.5">
+        <Select size="sm" aria-label={`Add ${label.toLowerCase()} ban`} value="" disabled={pending} onChange={(e) => { if (e.target.value) save([...heroes, e.target.value]); }}>
           <option value="">Add hero…</option>
           {HEROES.filter((h) => !taken.has(h)).map((h) => <option key={h} value={h}>{h}</option>)}
-        </select>
+        </Select>
       </div>
     );
   }

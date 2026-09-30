@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/page-header";
 import { Table, Td, Th } from "@/components/table";
 import { getDb } from "@/lib/db";
 import { listScrims } from "@/lib/db/queries";
+import { recordTone } from "@/lib/result";
 import { createScrimAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export default async function HomePage() {
                 <Td muted>{s.opponentName}</Td>
                 <Td numeric>{s.mapCount}</Td>
                 <Td numeric>
-                  <Badge tone={s.wins > s.losses ? "won" : s.losses > s.wins ? "lost" : "neutral"}>{s.wins}-{s.losses}</Badge>
+                  <Badge tone={recordTone(s.wins, s.losses)}>{s.wins}-{s.losses}</Badge>
                 </Td>
               </tr>
             ))}

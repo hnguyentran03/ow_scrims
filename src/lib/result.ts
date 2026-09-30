@@ -7,3 +7,10 @@ export function resultTone(label: ResultLabel): BadgeTone {
   if (label === "Lost") return "lost";
   return "neutral";
 }
+
+/** The badge tone for a win/loss record. */
+export function recordTone(wins: number, losses: number): BadgeTone {
+  if (wins > losses) return "won";
+  if (losses > wins) return "lost";
+  return "neutral";
+}

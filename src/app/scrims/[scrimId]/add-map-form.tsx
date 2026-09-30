@@ -130,7 +130,7 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
                       </label>
                     );
                   })}
-                  <Button type="button" disabled={busy} onClick={() => retry(i)} className="text-xs">Upload with this side</Button>
+                  <Button type="button" variant="primary" size="sm" disabled={busy} onClick={() => retry(i)}>Upload with this side</Button>
                 </div>
               )}
             </li>

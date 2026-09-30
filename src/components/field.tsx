@@ -1,13 +1,24 @@
 import { cloneElement, useId, type InputHTMLAttributes, type ReactElement, type SelectHTMLAttributes } from "react";
 
-const CONTROL = "rounded-control border border-line bg-raised px-2 py-1.5 text-base text-ink placeholder:text-muted aria-invalid:border-lost";
+export type ControlSize = "sm" | "md";
 
-export function Input({ className = "", ...props }: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={`${CONTROL} ${className}`} />;
+const SIZE: Record<ControlSize, string> = {
+  md: "px-2 py-1.5 text-base",
+  sm: "px-1 py-0.5 text-xs",
+};
+
+const CONTROL = "rounded-control border border-line bg-raised text-ink placeholder:text-muted aria-invalid:border-lost";
+
+type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & { size?: ControlSize };
+
+export function Input({ size = "md", className = "", ...props }: InputProps) {
+  return <input {...props} className={`${CONTROL} ${SIZE[size]} ${className}`} />;
 }
 
-export function Select({ className = "", ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={`${CONTROL} ${className}`} />;
+type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> & { size?: ControlSize };
+
+export function Select({ size = "md", className = "", ...props }: SelectProps) {
+  return <select {...props} className={`${CONTROL} ${SIZE[size]} ${className}`} />;
 }
 
 type ControlProps = { id?: string; "aria-describedby"?: string; "aria-invalid"?: boolean };
