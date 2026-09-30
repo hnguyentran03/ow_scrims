@@ -30,8 +30,8 @@ export function StageCanvas({ stage, children, className = "w-full", ...rest }: 
       {stage.image ? (
         <image href={`/api/map-images/${stage.image.id}`} width={w} height={h} />
       ) : (
-        <g stroke="#27272a" strokeWidth={Math.max(w, h) / 800}>
-          <rect x={0} y={0} width={w} height={h} fill="#09090b" />
+        <g className="stroke-line" strokeWidth={Math.max(w, h) / 800}>
+          <rect x={0} y={0} width={w} height={h} className="fill-ground" />
           {lines.map((v) => (
             <g key={v}>
               <line x1={v} x2={v} y1={0} y2={h} />

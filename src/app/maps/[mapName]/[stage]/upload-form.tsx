@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Button } from "@/components/button";
+import { Input } from "@/components/field";
 
 export function UploadForm({ mapName, stage }: { mapName: string; stage: number }) {
   const router = useRouter();
@@ -38,10 +40,10 @@ export function UploadForm({ mapName, stage }: { mapName: string; stage: number 
 
   return (
     <form onSubmit={onSubmit} className="flex flex-wrap items-center gap-3 text-sm">
-      <input type="file" name="file" accept=".png,.jpg,.jpeg,.webp" className="text-zinc-300" />
-      <button type="submit" disabled={busy} className="rounded bg-orange-500 px-3 py-1 font-medium text-black disabled:opacity-50">{busy ? "Uploading…" : "Upload image"}</button>
-      <span className="text-zinc-400">PNG, JPEG, or WebP, up to 10 MB. Replacing an image clears its calibration.</span>
-      {status && <span className="w-full text-zinc-300">{status}</span>}
+      <Input type="file" name="file" accept=".png,.jpg,.jpeg,.webp" size="sm" />
+      <Button type="submit" variant="primary" size="sm" pending={busy} pendingLabel="Uploading…">Upload image</Button>
+      <span className="text-muted">PNG, JPEG, or WebP, up to 10 MB. Replacing an image clears its calibration.</span>
+      {status && <span className="w-full text-ink">{status}</span>}
     </form>
   );
 }

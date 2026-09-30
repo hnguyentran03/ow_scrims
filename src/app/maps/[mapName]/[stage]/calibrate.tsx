@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { clearCalibrationAction, setCalibrationAction } from "@/app/actions";
+import { Button } from "@/components/button";
+import { Card } from "@/components/card";
 import { formatDuration } from "@/lib/format";
 import { applyAffine, solveAffine, type Calibration, type Pair } from "@/lib/stats/calibration";
 
@@ -81,19 +83,17 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
   }
 
   const r = size ? Math.max(size.w, size.h) * 0.006 : 4;
-  const button = "rounded border border-zinc-700 px-2 py-1 text-sm hover:border-zinc-400 disabled:opacity-50";
 
   return (
-    <section className="space-y-3 rounded border border-zinc-800 p-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="text-lg font-medium">Calibration</h2>
-        <span className="text-xs text-zinc-500">{calibration ? `Saved with ${calibration.pairs.length} pairs` : "Not calibrated"}{sourceLabel ? ` · kills from ${sourceLabel}` : ""}</span>
-      </div>
-      <p className="text-sm text-zinc-400">
+    <Card
+      title="Calibration"
+      note={`${calibration ? `Saved with ${calibration.pairs.length} pairs` : "Not calibrated"}${sourceLabel ? `, kills from ${sourceLabel}` : ""}`}
+    >
+      <p className="text-sm text-muted">
         Pick a kill from the list whose spot you remember, then click where it happened on the image. Three pairs spread across the stage
         (the objective, both chokes) are enough; more pairs average out mistakes. Optionally mark the objective centre for the zone-control views.
       </p>
-      {points.length === 0 && <p className="text-sm text-zinc-400">No log with position logging has been uploaded for this stage yet, so there is nothing to align. The image is kept; come back after uploading one.</p>}
+      {points.length === 0 && <p className="text-sm text-muted">No log with position logging has been uploaded for this stage yet, so there is nothing to align. The image is kept; come back after uploading one.</p>}
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {/* The hidden img reports the intrinsic size the SVG viewBox and the saved calibration need. */}
@@ -106,22 +106,22 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
             onLoad={(e) => setSize({ w: e.currentTarget.naturalWidth, h: e.currentTarget.naturalHeight })}
             onError={() => setImageMissing(true)}
           />
-          {!size && imageMissing && <p className="text-sm text-red-400">The image file is missing. Upload it again.</p>}
+          {!size && imageMissing && <p className="text-sm text-lost">The image file is missing. Upload it again.</p>}
           {size && (
-            <svg viewBox={`0 0 ${size.w} ${size.h}`} className={`w-full rounded border border-zinc-800 ${selected !== null || mode === "objective" ? "cursor-crosshair" : ""}`} onClick={onClick} role="img" aria-label="Stage image">
+            <svg viewBox={`0 0 ${size.w} ${size.h}`} className={`w-full rounded-card border border-line ${selected !== null || mode === "objective" ? "cursor-crosshair" : ""}`} onClick={onClick} role="img" aria-label="Stage image">
               <image href={src} width={size.w} height={size.h} />
               {affine && points.map((p, i) => {
                 const { px, py } = applyAffine(affine, p);
-                return <circle key={i} cx={px} cy={py} r={r} fill={i === selected ? "#f97316" : "#e4e4e7"} opacity={0.8} />;
+                return <circle key={i} cx={px} cy={py} r={r} className={i === selected ? "fill-accent" : "fill-ink"} opacity={0.8} />;
               })}
               {pairs.map((p, i) => (
-                <g key={i} stroke="#22c55e" strokeWidth={r * 0.5}>
+                <g key={i} className="stroke-won" strokeWidth={r * 0.5}>
                   <line x1={p.image.px - r * 2} x2={p.image.px + r * 2} y1={p.image.py} y2={p.image.py} />
                   <line x1={p.image.px} x2={p.image.px} y1={p.image.py - r * 2} y2={p.image.py + r * 2} />
                 </g>
               ))}
               {objective && (
-                <g stroke="#facc15" strokeWidth={r * 0.5} fill="none">
+                <g className="stroke-accent" strokeWidth={r * 0.5} fill="none">
                   <circle cx={objective.px} cy={objective.py} r={r * 3} />
                   <line x1={objective.px - r * 4} x2={objective.px + r * 4} y1={objective.py} y2={objective.py} />
                   <line x1={objective.px} x2={objective.px} y1={objective.py - r * 4} y2={objective.py + r * 4} />
@@ -129,39 +129,50 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
               )}
             </svg>
           )}
-          <div className="mt-2 flex flex-wrap gap-2">
-            <button type="button" onClick={() => setMode(mode === "objective" ? "pair" : "objective")} aria-pressed={mode === "objective"} className={`${button} ${mode === "objective" ? "border-zinc-100" : ""}`}>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant={mode === "objective" ? "primary" : "secondary"} onClick={() => setMode(mode === "objective" ? "pair" : "objective")} aria-pressed={mode === "objective"}>
               {mode === "objective" ? "Click the objective centre…" : "Mark objective centre"}
-            </button>
-            {objective && <button type="button" onClick={() => setObjective(null)} className={button}>Remove objective mark</button>}
-            <button type="button" onClick={save} disabled={pending || !size || pairs.length < 3} className={`${button} ml-auto border-orange-500`}>Save calibration</button>
-            {calibration && <button type="button" onClick={clear} disabled={pending} className={button}>Clear saved</button>}
+            </Button>
+            {objective && <Button type="button" size="sm" variant="secondary" onClick={() => setObjective(null)}>Remove objective mark</Button>}
+            <Button type="button" size="sm" variant="primary" className="ml-auto" onClick={save} disabled={pending || !size || pairs.length < 3}>
+              Save calibration
+            </Button>
+            {calibration && (
+              <Button type="button" size="sm" variant="secondary" onClick={clear} disabled={pending}>
+                Clear saved
+              </Button>
+            )}
           </div>
-          {error && <p className="mt-1 text-sm text-red-400">{error}</p>}
-          {!affine && pairs.length > 0 && pairs.length < 3 && <p className="mt-1 text-sm text-zinc-400">{3 - pairs.length} more pair{pairs.length === 2 ? "" : "s"} needed for a preview.</p>}
-          {!affine && pairs.length >= 3 && <p className="mt-1 text-sm text-zinc-400">These pairs lie on one line; add a pair somewhere else.</p>}
+          {error && <p className="mt-1 text-sm text-lost">{error}</p>}
+          {!affine && pairs.length > 0 && pairs.length < 3 && <p className="mt-1 text-sm text-muted">{3 - pairs.length} more pair{pairs.length === 2 ? "" : "s"} needed for a preview.</p>}
+          {!affine && pairs.length >= 3 && <p className="mt-1 text-sm text-muted">These pairs lie on one line; add a pair somewhere else.</p>}
         </div>
         <div className="space-y-3 text-sm">
           <div>
-            <h3 className="mb-1 text-xs uppercase tracking-wide text-zinc-500">Pairs</h3>
-            {pairs.length === 0 ? <p className="text-zinc-400">None yet.</p> : (
+            <h3 className="mb-1 text-sm text-muted">Pairs</h3>
+            {pairs.length === 0 ? <p className="text-muted">None yet.</p> : (
               <ul className="space-y-1">
                 {pairs.map((p, i) => (
                   <li key={i} className="flex items-center gap-2 tabular-nums">
                     <span>({p.world.x.toFixed(1)}, {p.world.z.toFixed(1)}) → ({Math.round(p.image.px)}, {Math.round(p.image.py)})</span>
-                    <button type="button" aria-label="Remove pair" onClick={() => { setPairs(pairs.filter((_, j) => j !== i)); setError(null); }} className="text-zinc-400 hover:text-zinc-100">×</button>
+                    <button type="button" aria-label="Remove pair" onClick={() => { setPairs(pairs.filter((_, j) => j !== i)); setError(null); }} className="text-muted hover:text-ink">×</button>
                   </li>
                 ))}
               </ul>
             )}
           </div>
           <div>
-            <h3 className="mb-1 text-xs uppercase tracking-wide text-zinc-500">Kills on this stage</h3>
+            <h3 className="mb-1 text-sm text-muted">Kills on this stage</h3>
             <ul className="max-h-96 space-y-1 overflow-y-auto">
               {points.map((p, i) => (
                 <li key={i}>
-                  <button type="button" onClick={() => setSelected(selected === i ? null : i)} aria-pressed={selected === i} className={`w-full text-left hover:bg-zinc-900 ${selected === i ? "text-orange-400" : ""}`}>
-                    <span className="tabular-nums text-zinc-400">{formatDuration(p.t)}</span> {p.attacker} → {p.victim}
+                  <button
+                    type="button"
+                    onClick={() => setSelected(selected === i ? null : i)}
+                    aria-pressed={selected === i}
+                    className={`w-full text-left hover:bg-raised ${selected === i ? "text-accent" : ""}`}
+                  >
+                    <span className="tabular-nums text-muted">{formatDuration(p.t)}</span> {p.attacker} → {p.victim}
                   </button>
                 </li>
               ))}
@@ -169,6 +180,6 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
           </div>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }

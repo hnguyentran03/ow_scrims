@@ -1,6 +1,8 @@
 "use client";
 
 import { usePathname, useSearchParams } from "next/navigation";
+import { Button } from "@/components/button";
+import { Field, Select } from "@/components/field";
 import type { HeatmapFilter } from "@/lib/heatmap-filters";
 import { extraParams } from "@/lib/range";
 import type { Sides } from "@/lib/stats/sides";
@@ -28,26 +30,23 @@ export function HeatmapFilters({ stages, players, filter, sides }: { stages: Sta
         <input key={i} type="hidden" name={k} value={v} />
       ))}
       {stages.length > 1 && (
-        <label className="flex flex-col">
-          Window
-          <select name="stage" defaultValue={String(filter.stage)} className="rounded bg-zinc-900 px-2 py-1">
+        <Field label="Window">
+          <Select name="stage" defaultValue={String(filter.stage)}>
             {stages.map((s) => (
               <option key={s.index} value={s.index}>{s.label}</option>
             ))}
-          </select>
-        </label>
+          </Select>
+        </Field>
       )}
-      <label className="flex flex-col">
-        Side
-        <select name="side" defaultValue={filter.side} className="rounded bg-zinc-900 px-2 py-1">
+      <Field label="Side">
+        <Select name="side" defaultValue={filter.side}>
           <option value="both">Both</option>
           <option value="ours">{sides.ours}</option>
           <option value="theirs">{sides.theirs}</option>
-        </select>
-      </label>
-      <label className="flex flex-col">
-        Player
-        <select name="player" defaultValue={playerValue} className="rounded bg-zinc-900 px-2 py-1">
+        </Select>
+      </Field>
+      <Field label="Player">
+        <Select name="player" defaultValue={playerValue}>
           <option value="">All</option>
           {(["ours", "theirs"] as const).map((side) => (
             <optgroup key={side} label={sides[side]}>
@@ -56,9 +55,9 @@ export function HeatmapFilters({ stages, players, filter, sides }: { stages: Sta
               ))}
             </optgroup>
           ))}
-        </select>
-      </label>
-      <button type="submit" className="rounded bg-orange-500 px-3 py-1 font-medium text-black">Apply</button>
+        </Select>
+      </Field>
+      <Button type="submit" variant="primary">Apply</Button>
     </form>
   );
 }
