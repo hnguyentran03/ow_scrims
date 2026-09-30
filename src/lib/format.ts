@@ -28,3 +28,7 @@ export function formatPct(v: number | null): string {
 export function formatSeconds(v: number | null): string {
   return v === null ? "–" : `${Math.round(v)}s`;
 }
+
+export function formatRatio(v: number | null): string {
+  return v === null ? "–" : v.toFixed(2);
+}

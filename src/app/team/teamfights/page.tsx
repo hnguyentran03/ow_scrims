@@ -4,7 +4,7 @@ import { Table, Td, Th } from "@/components/table";
 import { TEAM_COLORS } from "@/lib/colors";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
-import { formatPct } from "@/lib/format";
+import { formatPct, formatRatio } from "@/lib/format";
 import { parseRange, type SearchParams } from "@/lib/range";
 import { MIN_ABILITY_FIGHTS, buildAbilityImpact } from "@/lib/stats/ability-impact";
 import { buildTeamfights, type TeamFightStats } from "@/lib/stats/teamfights";
@@ -58,8 +58,6 @@ export default async function TeamfightsPage({ searchParams }: { searchParams: S
   );
 }
 
-const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
-
 function Column({ title, color, stats: s }: { title: string; color: string; stats: TeamFightStats }) {
   return (
     <section className="space-y-3">
@@ -71,8 +69,8 @@ function Column({ title, color, stats: s }: { title: string; color: string; stat
         <Stat label="First ult win rate" value={formatPct(s.firstUlt.rate)} hint={`${s.firstUlt.won} of ${s.firstUlt.count} fights`} />
         <Stat label="Dry fight rate" value={formatPct(s.dry.rate)} hint={`${s.dry.count} fights with no ult`} />
         <Stat label="Dry fight win rate" value={formatPct(s.dry.winRate)} hint={`${s.dry.won} of ${s.dry.count}`} />
-        <Stat label="Ults per fight" value={two(s.ultsPerFight)} hint={`${s.ultsUsed} ults`} />
-        <Stat label="Ult efficiency" value={two(s.ultEfficiency)} hint="fights won per ult" />
+        <Stat label="Ults per fight" value={formatRatio(s.ultsPerFight)} hint={`${s.ultsUsed} ults`} />
+        <Stat label="Ult efficiency" value={formatRatio(s.ultEfficiency)} hint="fights won per ult" />
         <Stat label="Wasted ults" value={String(s.wastedUlts)} hint="in lost or even fights, or no fight" />
       </div>
     </section>
