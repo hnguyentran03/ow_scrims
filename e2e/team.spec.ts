@@ -12,7 +12,15 @@ const TABS: Array<{ label: string; suffix: string; check: (page: Page) => Promis
       await expect(page.getByRole("heading", { name: "Performance by role", exact: true })).toBeVisible();
     },
   },
-  { label: "Trends", suffix: "/trends", check: async (page) => expect(page.getByRole("heading", { name: "Win rate by map", exact: true })).toBeVisible() },
+  {
+    label: "Trends",
+    suffix: "/trends",
+    check: async (page) => {
+      await expect(page.getByRole("heading", { name: "Win rate by map", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Maps", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Hero picks by scrim", exact: true })).toBeVisible();
+    },
+  },
   { label: "Teamfights", suffix: "/teamfights", check: async (page) => expect(page.getByRole("heading", { name: "By scrim", exact: true })).toBeVisible() },
   { label: "Players", suffix: "/players", check: async (page) => expect(page.getByRole("heading", { name: "Roster", exact: true })).toBeVisible() },
 ];

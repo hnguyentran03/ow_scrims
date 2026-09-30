@@ -1,11 +1,15 @@
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
 import { parseRange, type SearchParams } from "@/lib/range";
+import { heroPickHeatmap } from "@/lib/stats/hero-heatmap";
+import { mapGallery } from "@/lib/stats/map-gallery";
 import { heroPicks, ultEconomyByScrim, winRateByMap, winRateByType } from "@/lib/stats/trends";
 import { Card } from "@/components/card";
 import { EmptyRange } from "../empty-range";
 import { mapRecordRows, RecordTable, typeRecordRows } from "../record-table";
+import { HeroHeatmapTable } from "./hero-heatmap-table";
 import { HeroPicksTable } from "./hero-picks-table";
+import { MapGallery } from "./map-gallery";
 import { UltEconomyChart } from "./ult-economy-chart";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +22,8 @@ export default async function TrendsPage({ searchParams }: { searchParams: Searc
   const ours = heroPicks(rows.maps, rows.playerStats, rows.bans, "ours");
   const theirs = heroPicks(rows.maps, rows.playerStats, rows.bans, "theirs");
   const economy = ultEconomyByScrim(rows.maps, rows.playerStats, rows.ultCharged, rows.ultStarts, rows.ultEnds);
+  const tiles = mapGallery(rows.maps);
+  const heatmap = heroPickHeatmap(rows.maps, rows.playerStats);
 
   return (
     <div className="space-y-8">
@@ -29,6 +35,8 @@ export default async function TrendsPage({ searchParams }: { searchParams: Searc
           <RecordTable head="Map type" rows={typeRecordRows(byType)} />
         </Card>
       </div>
+      <MapGallery tiles={tiles} />
+      <HeroHeatmapTable heatmap={heatmap} />
       <Card title="Hero picks" note="Pick % is over maps where the hero was not banned by either team.">
         <HeroPicksTable ours={ours} theirs={theirs} />
       </Card>
