@@ -6,6 +6,8 @@ import { buildOverview } from "@/lib/stats/overview";
 import { loadMap, type MapParams } from "./load-map";
 import { Stat } from "@/components/stat";
 import { StatTable } from "./stat-table";
+import { Card } from "@/components/card";
+import { Table, Td } from "@/components/table";
 
 export const dynamic = "force-dynamic";
 
@@ -31,26 +33,24 @@ export default async function MapPage({ params }: { params: MapParams }) {
         <Stat label="Healing" value={`${formatInt(ours.healing)} / ${formatInt(theirs.healing)}`} hint={`${sides.ours} / ${sides.theirs}`} />
       </section>
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-medium">Players</h2>
+      <Card title="Players">
         <StatTable rows={overview.players} ourTeam={sides.ours} />
-      </section>
+      </Card>
 
-      <section className="space-y-2">
-        <h2 className="text-lg font-medium">Analysis</h2>
-        <ul className="text-sm text-zinc-300">
-          <li>Fights: {overview.analysis.fights}</li>
-          <li>First death rate: {sides.ours} {pct(overview.analysis.firstDeathPct[sides.ours])} · {sides.theirs} {pct(overview.analysis.firstDeathPct[sides.theirs])}</li>
-          <li>
-            Most first deaths:{" "}
-            {overview.analysis.mostFirstDeaths
-              ? `${overview.analysis.mostFirstDeaths.name} (${overview.analysis.mostFirstDeaths.team}), ${overview.analysis.mostFirstDeaths.count}`
-              : "none"}
-          </li>
-          <li>Ultimate value (kills with ults): {sides.ours} {ultKills(sides.ours)} · {sides.theirs} {ultKills(sides.theirs)}</li>
-          <li>Ajaxes (Lúcio died mid-ult): {sides.ours} {ajaxCount(sides.ours)} · {sides.theirs} {ajaxCount(sides.theirs)}</li>
-        </ul>
-      </section>
+      <Card title="Analysis">
+        <Table>
+          <tbody>
+            <tr><Td muted>Fights</Td><Td numeric>{overview.analysis.fights}</Td></tr>
+            <tr><Td muted>First death rate</Td><Td numeric>{sides.ours} {pct(overview.analysis.firstDeathPct[sides.ours])} / {sides.theirs} {pct(overview.analysis.firstDeathPct[sides.theirs])}</Td></tr>
+            <tr>
+              <Td muted>Most first deaths</Td>
+              <Td numeric>{overview.analysis.mostFirstDeaths ? `${overview.analysis.mostFirstDeaths.name} (${overview.analysis.mostFirstDeaths.team}), ${overview.analysis.mostFirstDeaths.count}` : "none"}</Td>
+            </tr>
+            <tr><Td muted>Ultimate value (kills with ults)</Td><Td numeric>{sides.ours} {ultKills(sides.ours)} / {sides.theirs} {ultKills(sides.theirs)}</Td></tr>
+            <tr><Td muted>Ajaxes (Lúcio died mid-ult)</Td><Td numeric>{sides.ours} {ajaxCount(sides.ours)} / {sides.theirs} {ajaxCount(sides.theirs)}</Td></tr>
+          </tbody>
+        </Table>
+      </Card>
     </div>
   );
 }
