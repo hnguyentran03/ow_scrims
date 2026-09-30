@@ -28,8 +28,16 @@ test.describe("team", () => {
 
   test.afterAll(async ({ browser }) => {
     const page = await newPage(browser);
-    for (const id of created) await deleteScrim(page, id);
+    const failures: unknown[] = [];
+    for (const id of created) {
+      try {
+        await deleteScrim(page, id);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
     await page.context().close();
+    if (failures.length > 0) throw failures[0];
   });
 
   test("overview shows the record over both scrims", async ({ page }) => {

@@ -12,7 +12,7 @@ export const SAMPLES = {
 } as const;
 
 export function samplePath(name: string): string {
-  return path.join(process.cwd(), "test", "samples", name);
+  return path.join(__dirname, "..", "test", "samples", name);
 }
 
 /** A page for beforeAll/afterAll hooks, where the test-scoped `page` fixture does not exist. Close it when done. */

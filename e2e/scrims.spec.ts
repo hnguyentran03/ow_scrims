@@ -8,8 +8,16 @@ test.describe.serial("core flow", () => {
 
   test.afterAll(async ({ browser }) => {
     const page = await newPage(browser);
-    for (const id of created) await deleteScrim(page, id);
+    const failures: unknown[] = [];
+    for (const id of created) {
+      try {
+        await deleteScrim(page, id);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
     await page.context().close();
+    if (failures.length > 0) throw failures[0];
   });
 
   test("create a scrim, upload a log, read the overview, delete everything", async ({ page }) => {
@@ -45,7 +53,7 @@ test.describe.serial("core flow", () => {
     await expect(page.getByText("3 - 0", { exact: true })).toBeVisible();
     await expect(page.getByText("Match time", { exact: true })).toBeVisible();
     await expect(page.getByText("11:01", { exact: true }).first()).toBeVisible();
-    expect(await page.getByRole("table").getByRole("row").count()).toBeGreaterThan(10);
+    await expect.poll(() => page.getByRole("table").getByRole("row").count()).toBeGreaterThan(10);
 
     // Delete the map from the scrim page.
     await page.getByRole("link", { name: NAME }).click();
