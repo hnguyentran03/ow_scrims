@@ -2,7 +2,7 @@ import { Card } from "@/components/card";
 import { formatPct } from "@/lib/format";
 import { RECENT_LIMIT, type MapTile, type Outcome } from "@/lib/stats/map-gallery";
 
-const TONE: Record<Outcome, string> = { won: "bg-won", lost: "bg-lost", undecided: "bg-raised" };
+const TONE: Record<Outcome, string> = { won: "bg-won", lost: "bg-lost", undecided: "bg-muted" };
 const WORD: Record<Outcome, string> = { won: "won", lost: "lost", undecided: "undecided" };
 
 export function MapGallery({ tiles }: { tiles: MapTile[] }) {

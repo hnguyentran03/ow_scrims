@@ -18,8 +18,9 @@ export function PlayerMapMatrixTable({ matrix }: { matrix: PlayerMapMatrix }) {
             <tr>
               <Th pin="first">Player</Th>
               {matrix.columns.map((c) => (
-                <Th key={c.mapName} numeric title={c.mapType}>{c.mapName}</Th>
+                <Th key={c.mapName} numeric title={c.mapType} style={{ width: "7rem", minWidth: "7rem" }}>{c.mapName}</Th>
               ))}
+              <Th aria-hidden style={{ width: "auto" }} />
             </tr>
           </thead>
           <tbody>
@@ -29,11 +30,12 @@ export function PlayerMapMatrixTable({ matrix }: { matrix: PlayerMapMatrix }) {
                 {r.cells.map((cell, i) => {
                   const step = cell ? rampStep(cell.winRate) : null;
                   return (
-                    <Td key={matrix.columns[i].mapName} numeric className={step !== null ? `${RAMP_CLASS[step]} ${RAMP_TEXT[step]}` : ""} title={cell ? cellTitle(cell) : undefined}>
+                    <Td key={matrix.columns[i].mapName} numeric style={{ width: "7rem", minWidth: "7rem" }} className={step !== null ? `${RAMP_CLASS[step]} ${RAMP_TEXT[step]}` : ""} title={cell ? cellTitle(cell) : undefined}>
                       {cell ? `${cell.won}-${cell.lost}` : ""}
                     </Td>
                   );
                 })}
+                <Td aria-hidden />
               </tr>
             ))}
           </tbody>

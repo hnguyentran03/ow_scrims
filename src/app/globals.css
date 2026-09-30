@@ -17,7 +17,7 @@
   /* Surface with 8 % of ours mixed in, so an opaque pinned cell matches an our-row's bg-ours/8 tint. */
   --color-surface-ours: #122640;
 
-  /* Single-hue ramp from the surface to the team blue for share cells; checked 2026-09-30 (ink stays over 4.5:1 on every step). */
+  /* Single-hue ramp from the surface to the team blue for share cells; checked 2026-09-30 (ink clears 4.5:1 on steps 0 to 3 only; step 4 needs ground text, see RAMP_TEXT in src/lib/ramp.ts). */
   --color-ramp-0: #111d33;
   --color-ramp-1: #143a5d;
   --color-ramp-2: #165687;

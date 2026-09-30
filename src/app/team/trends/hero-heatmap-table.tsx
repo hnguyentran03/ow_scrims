@@ -31,8 +31,9 @@ export function HeroHeatmapTable({ heatmap }: { heatmap: HeroHeatmap }) {
             <tr>
               <Th pin="first">Hero</Th>
               {heatmap.columns.map((c) => (
-                <Th key={c.scrimId} numeric title={c.name}>{c.date}</Th>
+                <Th key={c.scrimId} numeric title={c.name} style={{ width: "7rem", minWidth: "7rem" }}>{c.date}</Th>
               ))}
+              <Th aria-hidden style={{ width: "auto" }} />
             </tr>
           </thead>
           <tbody>
@@ -42,11 +43,12 @@ export function HeroHeatmapTable({ heatmap }: { heatmap: HeroHeatmap }) {
                 {r.cells.map((cell, i) => {
                   const step = rampStep(cell.share);
                   return (
-                    <Td key={heatmap.columns[i].scrimId} numeric className={`${RAMP_CLASS[step]} ${cell.picks === 0 ? "text-muted" : RAMP_TEXT[step]}`} title={`${cell.picks} of ${cell.maps} maps`}>
+                    <Td key={heatmap.columns[i].scrimId} numeric style={{ width: "7rem", minWidth: "7rem" }} className={`${RAMP_CLASS[step]} ${cell.picks === 0 ? "text-muted" : RAMP_TEXT[step]}`} title={`${cell.picks} of ${cell.maps} maps`}>
                       {formatPct(cell.share)}
                     </Td>
                   );
                 })}
+                <Td aria-hidden />
               </tr>
             ))}
           </tbody>
