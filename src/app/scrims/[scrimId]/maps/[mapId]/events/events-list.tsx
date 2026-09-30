@@ -75,11 +75,11 @@ export function describeEvent(e: EventEntry, sides: Sides): string {
       if (e.conversionKills) parts.push(`${plural(e.conversionKills, "team kill")} in ${CONVERSION_WINDOW_SECONDS} s`);
       if (e.diedDuringUlt) parts.push("died during ult");
       if (e.fightIndex) parts.push(`fight ${e.fightIndex}`);
-      return parts.join(" · ");
+      return parts.join(", ");
     }
     case "ult_kill": return `${e.player} (${e.hero}) got ${e.kills} kill${e.kills === 1 ? "" : "s"} with ultimate`;
-    case "fight": return `Fight ${e.fightIndex} · ${e.winner ? `won by ${e.winner}` : "even"} (${sides.ours} ${e.ours} – ${e.theirs} ${sides.theirs})`;
+    case "fight": return `Fight ${e.fightIndex}, ${e.winner ? `won by ${e.winner}` : "even"} (${sides.ours} ${e.ours} – ${e.theirs} ${sides.theirs})`;
     case "multikill": return `${e.player} (${e.hero}) multikill, ${e.kills} kills in fight ${e.fightIndex}`;
-    case "ajax": return `Ajax: ${e.player} (${teamName(e.team)}) died during Sound Barrier${e.fightIndex ? ` · fight ${e.fightIndex}` : ""}`;
+    case "ajax": return `Ajax: ${e.player} (${teamName(e.team)}) died during Sound Barrier${e.fightIndex ? `, fight ${e.fightIndex}` : ""}`;
   }
 }
