@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Axes, H, linear, M, svgPoint, ticks, Tooltip, W } from "@/components/chart-utils";
+import { Select } from "@/components/field";
 import { TEAM_COLORS } from "@/lib/colors";
 import { formatPer10 } from "@/lib/format";
 import { CHART_STAT_KEYS, CHART_STATS, type ChartPoint, type ChartStat } from "@/lib/stats/player";
@@ -27,11 +28,11 @@ export function StatChart({ points }: { points: ChartPoint[] }) {
     <div className="space-y-2">
       <label className="flex items-center gap-2 text-sm">
         Stat per 10 minutes
-        <select value={stat} onChange={(e) => setStat(e.target.value as ChartStat)} className="rounded border border-line bg-raised px-2 py-1 text-ink">
+        <Select value={stat} onChange={(e) => setStat(e.target.value as ChartStat)}>
           {CHART_STAT_KEYS.map((k) => (
             <option key={k} value={k}>{CHART_STATS[k]}</option>
           ))}
-        </select>
+        </Select>
       </label>
       {points.length <= 1 ? (
         <p className="text-sm text-muted">Need at least two scrims in range to draw a trend.</p>

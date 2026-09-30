@@ -18,19 +18,19 @@ export default async function TeamOverviewPage({ searchParams }: { searchParams:
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Record" value={`${o.record.won}-${o.record.lost}`} hint={`${o.record.undecided} undecided`} />
         <Stat label="Last 10" value={`${o.lastTen.won}-${o.lastTen.lost}`} hint="decided maps" />
         <Stat label="Maps" value={String(o.record.maps)} />
         <Stat label="Scrims" value={String(o.record.scrims)} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TypeCard title="Strongest game mode" record={o.strongestType} />
         <TypeCard title="Blind spot game mode" record={o.blindSpotType} />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <MapCard title="Strongest map" record={o.strongest} />
         <MapCard title="Blind spot map" record={o.blindSpot} />
       </div>

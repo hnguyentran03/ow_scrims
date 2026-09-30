@@ -50,8 +50,8 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
       <Card title="Tempo" note={tempoNote}>
         <TempoChart tempo={tempo} sides={sides} />
       </Card>
-      <h2 className="text-lg font-medium text-ink">Ultimates</h2>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <h2 className="font-display text-lg tracking-[0.03em] text-ink">Ultimates</h2>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Ult advantage per fight" note="Held ults at each fight's first kill; a cast with no logged charge counts as not held">
           <UltAdvantageTable advantage={advantage} sides={sides} />
         </Card>
@@ -65,7 +65,7 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
           <InitiationTable initiation={initiation} sides={sides} />
         </Card>
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Kills by fight" note={`${fights.length} fights`}>
           <KillsByFightChart points={steps} sides={sides} />
         </Card>

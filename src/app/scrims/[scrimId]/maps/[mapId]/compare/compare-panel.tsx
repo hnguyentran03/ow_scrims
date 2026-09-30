@@ -23,7 +23,7 @@ export function ComparePanel({ players, options, sides }: { players: PlayerRow[]
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Selector label="Left" options={options} value={left} onChange={setLeft} sides={sides} />
         <Selector label="Right" options={options} value={right} onChange={setRight} sides={sides} />
       </div>

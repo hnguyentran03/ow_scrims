@@ -24,7 +24,7 @@ export default async function TeamfightsPage({ searchParams }: { searchParams: S
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Column title="Ours" color={TEAM_COLORS.ours} stats={t.ours} />
         <Column title="Theirs" color={TEAM_COLORS.theirs} stats={t.theirs} />
       </div>
@@ -64,7 +64,7 @@ function Column({ title, color, stats: s }: { title: string; color: string; stat
   return (
     <section className="space-y-3">
       <h2 className="text-md font-medium"><span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: color }} />{title}</h2>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2">
         <Stat label="Fight win rate" value={formatPct(s.winRate)} hint={`${s.won}-${s.lost}, ${s.drawn} even of ${s.fights}`} />
         <Stat label="First pick win rate" value={formatPct(s.firstPick.rate)} hint={`${s.firstPick.won} of ${s.firstPick.count} fights`} />
         <Stat label="First death win rate" value={formatPct(s.firstDeath.rate)} hint={`${s.reversals} reversals of ${s.firstDeath.count} fights`} />

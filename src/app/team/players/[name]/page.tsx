@@ -45,14 +45,14 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
         actions={<HeroSelect action={`/team/players/${encodeURIComponent(name)}`} hidden={hidden} heroes={p.heroes} hero={p.hero} />}
       />
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Maps" value={String(o.maps)} />
         <Stat label="Time played" value={formatDuration(o.timePlayed)} />
         <Stat label="Record" value={`${o.record.won}-${o.record.lost}`} hint={`${o.record.undecided} undecided`} />
         <Stat label="Win rate" value={formatPct(o.winRate)} hint="decided maps" />
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Elims / 10" value={formatPer10(o.per10.eliminations)} />
         <Stat label="Final blows / 10" value={formatPer10(o.per10.finalBlows)} />
         <Stat label="Deaths / 10" value={formatPer10(o.per10.deaths)} />
@@ -70,7 +70,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
         <Records rows={p.profile.records} />
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Most played heroes">
           {p.mostPlayed.length === 0 ? <Empty /> : (
             <Table>
@@ -109,7 +109,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
         <Best best={p.bestPerformance} />
       </Card>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Win rate by map">
           <RecordTable head="Map" rows={mapRecordRows(p.winRateByMap)} />
         </Card>
@@ -118,7 +118,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card title="Final blows by method"><MethodList rows={p.finalBlowsByMethod} /></Card>
         <Card title="Died to most" note="any kill row"><HeroList rows={p.diedToMost} /></Card>
         <Card title="Final blows on most"><HeroList rows={p.finalBlowsOnMost} /></Card>
@@ -133,7 +133,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
 
 function Cards({ c }: { c: PlayerCards }) {
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       <Stat label="First pick %" value={formatPct(c.firstPick.rate)} hint={`${c.firstPick.count} of ${c.firstPick.fights} fights on maps played; won ${c.firstPick.won}`} />
       <Stat label="First death %" value={formatPct(c.firstDeath.rate)} hint={`${c.firstDeath.count} of ${c.firstDeath.fights} fights on maps played`} />
       <Stat label="Reversal %" value={formatPct(c.reversal.rate)} hint={`${c.reversal.won} won of ${c.reversal.count} first deaths`} />
@@ -200,7 +200,7 @@ const one = (v: number) => v.toFixed(1);
 function Profile({ profile: pr, hero }: { profile: ProfileCards; hero: string | null }) {
   const droughtScope = hero === null ? "" : `; gaps between ${hero} final blows only`;
   return (
-    <div className="grid gap-3 sm:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <Stat label="MVP score" value={pr.mvp.score === null ? "–" : String(Math.round(pr.mvp.score))} hint={pr.mvp.score === null ? needRatedMaps : `MVP on ${pr.mvp.mvpCount} of ${pr.mvp.maps} maps; 100 is the role average`} />
       <Stat label="Deadlift share" value={formatPct(pr.deadlift?.meanShare ?? null)} hint={pr.deadlift ? `best ${formatPct(pr.deadlift.best.share)} of our hero damage on ${pr.deadlift.best.mapName}` : needMaps} />
       <Stat label="Final-blow drought" value={formatSeconds(pr.drought?.longestSeconds ?? null)} hint={pr.drought ? `longest on ${pr.drought.longestMap.mapName}; mean ${formatSeconds(pr.drought.meanSeconds)}${droughtScope}` : "No final blows in range"} />

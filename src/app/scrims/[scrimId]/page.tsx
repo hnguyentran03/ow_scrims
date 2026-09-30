@@ -38,7 +38,7 @@ export default async function ScrimPage({ params }: { params: Promise<{ scrimId:
       {maps.length === 0 ? (
         <EmptyState>No maps yet. Drop this scrim&apos;s log files below.</EmptyState>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {maps.map((m) => {
             const label = resultLabel(m);
             const ours = m.ourSide === 1 ? m.team1Score : m.team2Score;

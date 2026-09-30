@@ -132,7 +132,7 @@ export function ReplayPanel({ replay, sides, mapName, initialTime, ghostSources,
           ))}
         </div>
       )}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-2">
           {replay.hasPositions ? (
             <ReplayCanvas replay={replay} t={t} windowIndex={windowIndex} mapName={mapName} ghost={ghost} ghostT={ghostT} />

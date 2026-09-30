@@ -94,7 +94,7 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
         (the objective, both chokes) are enough; more pairs average out mistakes. Optionally mark the objective centre for the zone-control views.
       </p>
       {points.length === 0 && <p className="text-sm text-muted">No log with position logging has been uploaded for this stage yet, so there is nothing to align. The image is kept; come back after uploading one.</p>}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {/* The hidden img reports the intrinsic size the SVG viewBox and the saved calibration need. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}

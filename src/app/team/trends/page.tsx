@@ -21,7 +21,7 @@ export default async function TrendsPage({ searchParams }: { searchParams: Searc
 
   return (
     <div className="space-y-8">
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Win rate by map">
           <RecordTable head="Map" rows={mapRecordRows(byMap)} />
         </Card>
@@ -32,7 +32,7 @@ export default async function TrendsPage({ searchParams }: { searchParams: Searc
       <Card title="Hero picks" note="Pick % is over maps where the hero was not banned by either team.">
         <HeroPicksTable ours={ours} theirs={theirs} />
       </Card>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Ults per 10 minutes" note="Our team, per scrim">
           <UltEconomyChart points={economy} kind="per10" />
         </Card>

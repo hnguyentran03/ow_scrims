@@ -42,7 +42,7 @@ export function TelemetryPanel({ telemetry, sides }: { telemetry: Telemetry; sid
       </div>
 
       {hasDamage ? (
-        <div className="grid gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Card title="Damage dealt by hero"><LaneList lanes={player.dealt} color={color} /></Card>
           <Card title="Damage received by hero"><LaneList lanes={player.received} color={opponentColor} /></Card>
           <Card title="Focus fire received" note="Share of damage taken, by enemy role"><RoleBar shares={player.focusFire.received} color={opponentColor} /></Card>
