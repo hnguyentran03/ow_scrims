@@ -136,7 +136,7 @@ export function buildPerformance(maps: TeamMapLike[], playerStats: StatLike[], k
       role,
       playtime: a.playtime,
       maps: a.maps.size,
-      kd: a.deaths === 0 ? null : a.finalBlows / a.deaths,
+      kd: rate(a.finalBlows, a.deaths),
       damagePer10: per10(a.heroDamage, a.playtime),
       healingPer10: per10(a.healing, a.playtime),
       deathsPer10: per10(a.deaths, a.playtime),

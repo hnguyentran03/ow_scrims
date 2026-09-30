@@ -8,7 +8,7 @@ const TABS: Array<{ label: string; suffix: string; check: (page: Page) => Promis
     label: "Overview",
     suffix: "",
     check: async (page) => {
-      await expect(page.getByText("Record", { exact: true })).toBeVisible();
+      await expect(page.getByText("Record", { exact: true }).first()).toBeVisible();
       await expect(page.getByRole("heading", { name: "Performance by role", exact: true })).toBeVisible();
       await expect(page.getByRole("heading", { name: "Best trios", exact: true })).toBeVisible();
     },
@@ -52,7 +52,7 @@ test.describe("team", () => {
     const res = await page.goto("/team");
     expect(res?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: "Team" })).toBeVisible();
-    await expect(page.getByText("Record", { exact: true })).toBeVisible();
+    await expect(page.getByText("Record", { exact: true }).first()).toBeVisible();
     // "1-1" also appears in the Last 10 stat, so the first match is enough.
     await expect(page.getByText("1-1", { exact: true }).first()).toBeVisible();
   });
@@ -82,6 +82,6 @@ test.describe("team", () => {
     await page.getByRole("button", { name: "Apply" }).click();
     await expect(page.getByText("No maps in this range")).toBeVisible();
     await page.getByRole("link", { name: "Clear" }).click();
-    await expect(page.getByText("Record", { exact: true })).toBeVisible();
+    await expect(page.getByText("Record", { exact: true }).first()).toBeVisible();
   });
 });

@@ -2,11 +2,8 @@ import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
 import { Stat } from "@/components/stat";
 import { Table, Td, Th } from "@/components/table";
-import { formatDuration, formatInt, formatPct } from "@/lib/format";
+import { formatDuration, formatPct, formatPer10, formatRatio } from "@/lib/format";
 import { MIN_TRIO_PLAYS, type RoleCard, type TrioRow } from "@/lib/stats/performance";
-
-const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
-const one = (v: number) => v.toFixed(1);
 
 export function RoleCards({ roles }: { roles: RoleCard[] }) {
   return (
@@ -17,18 +14,18 @@ export function RoleCards({ roles }: { roles: RoleCard[] }) {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {roles.map((r) => (
             <section key={r.role} className="space-y-3">
-              <h3 className="font-display text-lg tracking-[0.03em] text-ink">
+              <h3 className="font-display text-base tracking-[0.03em] text-ink">
                 <span className="mr-2 inline-block h-2 w-2 rounded-full bg-ours" aria-hidden />
                 {r.role}
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <Stat label="Playtime" value={formatDuration(r.playtime)} />
                 <Stat label="Maps" value={String(r.maps)} />
-                <Stat label="K/D" value={two(r.kd)} hint="final blows per death" />
-                <Stat label="Damage / 10" value={formatInt(r.damagePer10)} />
-                <Stat label="Healing / 10" value={formatInt(r.healingPer10)} />
-                <Stat label="Deaths / 10" value={one(r.deathsPer10)} />
-                <Stat label="Ult efficiency" value={formatPct(r.ultEfficiency)} hint={`${r.casts} ults, fights won per ult`} />
+                <Stat label="K/D" value={formatRatio(r.kd)} hint="final blows per death" />
+                <Stat label="Damage / 10" value={formatPer10(r.damagePer10)} />
+                <Stat label="Healing / 10" value={formatPer10(r.healingPer10)} />
+                <Stat label="Deaths / 10" value={formatPer10(r.deathsPer10)} />
+                <Stat label="Ult efficiency" value={formatPct(r.ultEfficiency)} hint={`${r.casts} ults, share cast in fights we won`} />
               </div>
             </section>
           ))}
