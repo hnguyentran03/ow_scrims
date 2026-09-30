@@ -2,7 +2,7 @@ import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
 import { Table, Td, Th } from "@/components/table";
 import { formatPct } from "@/lib/format";
-import { RAMP_CLASS, rampStep } from "@/lib/ramp";
+import { RAMP_CLASS, RAMP_TEXT, rampStep } from "@/lib/ramp";
 import type { MatrixCell, PlayerMapMatrix } from "@/lib/stats/player-map-matrix";
 
 const cellTitle = (c: MatrixCell) => `${c.won}-${c.lost}${c.undecided > 0 ? `, ${c.undecided} undecided` : ""}, ${formatPct(c.winRate)}`;
@@ -26,11 +26,14 @@ export function PlayerMapMatrixTable({ matrix }: { matrix: PlayerMapMatrix }) {
             {matrix.rows.map((r) => (
               <tr key={r.name}>
                 <Td pin="first">{r.name}</Td>
-                {r.cells.map((cell, i) => (
-                  <Td key={matrix.columns[i].mapName} numeric className={cell ? `${RAMP_CLASS[rampStep(cell.winRate)]} text-ink` : ""} title={cell ? cellTitle(cell) : undefined}>
-                    {cell ? `${cell.won}-${cell.lost}` : ""}
-                  </Td>
-                ))}
+                {r.cells.map((cell, i) => {
+                  const step = cell ? rampStep(cell.winRate) : null;
+                  return (
+                    <Td key={matrix.columns[i].mapName} numeric className={step !== null ? `${RAMP_CLASS[step]} ${RAMP_TEXT[step]}` : ""} title={cell ? cellTitle(cell) : undefined}>
+                      {cell ? `${cell.won}-${cell.lost}` : ""}
+                    </Td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
