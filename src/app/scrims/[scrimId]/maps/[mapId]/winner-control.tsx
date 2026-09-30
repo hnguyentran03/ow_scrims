@@ -2,37 +2,41 @@
 
 import { useState, useTransition } from "react";
 import { setMapWinnerAction } from "@/app/actions";
+import { Button } from "@/components/button";
+import { Field, Select } from "@/components/field";
 
-export function WinnerControl(props: {
-  scrimId: number;
-  mapId: number;
-  team1Name: string;
-  team2Name: string;
-  winnerSide: number | null;
-  winnerSource: string | null;
-}) {
+export function WinnerControl(props: { scrimId: number; mapId: number; team1Name: string; team2Name: string; winnerSide: number | null; winnerSource: string | null }) {
   const [side, setSide] = useState<"1" | "2">(props.winnerSide === 2 ? "2" : "1");
+  const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+  const current = props.winnerSide === null ? "N/A" : props.winnerSide === 1 ? props.team1Name : props.team2Name;
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        start(() => setMapWinnerAction(props.scrimId, props.mapId, side === "1" ? 1 : 2));
+        start(async () => {
+          try {
+            await setMapWinnerAction(props.scrimId, props.mapId, side === "1" ? 1 : 2);
+            setError(null);
+          } catch {
+            setError("Could not save the winner. Reload and try again.");
+          }
+        });
       }}
-      className="flex items-center gap-2 text-sm"
+      className="flex flex-wrap items-end gap-3 text-base"
     >
-      <span className="text-zinc-400">
-        Winner: {props.winnerSide === null ? "N/A" : props.winnerSide === 1 ? props.team1Name : props.team2Name}
+      <span className="py-1.5 text-muted">
+        Winner: {current}
         {props.winnerSource ? ` (${props.winnerSource})` : ""}
       </span>
-      <select value={side} onChange={(e) => setSide(e.target.value as "1" | "2")} className="rounded bg-zinc-900 px-2 py-1">
-        <option value="1">{props.team1Name}</option>
-        <option value="2">{props.team2Name}</option>
-      </select>
-      <button type="submit" disabled={pending} className="rounded border border-zinc-700 px-2 py-1 disabled:opacity-50">
-        Set winner
-      </button>
+      <Field label="Winner" error={error}>
+        <Select value={side} onChange={(e) => setSide(e.target.value as "1" | "2")}>
+          <option value="1">{props.team1Name}</option>
+          <option value="2">{props.team2Name}</option>
+        </Select>
+      </Field>
+      <Button type="submit" pending={pending} pendingLabel="Saving…">Set winner</Button>
     </form>
   );
 }
