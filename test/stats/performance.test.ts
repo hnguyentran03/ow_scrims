@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { KillLike } from "@/lib/stats/fights";
-import { buildPerformance, mainRoles, MIN_TRIO_PLAYS, type KillRowLike, type UltRowLike } from "@/lib/stats/performance";
+import { buildPerformance, mainRoles, type KillRowLike, type UltRowLike } from "@/lib/stats/performance";
 import type { MapKeyed, StatLike, TeamMapLike } from "@/lib/stats/team-rows";
 import { sampleMapRows } from "./sample-rows";
 
@@ -51,6 +51,9 @@ describe("buildPerformance roles", () => {
     expect(p.roles).toHaveLength(1);
     expect(p.roles[0]).toMatchObject({ role: "Damage", playtime: 600, kd: null });
   });
+  it("returns no roles for no maps", () => {
+    expect(buildPerformance([], [], [], [], [])).toEqual({ roles: [] });
+  });
   it("ignores the other side and skips roles with no time", () => {
     const p = buildPerformance([map(1)], [stat(1, "Enemy", "Ana", 600, { playerTeam: "B" }), stat(1, "Ours", "Tracer", 600)], [], [], []);
     expect(p.roles.map((r) => r.role)).toEqual(["Damage"]);
@@ -67,31 +70,6 @@ describe("buildPerformance roles", () => {
   });
 });
 
-describe("buildPerformance trios", () => {
-  it("expands a five-stack into four trios and needs MIN_TRIO_PLAYS decided maps", () => {
-    const maps = [map(1), map(2), map(3, { winnerSide: 2 }), map(4, { winnerSide: null })];
-    const rows = maps.flatMap((m) => fiveStack(m.id));
-    const p = buildPerformance(maps, rows, [], [], []);
-    expect(p.trios).toHaveLength(4);
-    expect(p.trios[0]).toEqual({ tank: "T", damage: "D1", support: "S1", played: 4, won: 2, lost: 1, winRate: 2 / 3 });
-    expect(new Set(p.trios.map((t) => `${t.damage}|${t.support}`))).toEqual(new Set(["D1|S1", "D1|S2", "D2|S1", "D2|S2"]));
-  });
-  it("drops trios below the guard and sorts by win rate then plays", () => {
-    // Trio with S2 plays three decided maps at 2-1; trio with S3 plays only two.
-    const maps = [map(1), map(2), map(3, { winnerSide: 2 })];
-    const rows = [
-      ...maps.flatMap((m) => [stat(m.id, "T", "Reinhardt", 600), stat(m.id, "D1", "Tracer", 600), stat(m.id, "S2", "Ana", 600)]),
-      stat(1, "S3", "Kiriko", 600), stat(2, "S3", "Kiriko", 600),
-    ];
-    const p = buildPerformance(maps, rows, [], [], []);
-    expect(p.trios.map((t) => t.support)).toEqual(["S2"]);
-    expect(MIN_TRIO_PLAYS).toBe(3);
-  });
-  it("returns no trios for no maps", () => {
-    expect(buildPerformance([], [], [], [], [])).toEqual({ roles: [], trios: [] });
-  });
-});
-
 describe("buildPerformance on a sample log", () => {
   it("pins the Antarctic Peninsula role cards", () => {
     const s = sampleMapRows("Log-2026-04-15-21-12-58", 1, 1);
@@ -102,6 +80,5 @@ describe("buildPerformance on a sample log", () => {
       expect(r.playtime).toBeGreaterThan(0);
       expect(r.casts).toBeGreaterThan(0);
     }
-    expect(p.trios).toEqual([]);
   });
 });

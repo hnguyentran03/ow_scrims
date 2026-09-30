@@ -9,7 +9,7 @@ import { buildPerformance } from "@/lib/stats/performance";
 import { buildTeamOverview, MIN_MAP_PLAYS, type ModeExtremes } from "@/lib/stats/team-overview";
 import type { MapRecord, TypeRecord } from "@/lib/stats/trends";
 import { EmptyRange } from "./empty-range";
-import { RoleCards, TriosTable } from "./performance-cards";
+import { RoleCards } from "./performance-cards";
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +60,6 @@ export default async function TeamOverviewPage({ searchParams }: { searchParams:
       </Card>
 
       <RoleCards roles={perf.roles} />
-      <TriosTable trios={perf.trios} />
     </div>
   );
 }

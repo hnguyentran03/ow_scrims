@@ -2,13 +2,9 @@ import { fightIndexAt, groupFights, type KillLike } from "./fights";
 import { ROLE_ORDER, roleOf, type Role } from "./heroes";
 import { per10 } from "./overview";
 import { sides } from "./sides";
-import { finalsByMap, groupByMap, outcome, rate, type MapKeyed, type StatLike, type TeamMapLike } from "./team-rows";
+import { finalsByMap, groupByMap, rate, type MapKeyed, type StatLike, type TeamMapLike } from "./team-rows";
 import { keptCasts } from "./ult-analysis";
 import type { UltLike } from "./ultimates";
-
-/** Decided plays a trio needs before it is ranked; the same floor as MIN_MAP_PLAYS. */
-export const MIN_TRIO_PLAYS = 3;
-export const TRIO_LIMIT = 5;
 
 export type KillRowLike = KillLike & MapKeyed;
 export type UltRowLike = UltLike & MapKeyed;
@@ -25,19 +21,8 @@ export interface RoleCard {
   casts: number;
 }
 
-export interface TrioRow {
-  tank: string;
-  damage: string;
-  support: string;
-  played: number;
-  won: number;
-  lost: number;
-  winRate: number | null;
-}
-
 export interface Performance {
   roles: RoleCard[];
-  trios: TrioRow[];
 }
 
 /** Each player's main role on one map: the role with the most hero time; ties go to the earlier role in ROLE_ORDER. */
@@ -70,23 +55,13 @@ interface RoleAcc {
 
 const emptyAcc = (): RoleAcc => ({ playtime: 0, maps: new Set(), finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0, casts: 0, castsWon: 0 });
 
-interface TrioAcc {
-  tank: string;
-  damage: string;
-  support: string;
-  played: number;
-  won: number;
-  lost: number;
-}
-
-/** Per-role cards and the best tank/damage/support player trios over our side's maps in range. */
+/** Per-role cards over our side's maps in range. */
 export function buildPerformance(maps: TeamMapLike[], playerStats: StatLike[], kills: KillRowLike[], ultStarts: UltRowLike[], ultEnds: UltRowLike[]): Performance {
   const finals = finalsByMap(playerStats);
   const killsByMap = groupByMap(kills);
   const startsByMap = groupByMap(ultStarts);
   const endsByMap = groupByMap(ultEnds);
   const roles = new Map<Role, RoleAcc>();
-  const trios = new Map<string, TrioAcc>();
 
   for (const map of maps) {
     const ours = sides(map).ours;
@@ -114,20 +89,6 @@ export function buildPerformance(maps: TeamMapLike[], playerStats: StatLike[], k
       if (index !== null && fights.find((f) => f.index === index)?.winner === ours) acc.castsWon += 1;
       roles.set(roleOf(cast.hero), acc);
     }
-
-    const byRole = (role: Role) => [...main].filter(([, r]) => r === role).map(([name]) => name).sort();
-    const result = outcome(map);
-    for (const tank of byRole("Tank")) {
-      for (const damage of byRole("Damage")) {
-        for (const support of byRole("Support")) {
-          const key = `${tank}|${damage}|${support}`;
-          const t = trios.get(key) ?? { tank, damage, support, played: 0, won: 0, lost: 0 };
-          t.played += 1;
-          if (result !== "undecided") t[result] += 1;
-          trios.set(key, t);
-        }
-      }
-    }
   }
 
   const cards: RoleCard[] = ROLE_ORDER.filter((role) => (roles.get(role)?.playtime ?? 0) > 0).map((role) => {
@@ -145,11 +106,6 @@ export function buildPerformance(maps: TeamMapLike[], playerStats: StatLike[], k
     };
   });
 
-  const ranked: TrioRow[] = [...trios.values()]
-    .filter((t) => t.won + t.lost >= MIN_TRIO_PLAYS)
-    .map((t) => ({ ...t, winRate: rate(t.won, t.won + t.lost) }))
-    .sort((a, b) => (b.winRate ?? 0) - (a.winRate ?? 0) || b.played - a.played || a.tank.localeCompare(b.tank) || a.damage.localeCompare(b.damage) || a.support.localeCompare(b.support))
-    .slice(0, TRIO_LIMIT);
 
-  return { roles: cards, trios: ranked };
+  return { roles: cards };
 }
