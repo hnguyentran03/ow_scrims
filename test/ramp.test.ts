@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { RAMP_CLASS, rampStep } from "@/lib/ramp";
+import { RAMP_CLASS, RAMP_TEXT, rampStep } from "@/lib/ramp";
 
 describe("rampStep", () => {
   it("maps a share onto five steps, rounding to the nearest quarter", () => {
@@ -17,5 +17,9 @@ describe("rampStep", () => {
   });
   it("names one background class per step", () => {
     expect(Object.values(RAMP_CLASS)).toEqual(["bg-ramp-0", "bg-ramp-1", "bg-ramp-2", "bg-ramp-3", "bg-ramp-4"]);
+  });
+  it("uses ground text only on the deepest step, ink otherwise", () => {
+    expect(RAMP_TEXT[0]).toBe("text-ink");
+    expect(RAMP_TEXT[4]).toBe("text-ground");
   });
 });

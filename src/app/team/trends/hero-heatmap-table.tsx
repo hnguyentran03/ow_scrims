@@ -2,7 +2,7 @@ import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
 import { Table, Td, Th } from "@/components/table";
 import { formatPct } from "@/lib/format";
-import { RAMP_CLASS, rampStep } from "@/lib/ramp";
+import { RAMP_CLASS, RAMP_TEXT, rampStep } from "@/lib/ramp";
 import type { HeroHeatmap } from "@/lib/stats/hero-heatmap";
 
 const LEGEND = [0, 0.25, 0.5, 0.75, 1] as const;
@@ -39,11 +39,14 @@ export function HeroHeatmapTable({ heatmap }: { heatmap: HeroHeatmap }) {
             {heatmap.rows.map((r) => (
               <tr key={r.hero}>
                 <Td pin="first" title={`${r.hero}, ${r.role}`}>{r.hero}</Td>
-                {r.cells.map((cell, i) => (
-                  <Td key={heatmap.columns[i].scrimId} numeric className={`${RAMP_CLASS[rampStep(cell.share)]} ${cell.picks === 0 ? "text-muted" : "text-ink"}`} title={`${cell.picks} of ${cell.maps} maps`}>
-                    {formatPct(cell.share)}
-                  </Td>
-                ))}
+                {r.cells.map((cell, i) => {
+                  const step = rampStep(cell.share);
+                  return (
+                    <Td key={heatmap.columns[i].scrimId} numeric className={`${RAMP_CLASS[step]} ${cell.picks === 0 ? "text-muted" : RAMP_TEXT[step]}`} title={`${cell.picks} of ${cell.maps} maps`}>
+                      {formatPct(cell.share)}
+                    </Td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
