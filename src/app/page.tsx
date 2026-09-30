@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { Badge } from "@/components/badge";
-import { Button } from "@/components/button";
 import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
-import { Field, Input } from "@/components/field";
 import { PageHeader } from "@/components/page-header";
 import { Table, Td, Th } from "@/components/table";
 import { getDb } from "@/lib/db";
 import { listScrims } from "@/lib/db/queries";
 import { recordTone } from "@/lib/result";
-import { createScrimAction } from "./actions";
+import { CreateScrimForm } from "./create-scrim-form";
 
 export const dynamic = "force-dynamic";
 
@@ -20,18 +18,7 @@ export default async function HomePage() {
       <PageHeader title="Scrims" />
 
       <Card title="New scrim">
-        <form action={createScrimAction} className="flex flex-wrap items-end gap-3">
-          <Field label="Name">
-            <Input name="name" required placeholder="vs Cerberus" />
-          </Field>
-          <Field label="Date">
-            <Input name="date" type="date" required />
-          </Field>
-          <Field label="Opponent">
-            <Input name="opponentName" required />
-          </Field>
-          <Button type="submit" variant="primary">Create scrim</Button>
-        </form>
+        <CreateScrimForm />
       </Card>
 
       {scrims.length === 0 ? (

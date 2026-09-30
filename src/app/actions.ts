@@ -10,6 +10,7 @@ import { POSITION_FEATURES_ENABLED } from "@/lib/flags";
 import { ghostFrom, type Ghost } from "@/lib/ghost";
 import { deleteRawLog } from "@/lib/logs";
 import { deleteImageFile } from "@/lib/map-images";
+import { validateScrimInput, type CreateScrimState } from "@/lib/scrim-input";
 import { applyAffine, invertAffine, solveAffine, type Calibration } from "@/lib/stats/calibration";
 import { buildReplay } from "@/lib/stats/replay";
 import { sides } from "@/lib/stats/sides";
@@ -19,14 +20,11 @@ function requireId(n: unknown): number {
   return n as number;
 }
 
-export async function createScrimAction(formData: FormData): Promise<void> {
-  const name = String(formData.get("name") ?? "").trim();
-  const date = String(formData.get("date") ?? "");
-  const opponentName = String(formData.get("opponentName") ?? "").trim();
-  if (!name || !opponentName || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw new Error("Name, date, and opponent are required.");
-  }
-  const id = await createScrim(await getDb(), { name, date, opponentName });
+/** Validates, creates, and redirects to the new scrim; on a bad field it returns the values and messages for the form to show inline. */
+export async function createScrimAction(_prev: CreateScrimState, formData: FormData): Promise<CreateScrimState> {
+  const { values, errors } = validateScrimInput({ name: formData.get("name"), date: formData.get("date"), opponentName: formData.get("opponentName") });
+  if (errors) return { values, errors };
+  const id = await createScrim(await getDb(), values);
   revalidatePath("/");
   redirect(`/scrims/${id}`);
 }
