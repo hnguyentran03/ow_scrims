@@ -92,7 +92,10 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
   return (
     <form onSubmit={onSubmit} className="space-y-3 rounded border border-dashed border-zinc-700 p-4">
       <h2 className="font-medium">Add maps</h2>
-      <input name="files" type="file" accept=".txt,.log" multiple required className="block text-sm" />
+      <label className="block text-sm">
+        Log files
+        <input name="files" type="file" accept=".txt,.log" multiple required className="mt-1 block text-sm" />
+      </label>
       <fieldset className="flex flex-wrap gap-4 text-sm">
         <label><input type="radio" name="ourSide" value="auto" defaultChecked /> Detect from players</label>
         <label><input type="radio" name="ourSide" value="1" /> We were Team 1</label>

@@ -10,8 +10,10 @@ Built with Next.js (App Router, TypeScript), Drizzle ORM, and PGlite (embedded P
 
 ```bash
 pnpm install
+pnpm exec playwright install chromium   # once, for the browser tests
 pnpm dev          # http://localhost:3000, data in ./data
 pnpm test         # Vitest
+pnpm test:e2e     # Playwright, builds and starts its own server on :3100 with a throwaway database
 pnpm lint && pnpm typecheck
 pnpm db:generate  # after editing src/lib/db/schema.ts
 ```
@@ -43,6 +45,7 @@ src/lib/flags.ts      Feature flags (every position-based feature — Replay, He
 src/lib/map-images.ts Map image type detection, file storage under MAP_IMAGE_DIR, upload and serve logic
 src/lib/format.ts     Display formatting helpers
 test/                Vitest specs, mirroring src/, plus sample ScrimTime logs in test/samples/
+e2e/                 Playwright specs (core flow, map tabs, team tabs) and helpers; playwright.config.ts at the root
 drizzle/             Generated SQL migrations
 ```
 
