@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { PageHeader } from "@/components/page-header";
 import { Stat } from "@/components/stat";
+import { Table, Td, Th } from "@/components/table";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
 import { formatDuration, formatInt, formatPct, formatPer10, formatSeconds } from "@/lib/format";
@@ -36,13 +38,12 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-xl font-semibold">{p.name}</h2>
-          {p.hero && <p className="text-xs text-zinc-500">Showing {p.hero} only</p>}
-        </div>
-        <HeroSelect action={`/team/players/${encodeURIComponent(name)}`} hidden={hidden} heroes={p.heroes} hero={p.hero} />
-      </header>
+      <PageHeader
+        title={p.name}
+        level={2}
+        meta={p.hero ? [`Showing ${p.hero} only`] : undefined}
+        actions={<HeroSelect action={`/team/players/${encodeURIComponent(name)}`} hidden={hidden} heroes={p.heroes} hero={p.hero} />}
+      />
 
       <div className="grid gap-3 sm:grid-cols-4">
         <Stat label="Maps" value={String(o.maps)} />
@@ -72,34 +73,34 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
       <div className="grid gap-6 lg:grid-cols-2">
         <Card title="Most played heroes">
           {p.mostPlayed.length === 0 ? <Empty /> : (
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-                <tr><th className="py-1">Hero</th><th>Role</th><th>Time</th><th>Share</th></tr>
+            <Table>
+              <thead>
+                <tr><Th>Hero</Th><Th>Role</Th><Th numeric>Time</Th><Th numeric>Share</Th></tr>
               </thead>
               <tbody>
                 {p.mostPlayed.map((h) => (
-                  <tr key={h.hero} className="border-t border-zinc-800 tabular-nums">
-                    <td className="py-1">{h.hero}</td><td>{h.role}</td><td>{formatDuration(h.playtime)}</td><td>{formatPct(h.share)}</td>
+                  <tr key={h.hero} className="tabular-nums">
+                    <Td>{h.hero}</Td><Td>{h.role}</Td><Td numeric>{formatDuration(h.playtime)}</Td><Td numeric>{formatPct(h.share)}</Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Table>
           )}
         </Card>
         <Card title="Time per role">
           {p.timeByRole.length === 0 ? <Empty /> : (
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-                <tr><th className="py-1">Role</th><th>Time</th><th>Share</th></tr>
+            <Table>
+              <thead>
+                <tr><Th>Role</Th><Th numeric>Time</Th><Th numeric>Share</Th></tr>
               </thead>
               <tbody>
                 {p.timeByRole.map((r) => (
-                  <tr key={r.role} className="border-t border-zinc-800 tabular-nums">
-                    <td className="py-1">{r.role}</td><td>{formatDuration(r.playtime)}</td><td>{formatPct(o.timePlayed > 0 ? r.playtime / o.timePlayed : null)}</td>
+                  <tr key={r.role} className="tabular-nums">
+                    <Td>{r.role}</Td><Td numeric>{formatDuration(r.playtime)}</Td><Td numeric>{formatPct(o.timePlayed > 0 ? r.playtime / o.timePlayed : null)}</Td>
                   </tr>
                 ))}
               </tbody>
-            </table>
+            </Table>
           )}
         </Card>
       </div>
@@ -144,11 +145,14 @@ function Cards({ c }: { c: PlayerCards }) {
 }
 
 function Best({ best }: { best: BestPerformance | null }) {
-  if (!best) return <p className="text-sm text-zinc-500">No map-hero pair with enough time yet.</p>;
+  if (!best) return <p className="text-sm text-muted">No map-hero pair with enough time yet.</p>;
   return (
     <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 text-sm">
       <Link href={`/scrims/${best.scrimId}/maps/${best.mapId}`} className="text-lg font-semibold hover:underline">{best.mapName}</Link>
-      <span className="text-zinc-400">{best.scrimName} · {best.scrimDate}</span>
+      <span className="flex flex-wrap gap-x-3 text-muted">
+        <span>{best.scrimName}</span>
+        <span>{best.scrimDate}</span>
+      </span>
       <span>{best.hero}</span>
       <span className="tabular-nums">{formatDuration(best.timePlayed)}</span>
       <span className="tabular-nums">{formatPer10(best.fbPer10)} final blows / 10 ({best.finalBlows})</span>
@@ -160,22 +164,32 @@ function Best({ best }: { best: BestPerformance | null }) {
 function MethodList({ rows }: { rows: MethodCount[] }) {
   if (rows.length === 0) return <Empty />;
   return (
-    <ul className="space-y-1 text-sm tabular-nums">
-      {rows.map((r) => (
-        <li key={r.method} className="flex justify-between gap-2"><span>{r.method}</span><span>{r.count} <span className="text-zinc-500">({formatPct(r.share)})</span></span></li>
-      ))}
-    </ul>
+    <Table>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.method} className="tabular-nums">
+            <Td>{r.method}</Td>
+            <Td numeric>{r.count} <span className="text-muted">({formatPct(r.share)})</span></Td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
   );
 }
 
 function HeroList({ rows }: { rows: HeroCount[] }) {
   if (rows.length === 0) return <Empty />;
   return (
-    <ul className="space-y-1 text-sm tabular-nums">
-      {rows.map((r) => (
-        <li key={r.hero} className="flex justify-between gap-2"><span>{r.hero}</span><span>{r.count}</span></li>
-      ))}
-    </ul>
+    <Table>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.hero} className="tabular-nums">
+            <Td>{r.hero}</Td>
+            <Td numeric>{r.count}</Td>
+          </tr>
+        ))}
+      </tbody>
+    </Table>
   );
 }
 
@@ -203,20 +217,20 @@ const RECORD_VALUE: Record<PersonalRecord["key"], (v: number) => string> = {
 function Records({ rows }: { rows: PersonalRecord[] }) {
   if (rows.length === 0) return <Empty />;
   return (
-    <table className="w-full text-sm">
-      <thead className="text-left text-xs uppercase tracking-wide text-zinc-500">
-        <tr><th className="py-1">Record</th><th>Value</th><th>Map</th><th>Date</th></tr>
+    <Table>
+      <thead>
+        <tr><Th>Record</Th><Th numeric>Value</Th><Th>Map</Th><Th>Date</Th></tr>
       </thead>
       <tbody>
         {rows.map((r) => (
-          <tr key={r.key} className="border-t border-zinc-800 tabular-nums">
-            <td className="py-1">{r.label}</td>
-            <td>{RECORD_VALUE[r.key](r.value)}</td>
-            <td><Link href={`/scrims/${r.scrimId}/maps/${r.mapId}`} className="hover:underline">{r.mapName}</Link></td>
-            <td className="text-zinc-400">{r.scrimDate}</td>
+          <tr key={r.key} className="tabular-nums">
+            <Td>{r.label}</Td>
+            <Td numeric>{RECORD_VALUE[r.key](r.value)}</Td>
+            <Td><Link href={`/scrims/${r.scrimId}/maps/${r.mapId}`} className="hover:underline">{r.mapName}</Link></Td>
+            <Td muted>{r.scrimDate}</Td>
           </tr>
         ))}
       </tbody>
-    </table>
+    </Table>
   );
 }
