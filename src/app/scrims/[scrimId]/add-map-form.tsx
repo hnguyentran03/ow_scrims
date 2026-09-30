@@ -4,7 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
+import { Dropzone } from "@/components/dropzone";
 import type { BadgeTone } from "@/lib/result";
+import { pickLogFiles } from "@/lib/upload-files";
 import { orderUploads } from "@/lib/upload-order";
 
 type SideChoice = "auto" | "1" | "2";
@@ -38,6 +40,7 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
   const [items, setItems] = useState<Item[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [round, setRound] = useState(0);
 
   const setStatus = (index: number, status: Status) => setItems((prev) => prev.map((it, i) => (i === index ? { ...it, status } : it)));
 
@@ -63,12 +66,13 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
     e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
-    const files = data.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
     const side = String(data.get("ourSide") ?? "auto") as SideChoice;
-    if (files.length === 0 || files.some((f) => !/\.(txt|log)$/i.test(f.name))) {
-      setError("Choose one or more .txt or .log Workshop logs.");
+    const picked = pickLogFiles(data.getAll("files"));
+    if (picked.error) {
+      setError(picked.error);
       return;
     }
+    const files = picked.files;
     setError(null);
     setBusy(true);
     const ordered = orderUploads(files);
@@ -79,6 +83,7 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
     }
     setBusy(false);
     form.reset();
+    setRound((r) => r + 1);
     router.refresh();
   }
 
@@ -94,17 +99,13 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <label className="block text-base">
-        Log files
-        <input name="files" type="file" accept=".txt,.log" multiple required className="mt-1 block text-sm text-muted" />
-      </label>
+      <Dropzone key={round} name="files" accept=".txt,.log" multiple label="Log files" hint="Drop the Workshop logs here, or click to choose them. Files under 1 KB are stubs and can be skipped." error={error} />
       <fieldset className="flex flex-wrap gap-4 text-base">
         <label className="flex items-center gap-1"><input type="radio" name="ourSide" value="auto" defaultChecked /> Detect from players</label>
         <label className="flex items-center gap-1"><input type="radio" name="ourSide" value="1" /> We were Team 1</label>
         <label className="flex items-center gap-1"><input type="radio" name="ourSide" value="2" /> We were Team 2</label>
       </fieldset>
       <Button type="submit" variant="primary" pending={busy} pendingLabel="Uploading…">Upload</Button>
-      {error && <p role="alert" className="text-sm text-lost">{error}</p>}
       {items.length > 0 && (
         <ul className="space-y-2 text-sm">
           {items.map((item, i) => (
