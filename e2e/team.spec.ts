@@ -22,7 +22,14 @@ const TABS: Array<{ label: string; suffix: string; check: (page: Page) => Promis
     },
   },
   { label: "Teamfights", suffix: "/teamfights", check: async (page) => expect(page.getByRole("heading", { name: "By scrim", exact: true })).toBeVisible() },
-  { label: "Players", suffix: "/players", check: async (page) => expect(page.getByRole("heading", { name: "Roster", exact: true })).toBeVisible() },
+  {
+    label: "Players",
+    suffix: "/players",
+    check: async (page) => {
+      await expect(page.getByRole("heading", { name: "Roster", exact: true })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Players by map", exact: true })).toBeVisible();
+    },
+  },
 ];
 
 test.describe("team", () => {
@@ -75,7 +82,7 @@ test.describe("team", () => {
 
   test("a player page opens from the roster", async ({ page }) => {
     await page.goto("/team/players");
-    const link = page.getByRole("table").getByRole("link").first();
+    const link = page.getByRole("table").first().getByRole("link").first();
     const name = (await link.innerText()).trim();
     await link.click();
     await expect(page).toHaveURL(/\/team\/players\/.+/);
