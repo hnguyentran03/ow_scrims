@@ -15,8 +15,8 @@ type Props = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant
 
 /** The one button. `pending` disables it and swaps the label; `danger` is text-only for deletes and always keeps `px-0`. */
 export function Button({ variant = "secondary", size = "md", pending = false, pendingLabel, className = "", children, disabled, type = "button", ...rest }: Props) {
-  // Danger stays flush left (px-0) regardless of size; only its py/text scale with size.
-  const sizeClasses = variant === "danger" ? SIZE[size].replace(/(^|\s)px-\S+/, "") : SIZE[size];
+  // Danger stays flush left (px-0) and at the body text size regardless of size; only its height scales with size.
+  const sizeClasses = variant === "danger" ? SIZE[size].replace(/(^|\s)(px|text)-\S+/g, "") : SIZE[size];
   return (
     <button
       {...rest}
