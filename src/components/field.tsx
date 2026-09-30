@@ -7,7 +7,7 @@ const SIZE: Record<ControlSize, string> = {
   sm: "px-1 py-0.5 text-xs",
 };
 
-const CONTROL = "rounded-control border border-line bg-raised text-ink placeholder:text-muted aria-invalid:border-lost";
+const CONTROL = "border border-line bg-raised text-ink placeholder:text-muted aria-invalid:border-lost";
 
 type InputProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & { size?: ControlSize };
 

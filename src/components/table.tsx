@@ -29,7 +29,7 @@ export function Th({ numeric, pin, sort, className = "", children, ...rest }: Th
     <th
       {...rest}
       aria-sort={ariaSort}
-      className={`bg-surface px-3 py-2 text-sm font-medium whitespace-nowrap text-muted ${numeric ? "text-right" : "text-left"} ${pin ? PIN[pin] : ""} ${className}`}
+      className={`bg-surface px-3 py-2 text-xs font-medium uppercase tracking-[0.06em] whitespace-nowrap text-muted ${numeric ? "text-right" : "text-left"} ${pin ? PIN[pin] : ""} ${className}`}
     >
       {sort ? (
         <button type="button" onClick={sort.onToggle} className="inline-flex items-center gap-1 hover:text-ink">

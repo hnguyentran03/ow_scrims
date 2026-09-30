@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { POSITION_FEATURES_ENABLED } from "@/lib/flags";
-import { archivo } from "./fonts";
+import { archivo, bebas } from "./fonts";
 import { NavLinks } from "./nav-links";
 import "./globals.css";
 
@@ -15,11 +15,11 @@ const NAV = [
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={archivo.variable}>
+    <html lang="en" className={`${archivo.variable} ${bebas.variable}`}>
       <body className="min-h-screen bg-ground text-ink antialiased">
         <header className="border-b border-line">
           <nav className="mx-auto flex h-12 max-w-6xl items-center gap-6 px-4 text-base">
-            <Link href="/" className="text-md font-semibold font-stretch-[85%]">ow-scrims</Link>
+            <Link href="/" className="font-display text-lg tracking-[0.04em] text-ink">ow-scrims</Link>
             <NavLinks links={NAV} />
           </nav>
         </header>

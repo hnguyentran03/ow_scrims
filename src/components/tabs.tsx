@@ -23,7 +23,11 @@ export function Tabs({ base, tabs }: { base: string; tabs: readonly Tab[] }) {
             key={path}
             href={query ? `${path}?${query}` : path}
             aria-current={active ? "page" : undefined}
-            className={active ? "-mb-px border-b-2 border-accent pb-2 font-medium text-ink" : "pb-2 text-muted hover:text-ink"}
+            className={
+              active
+                ? "relative pb-2 font-display text-md tracking-[0.06em] text-ink after:absolute after:inset-x-0 after:-bottom-px after:h-[3px] after:-skew-x-[20deg] after:bg-accent after:content-['']"
+                : "relative pb-2 font-display text-md tracking-[0.06em] text-muted hover:text-ink"
+            }
           >
             {label}
           </Link>

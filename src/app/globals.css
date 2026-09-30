@@ -1,22 +1,25 @@
 @import "tailwindcss";
 
 @theme {
-  --color-ground: #10151b;
-  --color-surface: #171d25;
-  --color-raised: #1f2731;
-  --color-line: #2a3441;
-  --color-ink: #e6ebf0;
-  --color-muted: #8b97a5;
-  --color-accent: #f2a33a;
-  --color-ours: #0284c7;
-  --color-theirs: #e11d48;
-  --color-won: #3ea56f;
-  --color-lost: #e3667f;
+  --color-ground: #0a1322;
+  --color-surface: #111d33;
+  --color-raised: #1a2a46;
+  --color-line: #27395a;
+  --color-ink: #f2f6fb;
+  --color-muted: #93a5c3;
+  --color-accent: #f99e1a;
+  --color-ours: #1c8fdb;
+  --color-theirs: #ee5a52;
+  --color-won: #3fbf7f;
+  --color-lost: #f0647a;
+  --color-plate-ours: #143650;
+  --color-plate-theirs: #422a3a;
 
   --font-sans: var(--font-archivo), system-ui, sans-serif;
+  --font-display: var(--font-bebas), "Archivo", system-ui, sans-serif;
 
-  --radius-card: 6px;
-  --radius-control: 4px;
+  --radius-card: 2px;
+  --radius-control: 0px;
 
   --text-xs: 12px;
   --text-xs--line-height: 16px;
@@ -25,13 +28,27 @@
   --text-base: 14px;
   --text-base--line-height: 20px;
   --text-md: 16px;
-  --text-md--line-height: 22px;
+  --text-md--line-height: 20px;
   --text-lg: 20px;
-  --text-lg--line-height: 26px;
-  --text-xl: 28px;
-  --text-xl--line-height: 32px;
-  --text-display: 40px;
-  --text-display--line-height: 40px;
+  --text-lg--line-height: 22px;
+  --text-xl: 32px;
+  --text-xl--line-height: 34px;
+  --text-stat: 24px;
+  --text-stat--line-height: 26px;
+  --text-display: 56px;
+  --text-display--line-height: 56px;
+}
+
+/* Slanted parallelogram edges; borders are clipped, so clipped elements draw their edge with an inset shadow. */
+@utility slant {
+  clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%);
+}
+@utility slant-sm {
+  clip-path: polygon(4px 0, 100% 0, calc(100% - 4px) 100%, 0 100%);
+}
+/* The scoreboard plate texture: white at 5 %, 6 px on, 8 px off, at 135 degrees. */
+@utility stripes {
+  background-image: repeating-linear-gradient(135deg, rgb(255 255 255 / 0.05) 0 6px, transparent 6px 14px);
 }
 
 @layer base {

@@ -24,7 +24,7 @@ export function BansEditor({ scrimId, mapId, ourSide, bans }: Props) {
       <div className="flex flex-wrap items-center gap-1 text-xs">
         <span className="w-12 text-muted">{label}</span>
         {heroes.map((h) => (
-          <span key={h} className="rounded-full bg-raised px-2 py-0.5">
+          <span key={h} className="slant-sm bg-raised px-2 py-0.5">
             {h}{" "}
             <button type="button" aria-label={`Remove ${h}`} disabled={pending} onClick={() => save(heroes.filter((x) => x !== h))} className="text-muted hover:text-ink">×</button>
           </span>

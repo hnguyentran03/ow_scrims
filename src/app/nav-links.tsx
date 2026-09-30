@@ -16,7 +16,11 @@ export function NavLinks({ links }: { links: Array<{ href: string; label: string
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={active ? "-mb-px border-b-2 border-accent pb-3 pt-3 font-medium text-ink" : "pb-3 pt-3 text-muted hover:text-ink"}
+            className={
+              active
+                ? "relative flex h-12 items-center font-display text-md tracking-[0.06em] text-ink after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:-skew-x-[20deg] after:bg-accent after:content-['']"
+                : "relative flex h-12 items-center font-display text-md tracking-[0.06em] text-muted hover:text-ink"
+            }
           >
             {label}
           </Link>

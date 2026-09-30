@@ -108,7 +108,7 @@ export function AddMapForm({ scrimId }: { scrimId: number }) {
       {items.length > 0 && (
         <ul className="space-y-2 text-sm">
           {items.map((item, i) => (
-            <li key={item.file.name + i} className="rounded-control border border-line bg-raised p-2">
+            <li key={item.file.name + i} className="border border-line bg-raised p-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate">{item.file.name}</span>
                 <StatusBadge status={item.status} />

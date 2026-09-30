@@ -3,15 +3,12 @@ import type { ButtonHTMLAttributes } from "react";
 export type ButtonVariant = "primary" | "secondary" | "danger";
 export type ButtonSize = "sm" | "md";
 
-const SIZE: Record<ButtonSize, string> = {
-  md: "px-3 py-1.5 text-base",
-  sm: "px-2 py-0.5 text-xs",
-};
+const SIZE: Record<ButtonSize, string> = { md: "h-8 px-4 text-md", sm: "h-6 px-3 text-sm" };
 
 const VARIANT: Record<ButtonVariant, string> = {
-  primary: "bg-accent text-ground hover:brightness-110",
-  secondary: "border border-line bg-surface text-ink hover:bg-raised",
-  danger: "px-0 text-lost hover:underline",
+  primary: "slant bg-accent text-ground font-display tracking-[0.06em]",
+  secondary: "slant bg-raised text-ink font-display tracking-[0.06em] shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-line",
+  danger: "px-0 font-sans text-base text-lost hover:underline",
 };
 
 type Props = ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant; size?: ButtonSize; pending?: boolean; pendingLabel?: string };
@@ -26,7 +23,7 @@ export function Button({ variant = "secondary", size = "md", pending = false, pe
       type={type}
       disabled={disabled || pending}
       aria-busy={pending || undefined}
-      className={`inline-flex items-center gap-2 rounded-control font-medium disabled:opacity-50 ${sizeClasses} ${VARIANT[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 leading-none disabled:opacity-50 ${sizeClasses} ${VARIANT[variant]} ${className}`}
     >
       {pending && pendingLabel ? pendingLabel : children}
     </button>

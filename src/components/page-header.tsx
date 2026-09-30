@@ -18,7 +18,7 @@ export function PageHeader({ back, title, meta, actions, children }: Props) {
         </Link>
       )}
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <h1 className="text-xl font-semibold font-stretch-[85%] text-ink">{title}</h1>
+        <h1 className="font-display text-xl tracking-[0.02em] text-ink">{title}</h1>
         {actions && <div className="flex items-center gap-2">{actions}</div>}
       </div>
       {meta && meta.length > 0 && (
