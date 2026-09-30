@@ -14,6 +14,8 @@
   --color-lost: #f0647a;
   --color-plate-ours: #143650;
   --color-plate-theirs: #422a3a;
+  /* Surface with 8 % of ours mixed in, so an opaque pinned cell matches an our-row's bg-ours/8 tint. */
+  --color-surface-ours: #122640;
 
   --font-sans: var(--font-archivo), system-ui, sans-serif;
   --font-display: var(--font-bebas), "Archivo", system-ui, sans-serif;

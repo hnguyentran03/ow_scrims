@@ -5,9 +5,13 @@ export type ButtonSize = "sm" | "md";
 
 const SIZE: Record<ButtonSize, string> = { md: "h-8 px-4 text-md", sm: "h-6 px-3 text-sm" };
 
+// clip-path clips the global outline ring away, so the slanted variants draw their focus ring as an inset shadow instead.
+// Primary is already filled with accent, so its accent ring needs a ground-coloured hairline inside it to read at all.
 const VARIANT: Record<ButtonVariant, string> = {
-  primary: "slant bg-accent text-ground font-display tracking-[0.06em]",
-  secondary: "slant bg-raised text-ink font-display tracking-[0.06em] shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-line",
+  primary:
+    "slant bg-accent text-ground font-display tracking-[0.06em] focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--color-accent),inset_0_0_0_4px_var(--color-ground)]",
+  secondary:
+    "slant bg-raised text-ink font-display tracking-[0.06em] shadow-[inset_0_0_0_1px_var(--color-line)] hover:bg-line focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--color-accent),inset_0_0_0_1px_var(--color-line)]",
   danger: "px-0 font-sans text-base text-lost hover:underline",
 };
 

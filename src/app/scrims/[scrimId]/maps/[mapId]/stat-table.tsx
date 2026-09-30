@@ -64,8 +64,8 @@ export function StatTable({ rows, ourTeam }: { rows: PlayerRow[]; ourTeam: strin
         <tbody>
           {visible.map((r) => (
             <tr key={`${r.team}-${r.name}-${r.hero}`} className={r.team === ourTeam ? "bg-ours/8" : ""}>
-              <Td pin="first" muted>{r.team}</Td>
-              <Td pin="second" className="font-medium">{r.name}</Td>
+              <Td pin="first" tint={r.team === ourTeam} muted>{r.team}</Td>
+              <Td pin="second" tint={r.team === ourTeam} className="font-medium">{r.name}</Td>
               {COLUMNS.map((c) => <Td key={c.key} numeric={c.key !== "hero"}>{c.render(r)}</Td>)}
             </tr>
           ))}
