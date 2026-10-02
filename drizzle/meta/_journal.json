@@ -29,6 +29,13 @@
       "when": 1790698777040,
       "tag": "0003_map_images",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790931992375,
+      "tag": "0004_title_case_map_names",
+      "breakpoints": true
     }
   ]
 }

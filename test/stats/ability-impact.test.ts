@@ -15,7 +15,7 @@ const kill = (matchTime: number, attackerTeam = "A", victimTeam = "B", mapId = 1
 });
 const ability = (matchTime: number, playerTeam: string, playerHero: string, slot: 1 | 2, mapId = 1): Ability => ({ mapId, matchTime, playerTeam, playerName: `${playerTeam}-${playerHero}`, playerHero, slot });
 const stat = (mapId: number, playerTeam: string, playerHero: string, heroTimePlayed = 600): StatLike => ({
-  mapId, roundNumber: 1, playerTeam, playerName: `${playerTeam}-${playerHero}`, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0,
+  mapId, roundNumber: 1, playerTeam, playerName: `${playerTeam}-${playerHero}`, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, healingReceived: 0,
   damageTaken: 0, damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed,
 });
 

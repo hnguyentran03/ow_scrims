@@ -4,6 +4,7 @@ import { ROLE_ORDER, roleOf, type Role } from "./heroes";
 import { per10, type PlayerStatLike } from "./overview";
 import { buildProfileCards, type ProfileCards, type RoundRowLike } from "./player-cards";
 import { sides } from "./sides";
+import { STAT_KEYS, STAT_LABELS, statValue, type StatKey } from "./stat-keys";
 import { groupByMap, outcome, ourRowsByMap, rate, type MapKeyed, type StatLike, type TeamMapLike } from "./team-rows";
 import { winRateByMap, winRateByType, type MapRecord, type TypeRecord } from "./trends";
 import { pairUltimates, ultTimings, type UltLike } from "./ultimates";
@@ -13,19 +14,9 @@ export const BEST_PERFORMANCE_MIN_SECONDS = 180;
 export const MOST_PLAYED_LIMIT = 10;
 export const MATCHUP_LIMIT = 5;
 
-export type ChartStat = "eliminations" | "finalBlows" | "deaths" | "heroDamage" | "healing" | "damageTaken" | "damageBlocked" | "ultsEarned" | "ultsUsed";
-
-export const CHART_STATS: Record<ChartStat, string> = {
-  eliminations: "Eliminations", finalBlows: "Final blows", deaths: "Deaths", heroDamage: "Hero damage", healing: "Healing",
-  damageTaken: "Damage taken", damageBlocked: "Damage blocked", ultsEarned: "Ults earned", ultsUsed: "Ults used",
-};
-export const CHART_STAT_KEYS = Object.keys(CHART_STATS) as ChartStat[];
-
-const STAT_OF: Record<ChartStat, (r: PlayerStatLike) => number> = {
-  eliminations: (r) => r.eliminations, finalBlows: (r) => r.finalBlows, deaths: (r) => r.deaths, heroDamage: (r) => r.heroDamageDealt,
-  healing: (r) => r.healingDealt, damageTaken: (r) => r.damageTaken, damageBlocked: (r) => r.damageBlocked,
-  ultsEarned: (r) => r.ultimatesEarned, ultsUsed: (r) => r.ultimatesUsed,
-};
+export type ChartStat = StatKey;
+export const CHART_STATS = STAT_LABELS;
+export const CHART_STAT_KEYS = STAT_KEYS;
 
 export type KillRowLike = KillLike & MapKeyed;
 export type UltRowLike = UltLike & MapKeyed;
@@ -142,7 +133,7 @@ export interface PlayerPage {
 function per10Record(rows: PlayerStatLike[]): Record<ChartStat, number> {
   const time = rows.reduce((n, r) => n + r.heroTimePlayed, 0);
   const out = {} as Record<ChartStat, number>;
-  for (const k of CHART_STAT_KEYS) out[k] = per10(rows.reduce((n, r) => n + STAT_OF[k](r), 0), time);
+  for (const k of CHART_STAT_KEYS) out[k] = per10(rows.reduce((n, r) => n + statValue(r, k), 0), time);
   return out;
 }
 

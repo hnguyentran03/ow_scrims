@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HERO_ABILITIES, HEROES, ROLE_ORDER, abilityName, roleOf } from "@/lib/stats/heroes";
+import { HERO_ABILITIES, HEROES, ROLE_ORDER, abilityName, canonicalHero, roleOf } from "@/lib/stats/heroes";
 
 describe("roleOf", () => {
   it("maps known heroes", () => {
@@ -44,5 +44,14 @@ describe("HERO_ABILITIES", () => {
     expect(abilityName("Jetpack Cat", 1)).toBe("Lifeline");
     expect(abilityName("Nobody", 1)).toBe("Ability 1");
     expect(abilityName("0", 2)).toBe("Ability 2");
+  });
+});
+
+describe("canonicalHero", () => {
+  it("restores the known spelling whatever the case and passes unknown names through", () => {
+    expect(canonicalHero("D.VA")).toBe("D.Va");
+    expect(canonicalHero("soldier: 76")).toBe("Soldier: 76");
+    expect(canonicalHero(" Lúcio ")).toBe("Lúcio");
+    expect(canonicalHero("Newhero")).toBe("Newhero");
   });
 });

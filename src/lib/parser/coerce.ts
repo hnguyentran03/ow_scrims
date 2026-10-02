@@ -1,5 +1,6 @@
 import { EVENTS, type EventColumn, type EventRow, type EventType } from "./events";
 import { ParseError } from "./errors";
+import { canonicalHero } from "@/lib/stats/heroes";
 
 export const POSITION_RE = /^\(\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*\)$/;
 
@@ -46,7 +47,8 @@ export function coerceRow(eventType: EventType, fields: string[], lineNumber: nu
       }
       throw new ParseError(`${eventType} is missing ${col.column}`, lineNumber);
     }
-    row[col.key] = coerceValue(col, raw, lineNumber);
+    const value = coerceValue(col, raw, lineNumber);
+    row[col.key] = col.kind === "text" && col.key.endsWith("Hero") && typeof value === "string" ? canonicalHero(value) : value;
   });
   return row;
 }

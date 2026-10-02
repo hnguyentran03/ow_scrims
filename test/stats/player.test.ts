@@ -17,7 +17,7 @@ const map = (id: number, mapName: string, mapType: string, ourSide: number, winn
   id, scrimId: scrim.id, scrimName: scrim.name, scrimDate: scrim.date, mapName, mapType, team1Name: "A", team2Name: "B", ourSide, winnerSide, durationSeconds: 600,
 });
 const stat = (mapId: number, playerTeam: string, playerName: string, playerHero: string, heroTimePlayed: number, extra: Partial<StatLike> = {}): StatLike => ({
-  mapId, roundNumber: 1, playerTeam, playerName, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, damageTaken: 0,
+  mapId, roundNumber: 1, playerTeam, playerName, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, healingReceived: 0, damageTaken: 0,
   damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed, ...extra,
 });
 const kill = (mapId: number, matchTime: number, attackerTeam: string, attackerName: string, attackerHero: string, victimTeam: string, victimName: string, victimHero: string, eventAbility: string): Kill => ({
@@ -98,7 +98,7 @@ describe("buildPlayerPage", () => {
     expect(p).toMatchObject({ name: "p1", hero: null, heroes: ["Ana", "Genji"] });
     expect(p.overview).toEqual({
       maps: 3, timePlayed: 1200, record: { won: 1, lost: 1, undecided: 1 }, winRate: 0.5,
-      per10: { eliminations: expect.closeTo(10.5, 6), finalBlows: 6, deaths: 4.5, heroDamage: 6500, healing: 6500, damageTaken: 4500, damageBlocked: 0, ultsEarned: 3, ultsUsed: 2.5 },
+      per10: { eliminations: expect.closeTo(10.5, 6), finalBlows: 6, deaths: 4.5, heroDamage: 6500, healing: 6500, healingReceived: 0, damageTaken: 4500, damageBlocked: 0, ultsEarned: 3, ultsUsed: 2.5 },
     });
   });
 
@@ -150,7 +150,7 @@ describe("buildPlayerPage", () => {
   it("returns an empty page for a name not on our roster", () => {
     const none = buildPlayerPage(maps, rows, "nobody");
     expect(none).toMatchObject({ heroes: [], mostPlayed: [], timeByRole: [], finalBlowsByMethod: [], winRateByMap: [], diedToMost: [], finalBlowsOnMost: [], chart: [] });
-    expect(none.overview).toEqual({ maps: 0, timePlayed: 0, record: { won: 0, lost: 0, undecided: 0 }, winRate: null, per10: { eliminations: 0, finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0, damageTaken: 0, damageBlocked: 0, ultsEarned: 0, ultsUsed: 0 } });
+    expect(none.overview).toEqual({ maps: 0, timePlayed: 0, record: { won: 0, lost: 0, undecided: 0 }, winRate: null, per10: { eliminations: 0, finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0, healingReceived: 0, damageTaken: 0, damageBlocked: 0, ultsEarned: 0, ultsUsed: 0 } });
   });
 
   it("counts first picks (first counted kill) and first deaths (any kill row) against fights on the player's maps, and reversals among first deaths", () => {

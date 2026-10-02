@@ -23,6 +23,15 @@ const TABS: Array<{ label: string; suffix: string; check: (page: Page) => Promis
   },
   { label: "Teamfights", suffix: "/teamfights", check: async (page) => expect(page.getByRole("heading", { name: "By scrim", exact: true })).toBeVisible() },
   {
+    label: "Charts",
+    suffix: "/charts",
+    check: async (page) => {
+      await expect(page.getByRole("heading", { name: "Scatter plot", exact: true })).toBeVisible();
+      await expect(page.getByLabel("Preset")).toBeVisible();
+      await expect(page.getByRole("img", { name: /per 10 minutes$/ })).toBeVisible();
+    },
+  },
+  {
     label: "Players",
     suffix: "/players",
     check: async (page) => {

@@ -33,7 +33,10 @@ export function svgPoint(e: MouseEvent<SVGSVGElement>): { x: number; y: number }
   return { x: ((e.clientX - rect.left) / rect.width) * W, y: ((e.clientY - rect.top) / rect.height) * H };
 }
 
-export function Axes({ yTicks, yScale, yFormat = String }: { yTicks: number[]; yScale: (v: number) => number; yFormat?: (v: number) => string }) {
+export function Axes({ yTicks, yScale, yFormat = String, xTicks = [], xScale, xFormat = String }: {
+  yTicks: number[]; yScale: (v: number) => number; yFormat?: (v: number) => string;
+  xTicks?: number[]; xScale?: (v: number) => number; xFormat?: (v: number) => string;
+}) {
   return (
     <g>
       {yTicks.map((t) => (
@@ -41,6 +44,9 @@ export function Axes({ yTicks, yScale, yFormat = String }: { yTicks: number[]; y
           <line x1={M.left} x2={W - M.right} y1={yScale(t)} y2={yScale(t)} className="stroke-line" />
           <text x={M.left - 6} y={yScale(t)} textAnchor="end" dominantBaseline="middle" fontSize={10} className="fill-muted">{yFormat(t)}</text>
         </g>
+      ))}
+      {xScale && xTicks.map((t) => (
+        <text key={t} x={xScale(t)} y={H - M.bottom + 14} textAnchor="middle" fontSize={10} className="fill-muted">{xFormat(t)}</text>
       ))}
       <line x1={M.left} x2={M.left} y1={M.top} y2={H - M.bottom} className="stroke-line" />
       <line x1={M.left} x2={W - M.right} y1={H - M.bottom} y2={H - M.bottom} className="stroke-line" />
