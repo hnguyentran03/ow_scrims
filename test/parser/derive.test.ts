@@ -71,6 +71,13 @@ describe("baseMapName", () => {
     expect(baseMapName("Lijiang Tower (Lunar New Year)")).toBe("Lijiang Tower");
     expect(baseMapName("Eichenwalde (Halloween)")).toBe("Eichenwalde");
     expect(baseMapName("King's Row (Winter) ")).toBe("King's Row");
+  });
+
+  it("title-cases a name the Workshop wrote in capitals and leaves mixed case alone", () => {
+    expect(baseMapName("NEON JUNCTION")).toBe("Neon Junction");
+    expect(baseMapName("TEMPLE OF ANUBIS")).toBe("Temple of Anubis");
+    expect(baseMapName("New Junk City")).toBe("New Junk City");
+    expect(baseMapName("Esperança")).toBe("Esperança");
     expect(baseMapName("Watchpoint: Gibraltar")).toBe("Watchpoint: Gibraltar");
     expect(baseMapName("Lijiang Tower")).toBe("Lijiang Tower");
   });

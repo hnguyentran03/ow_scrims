@@ -1,0 +1,3117 @@
+{
+  "id": "3065b8a2-0435-4baa-9372-43b73b03d147",
+  "prevId": "e267d306-d470-4970-a8c6-eb5013599f26",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.ability_1_used": {
+      "name": "ability_1_used",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_duplicated": {
+          "name": "hero_duplicated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_position": {
+          "name": "player_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ability_1_used_map_id_idx": {
+          "name": "ability_1_used_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "ability_1_used_map_id_map_id_fk": {
+          "name": "ability_1_used_map_id_map_id_fk",
+          "tableFrom": "ability_1_used",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ability_2_used": {
+      "name": "ability_2_used",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_duplicated": {
+          "name": "hero_duplicated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_position": {
+          "name": "player_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ability_2_used_map_id_idx": {
+          "name": "ability_2_used_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "ability_2_used_map_id_map_id_fk": {
+          "name": "ability_2_used_map_id_map_id_fk",
+          "tableFrom": "ability_2_used",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.damage": {
+      "name": "damage",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attacker_team": {
+          "name": "attacker_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attacker_name": {
+          "name": "attacker_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attacker_hero": {
+          "name": "attacker_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "victim_team": {
+          "name": "victim_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "victim_name": {
+          "name": "victim_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "victim_hero": {
+          "name": "victim_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_ability": {
+          "name": "event_ability",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_damage": {
+          "name": "event_damage",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_critical_hit": {
+          "name": "is_critical_hit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_environmental": {
+          "name": "is_environmental",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attacker_position": {
+          "name": "attacker_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "victim_position": {
+          "name": "victim_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "damage_map_id_idx": {
+          "name": "damage_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "damage_map_id_map_id_fk": {
+          "name": "damage_map_id_map_id_fk",
+          "tableFrom": "damage",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.defensive_assist": {
+      "name": "defensive_assist",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_duplicated": {
+          "name": "hero_duplicated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "defensive_assist_map_id_idx": {
+          "name": "defensive_assist_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "defensive_assist_map_id_map_id_fk": {
+          "name": "defensive_assist_map_id_map_id_fk",
+          "tableFrom": "defensive_assist",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.dva_remech": {
+      "name": "dva_remech",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultimate_id": {
+          "name": "ultimate_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "dva_remech_map_id_idx": {
+          "name": "dva_remech_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "dva_remech_map_id_map_id_fk": {
+          "name": "dva_remech_map_id_map_id_fk",
+          "tableFrom": "dva_remech",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.echo_duplicate_end": {
+      "name": "echo_duplicate_end",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultimate_id": {
+          "name": "ultimate_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "echo_duplicate_end_map_id_idx": {
+          "name": "echo_duplicate_end_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "echo_duplicate_end_map_id_map_id_fk": {
+          "name": "echo_duplicate_end_map_id_map_id_fk",
+          "tableFrom": "echo_duplicate_end",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.echo_duplicate_start": {
+      "name": "echo_duplicate_start",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_duplicated": {
+          "name": "hero_duplicated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultimate_id": {
+          "name": "ultimate_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "echo_duplicate_start_map_id_idx": {
+          "name": "echo_duplicate_start_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "echo_duplicate_start_map_id_map_id_fk": {
+          "name": "echo_duplicate_start_map_id_map_id_fk",
+          "tableFrom": "echo_duplicate_start",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.healing": {
+      "name": "healing",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "healer_team": {
+          "name": "healer_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "healer_name": {
+          "name": "healer_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "healer_hero": {
+          "name": "healer_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "healee_team": {
+          "name": "healee_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "healee_name": {
+          "name": "healee_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "healee_hero": {
+          "name": "healee_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_ability": {
+          "name": "event_ability",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_healing": {
+          "name": "event_healing",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_health_pack": {
+          "name": "is_health_pack",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "healer_position": {
+          "name": "healer_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "healee_position": {
+          "name": "healee_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "healing_map_id_idx": {
+          "name": "healing_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "healing_map_id_map_id_fk": {
+          "name": "healing_map_id_map_id_fk",
+          "tableFrom": "healing",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hero_spawn": {
+      "name": "hero_spawn",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_hero": {
+          "name": "previous_hero",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hero_time_played": {
+          "name": "hero_time_played",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "hero_spawn_map_id_idx": {
+          "name": "hero_spawn_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "hero_spawn_map_id_map_id_fk": {
+          "name": "hero_spawn_map_id_map_id_fk",
+          "tableFrom": "hero_spawn",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.hero_swap": {
+      "name": "hero_swap",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_hero": {
+          "name": "previous_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_time_played": {
+          "name": "hero_time_played",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "hero_swap_map_id_idx": {
+          "name": "hero_swap_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "hero_swap_map_id_map_id_fk": {
+          "name": "hero_swap_map_id_map_id_fk",
+          "tableFrom": "hero_swap",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.kill": {
+      "name": "kill",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attacker_team": {
+          "name": "attacker_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attacker_name": {
+          "name": "attacker_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attacker_hero": {
+          "name": "attacker_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "victim_team": {
+          "name": "victim_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "victim_name": {
+          "name": "victim_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "victim_hero": {
+          "name": "victim_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_ability": {
+          "name": "event_ability",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_damage": {
+          "name": "event_damage",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_critical_hit": {
+          "name": "is_critical_hit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_environmental": {
+          "name": "is_environmental",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "assist_count": {
+          "name": "assist_count",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attacker_position": {
+          "name": "attacker_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "victim_position": {
+          "name": "victim_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "kill_map_id_idx": {
+          "name": "kill_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "kill_map_id_map_id_fk": {
+          "name": "kill_map_id_map_id_fk",
+          "tableFrom": "kill",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.map_ban": {
+      "name": "map_ban",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "side": {
+          "name": "side",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero": {
+          "name": "hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "map_ban_map_id_idx": {
+          "name": "map_ban_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "map_ban_map_id_map_id_fk": {
+          "name": "map_ban_map_id_map_id_fk",
+          "tableFrom": "map_ban",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "map_ban_map_side_hero": {
+          "name": "map_ban_map_side_hero",
+          "columns": [
+            "map_id",
+            "side",
+            "hero"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.map_image": {
+      "name": "map_image",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_name": {
+          "name": "map_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stage": {
+          "name": "stage",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "filename": {
+          "name": "filename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content_type": {
+          "name": "content_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "width": {
+          "name": "width",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "height": {
+          "name": "height",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "calibration": {
+          "name": "calibration",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "uploaded_at": {
+          "name": "uploaded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "map_image_map_stage": {
+          "name": "map_image_map_stage",
+          "columns": [
+            "map_name",
+            "stage"
+          ],
+          "nullsNotDistinct": false
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.map": {
+      "name": "map",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "scrim_id": {
+          "name": "scrim_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_order": {
+          "name": "map_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_name": {
+          "name": "map_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_type": {
+          "name": "map_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team1_name": {
+          "name": "team1_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team2_name": {
+          "name": "team2_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "our_side": {
+          "name": "our_side",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "winner_side": {
+          "name": "winner_side",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "winner_source": {
+          "name": "winner_source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "team1_score": {
+          "name": "team1_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team2_score": {
+          "name": "team2_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "duration_seconds": {
+          "name": "duration_seconds",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_count": {
+          "name": "round_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_log_path": {
+          "name": "raw_log_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "original_filename": {
+          "name": "original_filename",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uploaded_at": {
+          "name": "uploaded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "map_scrim_id_idx": {
+          "name": "map_scrim_id_idx",
+          "columns": [
+            {
+              "expression": "scrim_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "map_scrim_id_scrim_id_fk": {
+          "name": "map_scrim_id_scrim_id_fk",
+          "tableFrom": "map",
+          "columnsFrom": [
+            "scrim_id"
+          ],
+          "tableTo": "scrim",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.match_end": {
+      "name": "match_end",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_1_score": {
+          "name": "team_1_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_2_score": {
+          "name": "team_2_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "match_end_map_id_idx": {
+          "name": "match_end_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "match_end_map_id_map_id_fk": {
+          "name": "match_end_map_id_map_id_fk",
+          "tableFrom": "match_end",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.match_start": {
+      "name": "match_start",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_name": {
+          "name": "map_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "map_type": {
+          "name": "map_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_1_name": {
+          "name": "team_1_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_2_name": {
+          "name": "team_2_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "match_start_map_id_idx": {
+          "name": "match_start_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "match_start_map_id_map_id_fk": {
+          "name": "match_start_map_id_map_id_fk",
+          "tableFrom": "match_start",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.mercy_rez": {
+      "name": "mercy_rez",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resurrecter_team": {
+          "name": "resurrecter_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resurrecter_player": {
+          "name": "resurrecter_player",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resurrecter_hero": {
+          "name": "resurrecter_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resurrectee_team": {
+          "name": "resurrectee_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resurrectee_player": {
+          "name": "resurrectee_player",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "resurrectee_hero": {
+          "name": "resurrectee_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "mercy_rez_map_id_idx": {
+          "name": "mercy_rez_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "mercy_rez_map_id_map_id_fk": {
+          "name": "mercy_rez_map_id_map_id_fk",
+          "tableFrom": "mercy_rez",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.objective_captured": {
+      "name": "objective_captured",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capturing_team": {
+          "name": "capturing_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "objective_index": {
+          "name": "objective_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "control_team_1_progress": {
+          "name": "control_team_1_progress",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "control_team_2_progress": {
+          "name": "control_team_2_progress",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time_remaining": {
+          "name": "match_time_remaining",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "objective_captured_map_id_idx": {
+          "name": "objective_captured_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "objective_captured_map_id_map_id_fk": {
+          "name": "objective_captured_map_id_map_id_fk",
+          "tableFrom": "objective_captured",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.objective_updated": {
+      "name": "objective_updated",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_objective_index": {
+          "name": "previous_objective_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "current_objective_index": {
+          "name": "current_objective_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "objective_updated_map_id_idx": {
+          "name": "objective_updated_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "objective_updated_map_id_map_id_fk": {
+          "name": "objective_updated_map_id_map_id_fk",
+          "tableFrom": "objective_updated",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.offensive_assist": {
+      "name": "offensive_assist",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_duplicated": {
+          "name": "hero_duplicated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "offensive_assist_map_id_idx": {
+          "name": "offensive_assist_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "offensive_assist_map_id_map_id_fk": {
+          "name": "offensive_assist_map_id_map_id_fk",
+          "tableFrom": "offensive_assist",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.payload_progress": {
+      "name": "payload_progress",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capturing_team": {
+          "name": "capturing_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "objective_index": {
+          "name": "objective_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload_capture_progress": {
+          "name": "payload_capture_progress",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "payload_progress_map_id_idx": {
+          "name": "payload_progress_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "payload_progress_map_id_map_id_fk": {
+          "name": "payload_progress_map_id_map_id_fk",
+          "tableFrom": "payload_progress",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.player_stat": {
+      "name": "player_stat",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "eliminations": {
+          "name": "eliminations",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "final_blows": {
+          "name": "final_blows",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deaths": {
+          "name": "deaths",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "all_damage_dealt": {
+          "name": "all_damage_dealt",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "barrier_damage_dealt": {
+          "name": "barrier_damage_dealt",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_damage_dealt": {
+          "name": "hero_damage_dealt",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "healing_dealt": {
+          "name": "healing_dealt",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "healing_received": {
+          "name": "healing_received",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "self_healing": {
+          "name": "self_healing",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "damage_taken": {
+          "name": "damage_taken",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "damage_blocked": {
+          "name": "damage_blocked",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "defensive_assists": {
+          "name": "defensive_assists",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "offensive_assists": {
+          "name": "offensive_assists",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultimates_earned": {
+          "name": "ultimates_earned",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultimates_used": {
+          "name": "ultimates_used",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "multikill_best": {
+          "name": "multikill_best",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "multikills": {
+          "name": "multikills",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "solo_kills": {
+          "name": "solo_kills",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "objective_kills": {
+          "name": "objective_kills",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "environmental_kills": {
+          "name": "environmental_kills",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "environmental_deaths": {
+          "name": "environmental_deaths",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "critical_hits": {
+          "name": "critical_hits",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "critical_hit_accuracy": {
+          "name": "critical_hit_accuracy",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoped_accuracy": {
+          "name": "scoped_accuracy",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoped_critical_hit_accuracy": {
+          "name": "scoped_critical_hit_accuracy",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoped_critical_hit_kills": {
+          "name": "scoped_critical_hit_kills",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shots_fired": {
+          "name": "shots_fired",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shots_hit": {
+          "name": "shots_hit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "shots_missed": {
+          "name": "shots_missed",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoped_shots_fired": {
+          "name": "scoped_shots_fired",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "scoped_shots_hit": {
+          "name": "scoped_shots_hit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weapon_accuracy": {
+          "name": "weapon_accuracy",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_time_played": {
+          "name": "hero_time_played",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "player_stat_map_id_idx": {
+          "name": "player_stat_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        },
+        "player_stat_map_round_idx": {
+          "name": "player_stat_map_round_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "round_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "player_stat_map_id_map_id_fk": {
+          "name": "player_stat_map_id_map_id_fk",
+          "tableFrom": "player_stat",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.point_progress": {
+      "name": "point_progress",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capturing_team": {
+          "name": "capturing_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "objective_index": {
+          "name": "objective_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "point_capture_progress": {
+          "name": "point_capture_progress",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "point_progress_map_id_idx": {
+          "name": "point_progress_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "point_progress_map_id_map_id_fk": {
+          "name": "point_progress_map_id_map_id_fk",
+          "tableFrom": "point_progress",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.remech_charged": {
+      "name": "remech_charged",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_duplicated": {
+          "name": "hero_duplicated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultimate_id": {
+          "name": "ultimate_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "remech_charged_map_id_idx": {
+          "name": "remech_charged_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "remech_charged_map_id_map_id_fk": {
+          "name": "remech_charged_map_id_map_id_fk",
+          "tableFrom": "remech_charged",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.round_end": {
+      "name": "round_end",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capturing_team": {
+          "name": "capturing_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_1_score": {
+          "name": "team_1_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_2_score": {
+          "name": "team_2_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "objective_index": {
+          "name": "objective_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "control_team_1_progress": {
+          "name": "control_team_1_progress",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "control_team_2_progress": {
+          "name": "control_team_2_progress",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time_remaining": {
+          "name": "match_time_remaining",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "round_end_map_id_idx": {
+          "name": "round_end_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "round_end_map_id_map_id_fk": {
+          "name": "round_end_map_id_map_id_fk",
+          "tableFrom": "round_end",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.round_start": {
+      "name": "round_start",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "capturing_team": {
+          "name": "capturing_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_1_score": {
+          "name": "team_1_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "team_2_score": {
+          "name": "team_2_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "objective_index": {
+          "name": "objective_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "round_start_map_id_idx": {
+          "name": "round_start_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "round_start_map_id_map_id_fk": {
+          "name": "round_start_map_id_map_id_fk",
+          "tableFrom": "round_start",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.scrim": {
+      "name": "scrim",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opponent_name": {
+          "name": "opponent_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.setup_complete": {
+      "name": "setup_complete",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "round_number": {
+          "name": "round_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time_remaining": {
+          "name": "match_time_remaining",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "setup_complete_map_id_idx": {
+          "name": "setup_complete_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "setup_complete_map_id_map_id_fk": {
+          "name": "setup_complete_map_id_map_id_fk",
+          "tableFrom": "setup_complete",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ultimate_charged": {
+      "name": "ultimate_charged",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_duplicated": {
+          "name": "hero_duplicated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultimate_id": {
+          "name": "ultimate_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "ultimate_charged_map_id_idx": {
+          "name": "ultimate_charged_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "ultimate_charged_map_id_map_id_fk": {
+          "name": "ultimate_charged_map_id_map_id_fk",
+          "tableFrom": "ultimate_charged",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ultimate_end": {
+      "name": "ultimate_end",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hero_duplicated": {
+          "name": "hero_duplicated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultimate_id": {
+          "name": "ultimate_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_position": {
+          "name": "player_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ultimate_end_map_id_idx": {
+          "name": "ultimate_end_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "ultimate_end_map_id_map_id_fk": {
+          "name": "ultimate_end_map_id_map_id_fk",
+          "tableFrom": "ultimate_end",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ultimate_start": {
+      "name": "ultimate_start",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "map_id": {
+          "name": "map_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "match_time": {
+          "name": "match_time",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_team": {
+          "name": "player_team",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_name": {
+          "name": "player_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_hero": {
+          "name": "player_hero",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "hero_duplicated": {
+          "name": "hero_duplicated",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ultimate_id": {
+          "name": "ultimate_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "player_position": {
+          "name": "player_position",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ultimate_start_map_id_idx": {
+          "name": "ultimate_start_map_id_idx",
+          "columns": [
+            {
+              "expression": "map_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "with": {},
+          "method": "btree",
+          "concurrently": false
+        }
+      },
+      "foreignKeys": {
+        "ultimate_start_map_id_map_id_fk": {
+          "name": "ultimate_start_map_id_map_id_fk",
+          "tableFrom": "ultimate_start",
+          "columnsFrom": [
+            "map_id"
+          ],
+          "tableTo": "map",
+          "columnsTo": [
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "cascade"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "views": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -17,6 +17,14 @@ const HERO_ROLES: Record<string, Role> = {
   Wuyang: "Support", Zenyatta: "Support",
 };
 
+const BY_LOWER = new Map(Object.keys(HERO_ROLES).map((h) => [h.toLowerCase(), h]));
+
+/** The known spelling of a hero name whatever its case ("d.va" and "D.VA" are "D.Va"); an unknown name passes through trimmed. */
+export function canonicalHero(name: string): string {
+  const trimmed = name.trim();
+  return BY_LOWER.get(trimmed.toLowerCase()) ?? trimmed;
+}
+
 export function roleOf(hero: string): Role {
   return HERO_ROLES[hero] ?? "Unknown";
 }

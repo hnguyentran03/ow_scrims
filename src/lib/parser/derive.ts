@@ -55,8 +55,21 @@ export function deriveWinner(input: WinnerInput): Side | null {
 const VARIANT_SUFFIX = /\s*\([^)]*\)\s*$/;
 
 /** Seasonal variants are the same map: "Lijiang Tower (Lunar New Year)" is stored as "Lijiang Tower". */
+const SMALL_WORDS = new Set(["of", "the", "de", "du", "la"]);
+
+/** The Workshop writes a few map names in capitals ("NEON JUNCTION"); title-case a name that has no lowercase letter at all, keeping small words lowercase after the first. */
+function titleCaseIfShouting(name: string): string {
+  if (/\p{Ll}/u.test(name)) return name;
+  return name
+    .toLowerCase()
+    .split(" ")
+    .map((w, i) => (i > 0 && SMALL_WORDS.has(w) ? w : w.replace(/^\p{L}/u, (c) => c.toUpperCase())))
+    .join(" ");
+}
+
+/** The stored map name: seasonal variant stripped, shouting names title-cased. */
 export function baseMapName(name: string): string {
-  return name.replace(VARIANT_SUFFIX, "").trim();
+  return titleCaseIfShouting(name.replace(VARIANT_SUFFIX, "").trim());
 }
 
 function isMapType(s: unknown): s is MapType {

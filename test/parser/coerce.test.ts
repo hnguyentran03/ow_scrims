@@ -8,6 +8,11 @@ describe("coerceRow", () => {
     expect(row).toMatchObject({ matchTime: 32.06, attackerTeam: "Team 2", eventDamage: 22.52, assistCount: "0", attackerPosition: "(6.38, 270.00, 295.06)" });
   });
 
+  it("canonicalises hero spellings in every hero column", () => {
+    const row = coerceRow("kill", ["18.45", "Team 1", "RBM", "BRIGITTE", "Team 2", "Spingar", "tracer", "Ability 1", "53.03", "0", "0"], 1);
+    expect(row).toMatchObject({ attackerHero: "Brigitte", victimHero: "Tracer" });
+  });
+
   it("fills absent optional columns with null (older kill line)", () => {
     const row = coerceRow("kill", ["18.45", "Team 1", "RBM", "Brigitte", "Team 2", "Spingar", "Tracer", "Ability 1", "53.03", "0", "0"], 1);
     expect(row.assistCount).toBeNull();
