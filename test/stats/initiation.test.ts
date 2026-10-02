@@ -1,12 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { buildInitiation, INITIATION_LOOKBACK_SECONDS, type DamageLite } from "@/lib/stats/initiation";
-import { groupFights, type KillLike } from "@/lib/stats/fights";
+import { buildInitiation, buildTeamInitiation, INITIATION_LOOKBACK_SECONDS, type DamageLite } from "@/lib/stats/initiation";
+import { fightsByMap, groupFights, type KillLike } from "@/lib/stats/fights";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
 import { sides } from "@/lib/stats/sides";
-import { buildTeamInitiation } from "@/lib/stats/initiation";
-import { fightsByMap } from "@/lib/stats/fights";
 import type { TeamMapLike } from "@/lib/stats/team-rows";
 
 const s = { ours: "A", theirs: "B" };

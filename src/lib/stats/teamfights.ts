@@ -1,5 +1,4 @@
-import { fightIndexAt } from "./events";
-import { killKind, type Fight } from "./fights";
+import { fightIndexAt, killKind, type Fight } from "./fights";
 import { sideOf, sides, type SideKey } from "./sides";
 import { groupByMap, rate, type MapKeyed, type TeamMapLike } from "./team-rows";
 import { pairUltimates, type UltLike } from "./ultimates";

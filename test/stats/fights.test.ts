@@ -73,5 +73,6 @@ describe("fightsByMap", () => {
     expect([...by.keys()].sort()).toEqual([1, 2]);
     expect(by.get(1)!.map((f) => f.index)).toEqual([1, 2]);
     expect(by.get(2)).toHaveLength(1);
+    expect(by.get(3)).toBeUndefined();
   });
 });

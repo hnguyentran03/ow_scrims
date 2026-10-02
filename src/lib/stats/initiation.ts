@@ -43,7 +43,7 @@ export interface Initiation {
  * Who engaged first in each fight: the earliest cross-team damage row from up to INITIATION_LOOKBACK_SECONDS before the first kill to the fight's end, never one inside the previous fight.
  * `damage` must be in ascending match-time order (as `getInitiationDamage` returns it); the earliest candidate is the first match in array order.
  */
-export function buildInitiation(fights: Fight[], damage: DamageLite[], sides: Sides): Initiation {
+export function buildInitiation(fights: Fight[], damage: DamageLite[], s: Sides): Initiation {
   const cross = damage.filter((d) => d.attackerTeam !== d.victimTeam);
   const acc: Record<SideKey, { initiated: number; wonWhenInitiated: number; fightsNotInitiated: number; wonWhenNotInitiated: number; decidedInitiated: number; decidedNotInitiated: number }> = {
     ours: { initiated: 0, wonWhenInitiated: 0, fightsNotInitiated: 0, wonWhenNotInitiated: 0, decidedInitiated: 0, decidedNotInitiated: 0 },
@@ -53,9 +53,9 @@ export function buildInitiation(fights: Fight[], damage: DamageLite[], sides: Si
     const prev = fights[i - 1];
     const from = f.start - INITIATION_LOOKBACK_SECONDS;
     const row = cross.find((d) => d.matchTime >= from && d.matchTime <= f.end && !(prev && d.matchTime >= prev.start && d.matchTime <= prev.end));
-    const winner = f.winner ? sideOf(f.winner, sides) : null;
+    const winner = f.winner ? sideOf(f.winner, s) : null;
     const firstKill = f.kills.find((k) => killKind(k) === "kill");
-    const initiator = row ? { side: sideOf(row.attackerTeam, sides), team: row.attackerTeam, name: row.attackerName, hero: row.attackerHero, t: row.matchTime } : null;
+    const initiator = row ? { side: sideOf(row.attackerTeam, s), team: row.attackerTeam, name: row.attackerName, hero: row.attackerHero, t: row.matchTime } : null;
     if (initiator?.side) {
       const me = initiator.side;
       const other: SideKey = me === "ours" ? "theirs" : "ours";
@@ -68,7 +68,7 @@ export function buildInitiation(fights: Fight[], damage: DamageLite[], sides: Si
         else acc[other].wonWhenNotInitiated += 1;
       }
     }
-    return { index: f.index, initiator, secondsToFirstKill: initiator ? f.start - initiator.t : null, firstKillSide: firstKill ? sideOf(firstKill.attackerTeam, sides) : null, winner };
+    return { index: f.index, initiator, secondsToFirstKill: initiator ? f.start - initiator.t : null, firstKillSide: firstKill ? sideOf(firstKill.attackerTeam, s) : null, winner };
   });
   const finish = (a: (typeof acc)["ours"]): InitiationSummary => ({
     initiated: a.initiated,

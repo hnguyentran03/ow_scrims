@@ -13,6 +13,7 @@ import { buildTeamfights, type TeamFightStats } from "@/lib/stats/teamfights";
 import { MIN_IMPACT_FIGHTS, buildUltImpact } from "@/lib/stats/ult-impact";
 import { EmptyRange } from "../empty-range";
 import { AbilityImpactTable } from "./ability-impact-table";
+import { engagedHint } from "./hints";
 import { UltImpactTable } from "./ult-impact-table";
 
 export const dynamic = "force-dynamic";
@@ -71,8 +72,8 @@ function Column({ title, color, stats: s, init, coverage }: { title: string; col
         <Stat label="First pick win rate" value={formatPct(s.firstPick.rate)} hint={`${s.firstPick.won} of ${s.firstPick.count} fights`} />
         <Stat label="First death win rate" value={formatPct(s.firstDeath.rate)} hint={`${s.reversals} reversals of ${s.firstDeath.count} fights`} />
         <Stat label="First ult win rate" value={formatPct(s.firstUlt.rate)} hint={`${s.firstUlt.won} of ${s.firstUlt.count} fights`} />
-        <Stat label="Win rate engaging first" value={coverage.mapsWithDamage === 0 ? "–" : formatPct(init.initiationWinRate)} hint={engagedHint(init, coverage, true)} />
-        <Stat label="Win rate when engaged" value={coverage.mapsWithDamage === 0 ? "–" : formatPct(init.nonInitiationWinRate)} hint={engagedHint(init, coverage, false)} />
+        <Stat label="Win rate engaging first" value={formatPct(init.initiationWinRate)} hint={engagedHint(init, coverage, true)} />
+        <Stat label="Win rate when engaged" value={formatPct(init.nonInitiationWinRate)} hint={engagedHint(init, coverage, false)} />
         <Stat label="Dry fight rate" value={formatPct(s.dry.rate)} hint={`${s.dry.count} fights with no ult`} />
         <Stat label="Dry fight win rate" value={formatPct(s.dry.winRate)} hint={`${s.dry.won} of ${s.dry.count}`} />
         <Stat label="Ults per fight" value={formatRatio(s.ultsPerFight)} hint={`${s.ultsUsed} ults`} />
@@ -81,12 +82,4 @@ function Column({ title, color, stats: s, init, coverage }: { title: string; col
       </div>
     </section>
   );
-}
-
-function engagedHint(s: InitiationSummary, c: TeamInitiation, first: boolean): string {
-  if (c.mapsWithDamage === 0) return "damage logging was off on every map in range";
-  const base = first
-    ? `won ${s.wonWhenInitiated} of ${s.decidedInitiated} decided fights, engaged first in ${s.initiated}`
-    : `won ${s.wonWhenNotInitiated} of ${s.decidedNotInitiated} decided fights`;
-  return c.mapsWithDamage < c.maps ? `${base}, ${c.mapsWithDamage} of ${c.maps} maps logged damage` : base;
 }
