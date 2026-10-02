@@ -4,7 +4,7 @@ import { groupByMap, rate, type MapKeyed, type TeamMapLike } from "./team-rows";
 
 export const INITIATION_LOOKBACK_SECONDS = 10;
 
-/** The five damage columns initiation needs; getInitiationRows selects exactly these. */
+/** The five damage columns initiation needs; getInitiationDamage selects exactly these. */
 export interface DamageLite {
   matchTime: number;
   attackerTeam: string;
@@ -41,7 +41,7 @@ export interface Initiation {
 
 /**
  * Who engaged first in each fight: the earliest cross-team damage row from up to INITIATION_LOOKBACK_SECONDS before the first kill to the fight's end, never one inside the previous fight.
- * `damage` must be in ascending match-time order (as `getInitiationRows` returns it); the earliest candidate is the first match in array order.
+ * `damage` must be in ascending match-time order (as `getInitiationDamage` returns it); the earliest candidate is the first match in array order.
  */
 export function buildInitiation(fights: Fight[], damage: DamageLite[], sides: Sides): Initiation {
   const cross = damage.filter((d) => d.attackerTeam !== d.victimTeam);

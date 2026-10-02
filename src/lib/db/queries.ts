@@ -179,15 +179,13 @@ export async function getTelemetryRows(db: Db, mapId: number): Promise<{ damage:
   return { damage: damageRows, playerStats };
 }
 
-/** Kills plus the five damage columns fight initiation needs, both in match-time order; the rest of the damage row never leaves the database. */
-export async function getInitiationRows(db: Db, mapId: number): Promise<{ kills: KillRow[]; damage: DamageLite[] }> {
-  const kills = await killsFor(db, mapId);
-  const damageRows = await db
+/** The five damage columns initiation needs, in match-time order. Kills come from the page's own row set. */
+export async function getInitiationDamage(db: Db, mapId: number): Promise<DamageLite[]> {
+  return db
     .select({ matchTime: damage.matchTime, attackerTeam: damage.attackerTeam, attackerName: damage.attackerName, attackerHero: damage.attackerHero, victimTeam: damage.victimTeam })
     .from(damage)
     .where(eq(damage.mapId, mapId))
     .orderBy(asc(damage.matchTime), asc(damage.id));
-  return { kills, damage: damageRows };
 }
 
 /** Every row the replay tab needs: the events set plus positions (damage, healing, abilities), spawns, charge, and stats. */

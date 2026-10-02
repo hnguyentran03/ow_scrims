@@ -1,4 +1,4 @@
-import { getInitiationRows, getKillfeedRows } from "@/lib/db/queries";
+import { getInitiationDamage, getKillfeedRows } from "@/lib/db/queries";
 import { formatDuration } from "@/lib/format";
 import { TEAM_COLORS } from "@/lib/colors";
 import { buildKillfeed, type KillfeedBlock, type KillfeedEntry } from "@/lib/stats/killfeed";
@@ -17,8 +17,8 @@ export const dynamic = "force-dynamic";
 export default async function KillfeedPage({ params }: { params: MapParams }) {
   const { db, map, scrim, sides } = await loadMap(params);
   const rows = await getKillfeedRows(db, map.id);
-  const init = await getInitiationRows(db, map.id);
-  const initiation = buildInitiation(groupFights(rows.kills), init.damage, sides);
+  const initDamage = await getInitiationDamage(db, map.id);
+  const initiation = buildInitiation(groupFights(rows.kills), initDamage, sides);
   const byFight = new Map(initiation.fights.map((f) => [f.index, f]));
   const kf = buildKillfeed({ map, kills: rows.kills, rezzes: rows.rezzes, roundEnds: rows.roundEnds, durationSeconds: map.durationSeconds });
   const pair = (p: { ours: number; theirs: number }) => `${p.ours} / ${p.theirs}`;

@@ -1,7 +1,7 @@
 import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
 import { TEAM_COLORS } from "@/lib/colors";
-import { getChartRows, getInitiationRows } from "@/lib/db/queries";
+import { getChartRows, getInitiationDamage } from "@/lib/db/queries";
 import { formatDuration } from "@/lib/format";
 import { damageByRound, finalBlowsByRole, killsByFight } from "@/lib/stats/charts";
 import { groupFights } from "@/lib/stats/fights";
@@ -32,9 +32,9 @@ export const dynamic = "force-dynamic";
 export default async function ChartsPage({ params }: { params: MapParams }) {
   const { db, map, sides } = await loadMap(params);
   const rows = await getChartRows(db, map.id);
-  const init = await getInitiationRows(db, map.id);
+  const initDamage = await getInitiationDamage(db, map.id);
   const fights = groupFights(rows.kills);
-  const initiation = buildInitiation(fights, init.damage, sides);
+  const initiation = buildInitiation(fights, initDamage, sides);
   const steps = killsByFight(fights, sides);
   const roles = finalBlowsByRole(rows.kills, sides);
   const rounds = damageByRound(rows.playerStats, sides);

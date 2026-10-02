@@ -5,6 +5,7 @@ import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
 import { Field, Select } from "@/components/field";
 import { TEAM_COLORS } from "@/lib/colors";
+import { DAMAGE_OFF_MESSAGE } from "@/lib/copy";
 import { formatDuration, formatInt, formatPct } from "@/lib/format";
 import type { Sides } from "@/lib/stats/sides";
 import type { Lane, RoleShare, Telemetry } from "@/lib/stats/telemetry";
@@ -49,7 +50,7 @@ export function TelemetryPanel({ telemetry, sides }: { telemetry: Telemetry; sid
           <Card title="Damage dealt, by enemy role"><RoleBar shares={player.focusFire.dealt} color={color} /></Card>
         </div>
       ) : (
-        <EmptyState>Damage logging was off for this map. Turn on damage logging in the ScrimTime Workshop settings before hosting.</EmptyState>
+        <EmptyState>{DAMAGE_OFF_MESSAGE}</EmptyState>
       )}
 
       <Card title="Matchup radar" note={opponent ? `vs ${opponent.name} (${opponent.hero}), per 10 min` : "No enemy played this role"}>
