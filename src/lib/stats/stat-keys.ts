@@ -8,7 +8,7 @@ export const STAT_LABELS: Record<StatKey, string> = {
   healingReceived: "Healing received", damageTaken: "Damage taken", damageBlocked: "Damage blocked", ultsEarned: "Ults earned", ultsUsed: "Ults used",
 };
 
-export const STAT_KEYS = Object.keys(STAT_LABELS) as StatKey[];
+export const STAT_KEYS: readonly StatKey[] = Object.keys(STAT_LABELS) as StatKey[];
 
 const PICK: Record<StatKey, (r: PlayerStatLike) => number> = {
   eliminations: (r) => r.eliminations, finalBlows: (r) => r.finalBlows, deaths: (r) => r.deaths, heroDamage: (r) => r.heroDamageDealt,

@@ -28,6 +28,7 @@ const TABS: Array<{ label: string; suffix: string; check: (page: Page) => Promis
     check: async (page) => {
       await expect(page.getByRole("heading", { name: "Scatter plot", exact: true })).toBeVisible();
       await expect(page.getByLabel("Preset")).toBeVisible();
+      await expect(page.getByRole("img", { name: /per 10 minutes$/ })).toBeVisible();
     },
   },
   {
