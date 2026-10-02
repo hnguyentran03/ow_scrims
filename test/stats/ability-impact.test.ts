@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { MIN_ABILITY_FIGHTS, buildAbilityImpact, type AbilityLike } from "@/lib/stats/ability-impact";
-import type { KillLike } from "@/lib/stats/fights";
+import { fightsByMap, type KillLike } from "@/lib/stats/fights";
 import type { MapKeyed, StatLike, TeamMapLike } from "@/lib/stats/team-rows";
 import { sampleMapRows } from "./sample-rows";
 
@@ -31,7 +31,7 @@ const crossfade = [
 const others = [ability(0, "A", "Nobody", 2), ability(100, "A", "0", 1), ability(500, "B", "Zarya", 2), ability(9999, "C", "Ana", 1)];
 
 describe("buildAbilityImpact", () => {
-  const { ours, theirs, hasAbilities } = buildAbilityImpact([map(1)], ten, [...crossfade, ...others], stats);
+  const { ours, theirs, hasAbilities } = buildAbilityImpact([map(1)], fightsByMap(ten), [...crossfade, ...others], stats);
 
   it("reports uses per decided fight in won and lost fights, counting a use outside every fight in uses only", () => {
     expect(hasAbilities).toBe(true);
@@ -57,20 +57,20 @@ describe("buildAbilityImpact", () => {
     // A wins six one-kill fights, B wins one; Ana is used once in every fight. The lost bucket has one fight, so perFightLost is null.
     const seven = [...[0, 100, 200, 300, 400, 500].map((t) => kill(t)), kill(600, "B", "A")];
     const uses = [0, 100, 200, 300, 400, 500, 600].map((t) => ability(t, "A", "Ana", 2));
-    const r = buildAbilityImpact([map(1)], seven, uses, [stat(1, "A", "Ana")]).ours[0];
+    const r = buildAbilityImpact([map(1)], fightsByMap(seven), uses, [stat(1, "A", "Ana")]).ours[0];
     expect(r).toMatchObject({ ability: "Biotic Grenade", uses: 7, perFightWon: 1, perFightLost: null, lift: null });
     expect(r.with).toEqual({ count: 7, decided: 7, won: 6, rate: 6 / 7 });
     expect(r.without).toEqual({ count: 0, decided: 0, won: 0, rate: null });
     // Ten fights, Ana used in all ten: with has 10 decided, without has 0, so lift stays null; perFightLost is 1 over five lost fights.
-    const all = buildAbilityImpact([map(1)], ten, [0, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((t) => ability(t, "A", "Ana", 2)), [stat(1, "A", "Ana")]).ours[0];
+    const all = buildAbilityImpact([map(1)], fightsByMap(ten), [0, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((t) => ability(t, "A", "Ana", 2)), [stat(1, "A", "Ana")]).ours[0];
     expect(all).toMatchObject({ perFightWon: 1, perFightLost: 1, lift: null });
     // Ana used in fights 1-5 only: both buckets have five decided fights, so lift is 1 − 0.
-    const half = buildAbilityImpact([map(1)], ten, [0, 100, 200, 300, 400].map((t) => ability(t, "A", "Ana", 2)), [stat(1, "A", "Ana")]).ours[0];
+    const half = buildAbilityImpact([map(1)], fightsByMap(ten), [0, 100, 200, 300, 400].map((t) => ability(t, "A", "Ana", 2)), [stat(1, "A", "Ana")]).ours[0];
     expect(half).toMatchObject({ lift: 1, perFightWon: 1, perFightLost: 0 });
   });
 
   it("is empty with hasAbilities false when no ability rows were loaded", () => {
-    expect(buildAbilityImpact([map(1)], ten, [], stats)).toEqual({ ours: [], theirs: [], hasAbilities: false });
+    expect(buildAbilityImpact([map(1)], fightsByMap(ten), [], stats)).toEqual({ ours: [], theirs: [], hasAbilities: false });
   });
 
   it("counts a played hero's fights on a map with no uses of a slot into without, across maps, and skips an unlogged map entirely", () => {
@@ -86,7 +86,7 @@ describe("buildAbilityImpact", () => {
       stat(1, "A", "Ana"), stat(2, "A", "Ana"), stat(3, "A", "Ana"),
       stat(1, "A", "Mercy"), stat(2, "A", "Mercy"), stat(3, "A", "Mercy"),
     ];
-    const { ours } = buildAbilityImpact([map(1), map(2), map(3)], [...ten, ...tenMap2, ...tenMap3], abilities, threeMapStats);
+    const { ours } = buildAbilityImpact([map(1), map(2), map(3)], fightsByMap([...ten, ...tenMap2, ...tenMap3]), abilities, threeMapStats);
 
     const ana = ours.find((r) => r.hero === "Ana")!;
     expect(ana.uses).toBe(5);
@@ -105,7 +105,7 @@ describe("buildAbilityImpact", () => {
     const draw = [kill(0), kill(2, "B", "A")];
     const wonFights = [1000, 1100, 1200, 1300, 1400].map((t) => kill(t));
     const uses = [0, 1000, 1100, 1200, 1300, 1400].map((t) => ability(t, "A", "Ana", 2));
-    const r = buildAbilityImpact([map(1)], [...draw, ...wonFights], uses, [stat(1, "A", "Ana")]).ours[0];
+    const r = buildAbilityImpact([map(1)], fightsByMap([...draw, ...wonFights]), uses, [stat(1, "A", "Ana")]).ours[0];
     expect(r.with).toEqual({ count: 6, decided: 5, won: 5, rate: 1 });
     expect(r.without).toEqual({ count: 0, decided: 0, won: 0, rate: null });
     expect(r.perFightWon).toBe(1);
@@ -114,7 +114,7 @@ describe("buildAbilityImpact", () => {
 
   it("reconciles with the Lijiang sample", () => {
     const l = sampleMapRows("Log-2026-04-02-17-21-48", 1, 1);
-    const r = buildAbilityImpact([l.map], l.kills, l.abilities, l.playerStats);
+    const r = buildAbilityImpact([l.map], fightsByMap(l.kills), l.abilities, l.playerStats);
     const all = [...r.ours, ...r.theirs];
     expect(all.filter((x) => x.slot === 1).reduce((n, x) => n + x.uses, 0)).toBe(532);
     expect(all.filter((x) => x.slot === 2).reduce((n, x) => n + x.uses, 0)).toBe(364);
@@ -123,7 +123,7 @@ describe("buildAbilityImpact", () => {
 
   it("leaves a fight won by a third team out of the won and lost fight counts", () => {
     const kills = [kill(10, "C", "D"), kill(11, "C", "D")];
-    const r = buildAbilityImpact([map(1)], kills, [ability(10.5, "A", "Ana", 1)], [stat(1, "A", "Ana")]).ours[0];
+    const r = buildAbilityImpact([map(1)], fightsByMap(kills), [ability(10.5, "A", "Ana", 1)], [stat(1, "A", "Ana")]).ours[0];
     expect(r.with).toEqual({ count: 1, decided: 0, won: 0, rate: null });
     expect(r.perFightWon).toBeNull();
     expect(r.perFightLost).toBeNull();

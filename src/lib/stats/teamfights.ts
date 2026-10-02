@@ -1,5 +1,5 @@
 import { fightIndexAt } from "./events";
-import { groupFights, killKind, type KillLike } from "./fights";
+import { killKind, type Fight } from "./fights";
 import { sideOf, sides, type SideKey } from "./sides";
 import { groupByMap, rate, type MapKeyed, type TeamMapLike } from "./team-rows";
 import { pairUltimates, type UltLike } from "./ultimates";
@@ -88,8 +88,7 @@ function finish(a: Acc): TeamFightStats {
 
 const SIDES: SideKey[] = ["ours", "theirs"];
 
-export function buildTeamfights(maps: TeamMapLike[], kills: (KillLike & MapKeyed)[], ultStarts: (UltLike & MapKeyed)[], ultEnds: (UltLike & MapKeyed)[]): Teamfights {
-  const killsBy = groupByMap(kills);
+export function buildTeamfights(maps: TeamMapLike[], fightsOf: Map<number, Fight[]>, ultStarts: (UltLike & MapKeyed)[], ultEnds: (UltLike & MapKeyed)[]): Teamfights {
   const startsBy = groupByMap(ultStarts);
   const endsBy = groupByMap(ultEnds);
   const acc: Record<SideKey, Acc> = { ours: newAcc(), theirs: newAcc() };
@@ -98,7 +97,7 @@ export function buildTeamfights(maps: TeamMapLike[], kills: (KillLike & MapKeyed
   for (const map of maps) {
     const s = sides(map);
     const side = (team: string | null | undefined): SideKey | null => (team ? sideOf(team, s) : null);
-    const fights = groupFights(killsBy.get(map.id) ?? []);
+    const fights = fightsOf.get(map.id) ?? [];
     // pairUltimates sorts starts by time, so `ults` is in cast order.
     const ults = pairUltimates(startsBy.get(map.id) ?? [], endsBy.get(map.id) ?? []).map(({ start }) => ({
       side: side(start.playerTeam), fightIndex: fightIndexAt(start.matchTime, fights),

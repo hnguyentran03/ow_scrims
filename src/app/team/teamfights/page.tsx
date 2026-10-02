@@ -7,6 +7,7 @@ import { getTeamRows } from "@/lib/db/queries";
 import { formatPct, formatRatio } from "@/lib/format";
 import { parseRange, type SearchParams } from "@/lib/range";
 import { MIN_ABILITY_FIGHTS, buildAbilityImpact } from "@/lib/stats/ability-impact";
+import { fightsByMap } from "@/lib/stats/fights";
 import { buildTeamfights, type TeamFightStats } from "@/lib/stats/teamfights";
 import { MIN_IMPACT_FIGHTS, buildUltImpact } from "@/lib/stats/ult-impact";
 import { EmptyRange } from "../empty-range";
@@ -18,9 +19,10 @@ export const dynamic = "force-dynamic";
 export default async function TeamfightsPage({ searchParams }: { searchParams: SearchParams }) {
   const rows = await getTeamRows(await getDb(), parseRange(await searchParams), { kills: true, ults: true, playerStats: true, abilities: true });
   if (rows.maps.length === 0) return <EmptyRange />;
-  const t = buildTeamfights(rows.maps, rows.kills, rows.ultStarts, rows.ultEnds);
-  const ultImpact = buildUltImpact(rows.maps, rows.kills, rows.ultStarts, rows.ultEnds, rows.playerStats);
-  const abilityImpact = buildAbilityImpact(rows.maps, rows.kills, rows.abilities, rows.playerStats);
+  const fights = fightsByMap(rows.kills);
+  const t = buildTeamfights(rows.maps, fights, rows.ultStarts, rows.ultEnds);
+  const ultImpact = buildUltImpact(rows.maps, rows.kills, fights, rows.ultStarts, rows.ultEnds, rows.playerStats);
+  const abilityImpact = buildAbilityImpact(rows.maps, fights, rows.abilities, rows.playerStats);
 
   return (
     <div className="space-y-8">

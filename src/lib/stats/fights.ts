@@ -1,3 +1,5 @@
+import { groupByMap, type MapKeyed } from "./map-keyed";
+
 export interface KillLike {
   matchTime: number;
   attackerTeam: string;
@@ -84,4 +86,11 @@ export function fightIndexAt(time: number, fights: Fight[]): number | null {
   const inside = fights.find((f) => time >= f.start && time <= f.end);
   if (inside) return inside.index;
   return fights.find((f) => f.start > time)?.index ?? null;
+}
+
+/** groupFights per map, so a page groups once and hands the result to every builder. */
+export function fightsByMap(kills: (KillLike & MapKeyed)[]): Map<number, Fight[]> {
+  const out = new Map<number, Fight[]>();
+  for (const [mapId, list] of groupByMap(kills)) out.set(mapId, groupFights(list));
+  return out;
 }
