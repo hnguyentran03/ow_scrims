@@ -11,7 +11,7 @@ const map = (id: number, scrimId = 1): TeamMapLike => ({
   id, scrimId, scrimName: `s${scrimId}`, scrimDate: `2026-09-1${scrimId}`, mapName: `Map ${id}`, mapType: "Control", team1Name: "A", team2Name: "B", ourSide: 1, winnerSide: 1, durationSeconds: 600,
 });
 const stat = (mapId: number, playerTeam: string, playerName: string, playerHero: string, extra: Partial<StatLike> = {}): StatLike => ({
-  mapId, roundNumber: 1, playerTeam, playerName, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, damageTaken: 0,
+  mapId, roundNumber: 1, playerTeam, playerName, playerHero, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, healingReceived: 0, damageTaken: 0,
   damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed: 600, ...extra,
 });
 const kill = (mapId: number, matchTime: number, attackerTeam: string, attackerName: string, victimTeam: string, victimName: string, extra: Partial<Kill> = {}): Kill => ({

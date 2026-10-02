@@ -11,6 +11,7 @@ export interface PlayerStatLike {
   deaths: number;
   heroDamageDealt: number;
   healingDealt: number;
+  healingReceived: number;
   damageTaken: number;
   damageBlocked: number;
   ultimatesEarned: number;

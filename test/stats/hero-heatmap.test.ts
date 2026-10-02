@@ -9,7 +9,7 @@ const map = (id: number, over: Partial<TeamMapLike> = {}): TeamMapLike => ({
 });
 const stat = (mapId: number, playerName: string, playerHero: string, heroTimePlayed: number, over: Partial<StatLike> = {}): StatLike => ({
   mapId, roundNumber: 1, playerTeam: "A", playerName, playerHero, heroTimePlayed,
-  eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, damageTaken: 0, damageBlocked: 0,
+  eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, healingReceived: 0, damageTaken: 0, damageBlocked: 0,
   ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, ...over,
 });
 

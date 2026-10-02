@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { buildOverview, finalRoundRows, per10, type PlayerStatLike } from "@/lib/stats/overview";
 
 const stat = (o: Partial<PlayerStatLike> & Pick<PlayerStatLike, "playerTeam" | "playerName" | "playerHero">): PlayerStatLike => ({
-  roundNumber: 1, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, damageTaken: 0,
+  roundNumber: 1, eliminations: 0, finalBlows: 0, deaths: 0, heroDamageDealt: 0, healingDealt: 0, healingReceived: 0, damageTaken: 0,
   damageBlocked: 0, ultimatesEarned: 0, ultimatesUsed: 0, multikillBest: 0, soloKills: 0, objectiveKills: 0, heroTimePlayed: 600, ...o,
 });
 
