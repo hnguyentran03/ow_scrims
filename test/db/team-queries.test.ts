@@ -38,6 +38,7 @@ describe("team queries", () => {
     expect(rows.abilities).toHaveLength(0 + 346);
     expect(rows.abilities[0].slot).toBe(1);
     expect(rows.abilities.every((a, i) => i === 0 || rows.abilities[i - 1].matchTime <= a.matchTime)).toBe(true);
+    expect(Object.keys(rows.abilities[0]).sort()).toEqual(["mapId", "matchTime", "playerHero", "playerName", "playerTeam", "slot"]);
     expect(rows.roundStarts).toHaveLength(3 + 1);
     // Ordered by match time then id across maps, like every other event list: both maps start a round at 0.
     expect(rows.roundStarts.slice(0, 2).map((r) => r.mapId)).toEqual([antarctic, aatlis]);

@@ -6,6 +6,8 @@ import {
 } from "./schema";
 import type { DamageLite } from "@/lib/stats/initiation";
 import { isCalibrated } from "@/lib/stats/calibration";
+import type { AbilityLike } from "@/lib/stats/ability-impact";
+import type { MapKeyed } from "@/lib/stats/team-rows";
 
 export type { DamageLite };
 
@@ -27,8 +29,6 @@ export type UltChargedRow = typeof ultimateCharged.$inferSelect;
 export type DamageRow = typeof damage.$inferSelect;
 export type HealingRow = typeof healing.$inferSelect;
 export type AbilityRow = typeof ability1Used.$inferSelect;
-/** An ability_1_used or ability_2_used row tagged with its slot. */
-export type SlottedAbilityRow = AbilityRow & { slot: 1 | 2 };
 export type SpawnRow = typeof heroSpawn.$inferSelect;
 export type ObjectiveUpdatedRow = typeof objectiveUpdated.$inferSelect;
 export type MapImageRow = typeof mapImages.$inferSelect;
@@ -52,7 +52,7 @@ export interface TeamRows {
   ultCharged: UltChargedRow[];
   playerStats: PlayerStatRow[];
   bans: MapBanRow[];
-  abilities: SlottedAbilityRow[];
+  abilities: (AbilityLike & MapKeyed)[];
   roundStarts: RoundStartRow[];
 }
 
@@ -249,10 +249,13 @@ export interface TeamTables {
 
 export const ALL_TEAM_TABLES: TeamTables = { kills: true, ults: true, charged: true, playerStats: true, bans: true, abilities: true, rounds: true };
 
-/** Both ability tables for the given maps, merged by match time with slot 1 first on a tie. */
-async function abilitiesFor(db: Db, ids: number[]): Promise<SlottedAbilityRow[]> {
-  const a1 = await db.select().from(ability1Used).where(inArray(ability1Used.mapId, ids)).orderBy(asc(ability1Used.matchTime), asc(ability1Used.id));
-  const a2 = await db.select().from(ability2Used).where(inArray(ability2Used.mapId, ids)).orderBy(asc(ability2Used.matchTime), asc(ability2Used.id));
+/** Both ability tables for the given maps, five columns each, merged by match time with slot 1 first on a tie. */
+async function abilitiesFor(db: Db, ids: number[]): Promise<(AbilityLike & MapKeyed)[]> {
+  const cols = (t: typeof ability1Used | typeof ability2Used) => ({ mapId: t.mapId, matchTime: t.matchTime, playerTeam: t.playerTeam, playerName: t.playerName, playerHero: t.playerHero });
+  const [a1, a2] = await Promise.all([
+    db.select(cols(ability1Used)).from(ability1Used).where(inArray(ability1Used.mapId, ids)).orderBy(asc(ability1Used.matchTime), asc(ability1Used.id)),
+    db.select(cols(ability2Used)).from(ability2Used).where(inArray(ability2Used.mapId, ids)).orderBy(asc(ability2Used.matchTime), asc(ability2Used.id)),
+  ]);
   return [...a1.map((r) => ({ ...r, slot: 1 as const })), ...a2.map((r) => ({ ...r, slot: 2 as const }))].sort((x, y) => x.matchTime - y.matchTime || x.slot - y.slot);
 }
 
