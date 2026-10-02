@@ -49,9 +49,10 @@ export const bucket = (): Bucket => ({ count: 0, decided: 0, won: 0 });
 /** Adds one fight to a bucket from `side`'s point of view. */
 export function tally(b: Bucket, f: Fight, side: SideKey, s: Sides): void {
   b.count += 1;
-  if (f.winner === null) return;
+  const winner = f.winner === null ? null : sideOf(f.winner, s);
+  if (winner === null) return;
   b.decided += 1;
-  if (sideOf(f.winner, s) === side) b.won += 1;
+  if (winner === side) b.won += 1;
 }
 
 export const toRatio = (b: Bucket): ImpactRatio => ({ ...b, rate: rate(b.won, b.decided) });

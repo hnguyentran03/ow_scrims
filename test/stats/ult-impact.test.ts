@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { MIN_IMPACT_FIGHTS, buildUltImpact } from "@/lib/stats/ult-impact";
-import type { KillLike } from "@/lib/stats/fights";
+import { MIN_IMPACT_FIGHTS, buildUltImpact, bucket, tally } from "@/lib/stats/ult-impact";
+import { groupFights, type KillLike } from "@/lib/stats/fights";
 import type { MapKeyed, StatLike, TeamMapLike } from "@/lib/stats/team-rows";
 import type { UltLike } from "@/lib/stats/ultimates";
 import { sampleMapRows } from "./sample-rows";
@@ -91,5 +91,14 @@ describe("buildUltImpact", () => {
     expect(all.every((x) => x.with.count + x.without.count === 23 || x.without.count === 0)).toBe(true);
     expect(all.some((x) => x.with.count + x.without.count === 23)).toBe(true);
     expect(all.every((x) => x.with.won <= x.with.decided && x.with.decided <= x.with.count)).toBe(true);
+  });
+});
+
+describe("tally", () => {
+  it("treats a winner matching neither side as undecided", () => {
+    const [f] = groupFights([kill(10, "C", "D")]);
+    const b = bucket();
+    tally(b, f, "ours", { ours: "A", theirs: "B" });
+    expect(b).toEqual({ count: 1, decided: 0, won: 0 });
   });
 });

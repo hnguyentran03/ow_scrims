@@ -120,4 +120,12 @@ describe("buildAbilityImpact", () => {
     expect(all.filter((x) => x.slot === 2).reduce((n, x) => n + x.uses, 0)).toBe(364);
     expect(r.hasAbilities).toBe(true);
   });
+
+  it("leaves a fight won by a third team out of the won and lost fight counts", () => {
+    const kills = [kill(10, "C", "D"), kill(11, "C", "D")];
+    const r = buildAbilityImpact([map(1)], kills, [ability(10.5, "A", "Ana", 1)], [stat(1, "A", "Ana")]).ours[0];
+    expect(r.with).toEqual({ count: 1, decided: 0, won: 0, rate: null });
+    expect(r.perFightWon).toBeNull();
+    expect(r.perFightLost).toBeNull();
+  });
 });

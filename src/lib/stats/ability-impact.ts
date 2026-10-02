@@ -92,8 +92,9 @@ export function buildAbilityImpact(maps: TeamMapLike[], kills: (KillLike & MapKe
           const n = perFight.get(f.index) ?? 0;
           if (n === 0 && !played.has(a.hero)) continue;
           tally(n > 0 ? a.with : a.without, f, side, s);
-          if (f.winner === null) continue;
-          if (sideOf(f.winner, s) === side) { a.wonFights += 1; a.wonUses += n; }
+          const winner = f.winner === null ? null : sideOf(f.winner, s);
+          if (winner === null) continue;
+          if (winner === side) { a.wonFights += 1; a.wonUses += n; }
           else { a.lostFights += 1; a.lostUses += n; }
         }
         acc[side].set(k, a);
