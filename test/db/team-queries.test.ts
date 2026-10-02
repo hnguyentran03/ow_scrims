@@ -43,6 +43,7 @@ describe("team queries", () => {
     // Ordered by match time then id across maps, like every other event list: both maps start a round at 0.
     expect(rows.roundStarts.slice(0, 2).map((r) => r.mapId)).toEqual([antarctic, aatlis]);
     expect(rows.roundStarts.filter((r) => r.mapId === antarctic).map((r) => r.roundNumber)).toEqual([1, 2, 3]);
+    expect(rows.damage.length).toBeGreaterThan(0);
   });
 
   it("filters by an inclusive date range and runs no event query for an empty range", async () => {
@@ -50,7 +51,7 @@ describe("team queries", () => {
     expect((await getTeamRows(db, { to: "2026-09-10" })).maps.map((m) => m.id)).toEqual([antarctic]);
     expect((await getTeamRows(db, { from: "2026-09-12", to: "2026-09-12" })).maps.map((m) => m.id)).toEqual([aatlis]);
     const none = await getTeamRows(db, { from: "2027-01-01" });
-    expect(none).toEqual({ maps: [], kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [] });
+    expect(none).toEqual({ maps: [], kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [], damage: [] });
   });
 
   it("replaces one side's bans and returns them with the scrim and the map", async () => {
@@ -92,6 +93,17 @@ describe("team queries", () => {
     const stats = await getTeamRows(db, {}, { playerStats: true, bans: true });
     expect(stats.kills).toEqual([]);
     expect(stats.playerStats).toHaveLength(40 + 50);
+  });
+
+  it("loads the five initiation damage columns per map only when asked", async () => {
+    const off = await getTeamRows(db, {}, { kills: true });
+    expect(off.damage).toEqual([]);
+    // Antarctic (2026-04-15) logged no damage; Aatlis (2026-09-18) has 2690 damage lines in the log.
+    const on = await getTeamRows(db, {}, { damage: true, kills: true });
+    expect(on.damage.length).toBeGreaterThan(on.kills.length * 10);
+    expect(Object.keys(on.damage[0]).sort()).toEqual(["attackerHero", "attackerName", "attackerTeam", "mapId", "matchTime", "victimTeam"]);
+    expect(on.damage.every((d, i) => i === 0 || on.damage[i - 1].matchTime <= d.matchTime)).toBe(true);
+    expect(new Set(on.damage.map((d) => d.mapId))).toEqual(new Set([aatlis]));
   });
 
   it("returns the damage rows of a map that logged them, in time order", async () => {
