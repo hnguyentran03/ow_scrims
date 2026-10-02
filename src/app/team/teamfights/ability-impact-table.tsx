@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { Table, Td, Th } from "@/components/table";
+import { formatRatio } from "@/lib/format";
 import type { AbilityImpactRow } from "@/lib/stats/ability-impact";
 import type { SideKey } from "@/lib/stats/sides";
 import { SideToggle } from "../side-toggle";
 import { lift, winLoss } from "./ult-impact-table";
-
-const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
 
 export function AbilityImpactTable({ ours, theirs, hasAbilities }: { ours: AbilityImpactRow[]; theirs: AbilityImpactRow[]; hasAbilities: boolean }) {
   const [side, setSide] = useState<SideKey>("ours");
@@ -30,8 +29,8 @@ export function AbilityImpactTable({ ours, theirs, hasAbilities }: { ours: Abili
                 <Td>{r.hero}</Td>
                 <Td>{r.ability}</Td>
                 <Td numeric>{r.uses}</Td>
-                <Td numeric>{two(r.perFightWon)}</Td>
-                <Td numeric>{two(r.perFightLost)}</Td>
+                <Td numeric>{formatRatio(r.perFightWon)}</Td>
+                <Td numeric>{formatRatio(r.perFightLost)}</Td>
                 <Td numeric>{winLoss(r.with)}</Td>
                 <Td numeric>{winLoss(r.without)}</Td>
                 <Td numeric>{lift(r.lift)}</Td>
