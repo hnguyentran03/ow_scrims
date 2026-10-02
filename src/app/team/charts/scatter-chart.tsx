@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Axes, H, linear, M, svgPoint, ticks, Tooltip, W } from "@/components/chart-utils";
+import { Axes, H, linear, M, ticks, Tooltip, W } from "@/components/chart-utils";
 import { EmptyState } from "@/components/empty-state";
 import { Field, Select } from "@/components/field";
 import { ROLE_COLORS } from "@/lib/colors";
@@ -13,6 +13,11 @@ import { STAT_KEYS, STAT_LABELS, type StatKey } from "@/lib/stats/stat-keys";
 
 const CUSTOM = "custom";
 const HOVER_RADIUS = 12;
+/** Room outside the shared chart box for the rotated y-axis title and the x-axis title. */
+const TITLE_LEFT = 16;
+const TITLE_BOTTOM = 18;
+const VIEW_W = W + TITLE_LEFT;
+const VIEW_H = H + TITLE_BOTTOM;
 
 /** Ticks for [0, maxRaw] plus one more step above the data, so the top tick is drawn and the outermost point never sits on the plot edge. */
 function domain(maxRaw: number): { max: number; ticks: number[] } {
@@ -58,7 +63,10 @@ export function ScatterChart({ points }: { points: ScatterPoint[] }) {
     if (axis === "x") setX(key); else setY(key);
   }
   function onMove(e: React.MouseEvent<SVGSVGElement>) {
-    const { x: mx, y: my } = svgPoint(e);
+    // The plot sits TITLE_LEFT units right of the viewBox origin; svgPoint assumes the shared W×H box, so map by hand.
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mx = ((e.clientX - rect.left) / rect.width) * VIEW_W - TITLE_LEFT;
+    const my = ((e.clientY - rect.top) / rect.height) * VIEW_H;
     let best: { d: number; p: ScatterPoint } | null = null;
     for (const p of shown) {
       const d = Math.hypot(sx(p.per10[x]) - mx, sy(p.per10[y]) - my);
@@ -116,7 +124,10 @@ export function ScatterChart({ points }: { points: ScatterPoint[] }) {
         <EmptyState>No points for this hero in this range.</EmptyState>
       ) : (
         <>
-          <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`${xLabel} against ${yLabel} per 10 minutes`} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+          <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="w-full" role="img" aria-label={`${xLabel} against ${yLabel} per 10 minutes`} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+            <text transform={`translate(11,${(M.top + H - M.bottom) / 2}) rotate(-90)`} textAnchor="middle" fontSize={11} className="fill-muted">{yLabel} per 10 minutes</text>
+            <text x={TITLE_LEFT + (M.left + W - M.right) / 2} y={H + 12} textAnchor="middle" fontSize={11} className="fill-muted">{xLabel} per 10 minutes</text>
+            <g transform={`translate(${TITLE_LEFT},0)`}>
             <Axes yTicks={yDomain.ticks} yScale={sy} yFormat={formatPer10} xTicks={xDomain.ticks} xScale={sx} xFormat={formatPer10} />
             <clipPath id={clipId}>
               <rect x={M.left} y={M.top} width={W - M.left - M.right} height={H - M.top - M.bottom} />
@@ -137,8 +148,8 @@ export function ScatterChart({ points }: { points: ScatterPoint[] }) {
                 `${yLabel}: ${formatPer10(hover.per10[y])}`,
               ]} />
             )}
+            </g>
           </svg>
-          <p className="text-xs text-muted">{xLabel} per 10 minutes across, {yLabel} per 10 minutes up.</p>
         </>
       )}
     </div>
