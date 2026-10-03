@@ -41,6 +41,7 @@ export interface RadarAxis {
 export interface RadarOpponent {
   name: string;
   hero: string;
+  /** The role the comparison was made in (the viewing player's role); the opponent's rows outside it are not measured. */
   role: Role;
 }
 

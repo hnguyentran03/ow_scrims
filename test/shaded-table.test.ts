@@ -80,11 +80,13 @@ describe("matrixToShaded", () => {
       {
         key: "P",
         label: "P",
+        title: "P",
         cells: [{ value: 0.5, text: "1-1", title: "1-1, 50%" }, null],
       },
       {
         key: "Q",
         label: "Q",
+        title: "Q",
         cells: [null, { value: null, text: "0-0", title: "0-0, 1 undecided, –" }],
       },
     ]);

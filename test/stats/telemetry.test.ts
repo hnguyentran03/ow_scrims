@@ -157,15 +157,15 @@ describe("radar counterpart in role", () => {
   it("measures a flex enemy by their time in the player's role and labels them with that role's hero", () => {
     const stats = [
       stat("Team 1", "me", "Reinhardt", { heroDamageDealt: 1000 }),
-      stat("Team 2", "flex", "Zarya", { heroTimePlayed: 400, heroDamageDealt: 2000, deaths: 2 }),
-      stat("Team 2", "flex", "Tracer", { heroTimePlayed: 200, heroDamageDealt: 9000, deaths: 10 }),
+      stat("Team 2", "flex", "Zarya", { heroTimePlayed: 200, heroDamageDealt: 2000, deaths: 2 }),
+      stat("Team 2", "flex", "Tracer", { heroTimePlayed: 400, heroDamageDealt: 9000, deaths: 10 }),
     ];
     const t = buildTelemetry({ map, damage: [], playerStats: stats });
     const me = t.players.find((p) => p.name === "me")!;
     expect(me.radar.opponent).toEqual({ name: "flex", hero: "Zarya", role: "Tank" });
     const damage = me.radar.axes.find((a) => a.label === "Hero damage")!;
-    expect(damage.opponent).toBe(3000); // 2000 over 400 s, per 10 minutes
+    expect(damage.opponent).toBe(6000); // 2000 over 200 s, per 10 minutes
     const deaths = me.radar.axes.find((a) => a.label === "Deaths")!;
-    expect(deaths.opponent).toBe(3);
+    expect(deaths.opponent).toBe(6);
   });
 });

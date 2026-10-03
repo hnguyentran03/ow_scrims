@@ -13,6 +13,7 @@ export function matrixToShaded(matrix: PlayerMapMatrix): { columns: ShadedColumn
     rows: matrix.rows.map((r) => ({
       key: r.name,
       label: r.name,
+      title: r.name,
       cells: r.cells.map((cell) => (cell ? { value: cell.winRate, text: `${cell.won}-${cell.lost}`, title: cellTitle(cell) } : null)),
     })),
   };

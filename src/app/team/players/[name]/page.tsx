@@ -45,7 +45,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
   const hero = parseHero(query, heroes);
   // A ?hero= the new range cannot satisfy would otherwise be silently ignored and kept in the URL.
   // An empty value is the hero select's own "all heroes" choice, not a stale filter, so it stays.
-  if (typeof query.hero === "string" && query.hero !== "" && hero === undefined) redirect(`/team/players/${encodeURIComponent(name)}${rangeQuery(range)}`);
+  if (query.hero !== undefined && query.hero !== "" && hero === undefined) redirect(`/team/players/${encodeURIComponent(name)}${rangeQuery(range)}`);
   const p = buildPlayerPage(rows.maps, rows, name, hero);
   const hidden: Array<[string, string]> = [];
   if (range.from) hidden.push(["from", range.from]);

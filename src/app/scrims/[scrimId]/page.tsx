@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/page-header";
 import { getDb } from "@/lib/db";
 import { getScrim } from "@/lib/db/queries";
 import { resultLabel } from "@/lib/format";
+import { parsePositiveInt } from "@/lib/ids";
 import { resultTone } from "@/lib/result";
 import { deleteMapAction, deleteScrimAction } from "@/app/actions";
 import { AddMapForm } from "./add-map-form";
@@ -16,8 +17,8 @@ import { BansEditor } from "./bans-editor";
 export const dynamic = "force-dynamic";
 
 export default async function ScrimPage({ params }: { params: Promise<{ scrimId: string }> }) {
-  const scrimId = Number((await params).scrimId);
-  if (!Number.isInteger(scrimId)) notFound();
+  const scrimId = parsePositiveInt((await params).scrimId);
+  if (scrimId === null) notFound();
   const data = await getScrim(await getDb(), scrimId);
   if (!data) notFound();
   const { scrim, maps, bans } = data;

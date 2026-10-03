@@ -109,7 +109,10 @@ export interface PlayerCards {
   killsPerUlt: { ults: number; kills: number; perUlt: number | null };
   avgChargeSeconds: number | null;
   avgHoldSeconds: number | null;
-  /** Timings behind each average: casts with both a charge moment and a hold. */
+  /**
+   * Timings behind each average: casts with both a charge moment and a hold.
+   * Both counts are always equal — kept as two fields so each hint names its own count.
+   */
   chargeSamples: number;
   holdSamples: number;
 }

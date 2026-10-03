@@ -35,7 +35,7 @@ Each map card on the scrim page has a hero bans editor for both teams.
 
 ```
 src/app/            Next.js pages (scrim list, scrim detail, map overview/killfeed/charts/events/compare/telemetry/heatmap/replay, team overview/trends/teamfights/players roster and player detail, maps index and stage calibration), server actions, the map upload and map image route handlers, and the killfeed CSV route
-src/components/      Shared primitives: button, field/input/select, badge, card, stat, table, tabs, page header, scoreboard, dropzone, empty state, skeleton, and the SVG chart helpers
+src/components/      Shared primitives: button, field/input/select, badge, card, stat, table, shaded table, tabs, page header, scoreboard, dropzone, empty state, skeleton, and the SVG chart helpers
 src/lib/parser/      Tokenizer, sanitizer, and descriptor-driven event coercion
 src/lib/db/          Drizzle schema, PGlite/Postgres connection, queries, and map insertion
 src/lib/stats/       Pure computation: fights, heroes (role map), sides, rounds, overview, killfeed, killfeed-csv, events, charts, compare, ultimates, ult-analysis, ult-impact, ability-impact, tempo, telemetry, team-rows, trends, teamfights, team-overview, roster, player, player-cards, initiation, heatmap, territory, and the replay modules (positions, calibration, stages, tracks, replay, playback)

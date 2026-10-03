@@ -9,4 +9,10 @@ describe("upload route id parsing", () => {
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "invalid scrim id" });
   });
+
+  it("passes a valid id through the guard", async () => {
+    const res = await call("1");
+    const body = await res.json();
+    expect(body).not.toEqual({ error: "invalid scrim id" });
+  });
 });
