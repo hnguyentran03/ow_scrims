@@ -223,15 +223,27 @@ export async function setMapBans(db: Db, mapId: number, side: 1 | 2, heroes: str
   });
 }
 
+/** The name of our team on a map, whichever side we were on. */
+const OUR_TEAM = sql`case when ${maps.ourSide} = 1 then ${maps.team1Name} else ${maps.team2Name} end`;
+
 /** Distinct player names on our side over the `limit` most recently uploaded maps. Feeds side inference for bulk upload. */
 export async function recentOurRoster(db: Db, limit = 20): Promise<Set<string>> {
   const recent = db.select({ id: maps.id }).from(maps).orderBy(desc(maps.uploadedAt), desc(maps.id)).limit(limit);
-  const ourTeam = sql`case when ${maps.ourSide} = 1 then ${maps.team1Name} else ${maps.team2Name} end`;
   const rows = await db
     .selectDistinct({ name: playerStat.playerName })
     .from(playerStat)
     .innerJoin(maps, eq(maps.id, playerStat.mapId))
-    .where(and(inArray(playerStat.mapId, recent), eq(playerStat.playerTeam, ourTeam)));
+    .where(and(inArray(playerStat.mapId, recent), eq(playerStat.playerTeam, OUR_TEAM)));
+  return new Set(rows.map((r) => r.name));
+}
+
+/** Every distinct name that ever played on our side, across every map. Tells an off-range teammate from a stranger. */
+export async function ourRoster(db: Db): Promise<Set<string>> {
+  const rows = await db
+    .selectDistinct({ name: playerStat.playerName })
+    .from(playerStat)
+    .innerJoin(maps, eq(maps.id, playerStat.mapId))
+    .where(eq(playerStat.playerTeam, OUR_TEAM));
   return new Set(rows.map((r) => r.name));
 }
 

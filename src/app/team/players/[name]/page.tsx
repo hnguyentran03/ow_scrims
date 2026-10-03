@@ -1,12 +1,14 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { Stat } from "@/components/stat";
 import { Table, Td, Th } from "@/components/table";
 import { getDb } from "@/lib/db";
-import { getTeamRows } from "@/lib/db/queries";
+import { getTeamRows, ourRoster } from "@/lib/db/queries";
 import { formatDuration, formatInt, formatPct, formatPer10, formatRatio, formatSeconds } from "@/lib/format";
-import { parseHero, parseRange, type SearchParams } from "@/lib/range";
+import { nameCandidates } from "@/lib/player-name";
+import { parseHero, parseRange, rangeQuery, type SearchParams } from "@/lib/range";
 import { BEST_PERFORMANCE_MIN_SECONDS, buildPlayerPage, playerHeroes, resolvePlayerName, type BestPerformance, type HeroCount, type MethodCount, type PlayerCards } from "@/lib/stats/player";
 import { MIN_PROFILE_MAPS, MIN_PROFILE_SECONDS, type PersonalRecord, type ProfileCards } from "@/lib/stats/player-cards";
 import { Card } from "@/components/card";
@@ -24,12 +26,26 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
   const { name: raw } = await params;
   const query = await searchParams;
   const range = parseRange(query);
-  const rows = await getTeamRows(await getDb(), range, { playerStats: true, kills: true, ults: true, charged: true, rounds: true });
+  const db = await getDb();
+  const rows = await getTeamRows(db, range, { playerStats: true, kills: true, ults: true, charged: true, rounds: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const name = resolvePlayerName(rows.maps, rows.playerStats, raw);
-  if (name === undefined) notFound();
+  if (name === undefined) {
+    const known = await ourRoster(db);
+    const candidate = nameCandidates(raw).find((n) => known.has(n));
+    if (candidate === undefined) notFound();
+    return (
+      <div className="space-y-8">
+        <PageHeader title={candidate} level={2} />
+        <EmptyState>No maps for {candidate} in this range. Widen the dates.</EmptyState>
+      </div>
+    );
+  }
   const heroes = playerHeroes(rows.maps, rows.playerStats, name);
-  const p = buildPlayerPage(rows.maps, rows, name, parseHero(query, heroes));
+  const hero = parseHero(query, heroes);
+  // A ?hero= the new range cannot satisfy would otherwise be silently ignored and kept in the URL.
+  if (hero === undefined && typeof query.hero === "string") redirect(`/team/players/${encodeURIComponent(name)}${rangeQuery(range)}`);
+  const p = buildPlayerPage(rows.maps, rows, name, hero);
   const hidden: Array<[string, string]> = [];
   if (range.from) hidden.push(["from", range.from]);
   if (range.to) hidden.push(["to", range.to]);
@@ -137,8 +153,8 @@ function Cards({ c }: { c: PlayerCards }) {
       <Stat label="First death %" value={formatPct(c.firstDeath.rate)} hint={`${c.firstDeath.count} of ${c.firstDeath.fights} fights on maps played`} />
       <Stat label="Reversal %" value={formatPct(c.reversal.rate)} hint={`${c.reversal.won} won of ${c.reversal.count} first deaths`} />
       <Stat label="Kills per ult" value={formatRatio(c.killsPerUlt.perUlt)} hint={`${c.killsPerUlt.kills} kills over ${c.killsPerUlt.ults} ults`} />
-      <Stat label="Avg ult charge" value={formatSeconds(c.avgChargeSeconds)} hint="previous cast to charged" />
-      <Stat label="Avg ult hold" value={formatSeconds(c.avgHoldSeconds)} hint="charged to cast" />
+      <Stat label="Avg ult charge" value={formatSeconds(c.avgChargeSeconds)} hint={`previous cast to charged, ${c.chargeSamples} samples`} />
+      <Stat label="Avg ult hold" value={formatSeconds(c.avgHoldSeconds)} hint={`charged to cast, ${c.holdSamples} samples`} />
     </div>
   );
 }

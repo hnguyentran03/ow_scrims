@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { createTestDb, type Db } from "@/lib/db";
-import { createScrim, deleteMap, getMap, getScrim, getTelemetryRows, getTeamRows, recentOurRoster, setMapBans } from "@/lib/db/queries";
+import { createScrim, deleteMap, getMap, getScrim, getTelemetryRows, getTeamRows, ourRoster, recentOurRoster, setMapBans } from "@/lib/db/queries";
 import { insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
@@ -72,6 +72,16 @@ describe("team queries", () => {
     expect(all).toEqual(new Set(["StellBell", "meowzy", "Dyeonnie", "Kloverr", "sleepyme", "Doomfist", "Bastion", "Ashe", "Baptiste", "Ana"]));
     const latest = await recentOurRoster(db, 1);
     expect(latest).toEqual(new Set(["Doomfist", "Bastion", "Ashe", "Baptiste", "Ana"]));
+  });
+
+  it("lists every player who was ever on our side", async () => {
+    const all = await ourRoster(db);
+    expect(all.size).toBeGreaterThan(5);
+    // Both fixture maps are inside the default recent window, so the two must agree exactly — this is
+    // what catches a dropped our-side predicate, which the subset check below would still pass.
+    expect(all).toEqual(await recentOurRoster(db));
+    const recent = await recentOurRoster(db, 1);
+    for (const n of recent) expect(all.has(n)).toBe(true);
   });
 
   it("loads only the tables a page asks for", async () => {
