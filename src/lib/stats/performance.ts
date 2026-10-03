@@ -82,11 +82,12 @@ export function buildPerformance(maps: TeamMapLike[], playerStats: StatLike[], f
     const fights = fightsOf.get(map.id) ?? [];
     for (const cast of keptCasts(startsByMap.get(map.id) ?? [], endsByMap.get(map.id) ?? [])) {
       if (cast.team !== ours) continue;
-      const acc = roles.get(roleOf(cast.hero)) ?? emptyAcc();
+      const role = main.get(cast.player) ?? roleOf(cast.hero);
+      const acc = roles.get(role) ?? emptyAcc();
       acc.casts += 1;
       const index = fightIndexAt(cast.time, fights);
       if (index !== null && fights.find((f) => f.index === index)?.winner === ours) acc.castsWon += 1;
-      roles.set(roleOf(cast.hero), acc);
+      roles.set(role, acc);
     }
   }
 
