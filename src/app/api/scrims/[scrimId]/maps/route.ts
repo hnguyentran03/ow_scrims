@@ -1,11 +1,12 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
+import { parsePositiveInt } from "@/lib/ids";
 import { handleUpload, MAX_UPLOAD_BYTES, UploadError } from "@/lib/upload";
 
-export async function POST(request: Request, ctx: { params: Promise<{ scrimId: string }> }) {
-  const scrimId = Number((await ctx.params).scrimId);
-  if (!Number.isInteger(scrimId) || scrimId <= 0) {
+export async function POST(request: Request, ctx: RouteContext<"/api/scrims/[scrimId]/maps">) {
+  const scrimId = parsePositiveInt((await ctx.params).scrimId);
+  if (scrimId === null) {
     return NextResponse.json({ error: "invalid scrim id" }, { status: 400 });
   }
 
