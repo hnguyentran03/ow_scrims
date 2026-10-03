@@ -62,13 +62,9 @@ export interface Telemetry {
   players: TelemetryPlayer[];
 }
 
-export interface PlayerTotals {
-  team: string;
-  name: string;
-  hero: string;
-  role: Role;
+/** The stats shared by a whole-map total and a per-role total, so one picker reads either. */
+export interface Totalsish {
   time: number;
-  timeByRole: Record<Role, number>;
   eliminations: number;
   finalBlows: number;
   deaths: number;
@@ -78,9 +74,41 @@ export interface PlayerTotals {
   damageBlocked: number;
 }
 
+export interface RoleTotals extends Totalsish {
+  /** Most-played hero within the role, ties by name; "" when no time. */
+  hero: string;
+}
+
+export interface PlayerTotals extends Totalsish {
+  team: string;
+  name: string;
+  hero: string;
+  role: Role;
+  /** The same stats split by the role of each hero played; every role is present, zeroed when unplayed. */
+  byRole: Record<Role, RoleTotals>;
+}
+
 const zeroByRole = (): Record<Role, number> => ({ Tank: 0, Damage: 0, Support: 0, Unknown: 0 });
 
-/** One row per player with hero time, summed across heroes; role and hero are the ones with the most time. */
+const totalsOf = (rows: PlayerStatLike[]): Totalsish => {
+  const sum = (pick: (r: PlayerStatLike) => number) => rows.reduce((n, r) => n + pick(r), 0);
+  return {
+    time: sum((r) => r.heroTimePlayed),
+    eliminations: sum((r) => r.eliminations),
+    finalBlows: sum((r) => r.finalBlows),
+    deaths: sum((r) => r.deaths),
+    heroDamage: sum((r) => r.heroDamageDealt),
+    healing: sum((r) => r.healingDealt),
+    damageTaken: sum((r) => r.damageTaken),
+    damageBlocked: sum((r) => r.damageBlocked),
+  };
+};
+
+/** The hero with the most time, ties by name; "" when there are no rows. */
+const topHero = (rows: PlayerStatLike[]): string =>
+  [...rows].sort((a, b) => b.heroTimePlayed - a.heroTimePlayed || a.playerHero.localeCompare(b.playerHero))[0]?.playerHero ?? "";
+
+/** One row per player with hero time, summed across heroes and also split by role; role and hero are the ones with the most time. */
 export function playerTotals(playerStats: PlayerStatLike[]): PlayerTotals[] {
   const byPlayer = new Map<string, PlayerStatLike[]>();
   for (const r of finalRoundRows(playerStats)) {
@@ -89,25 +117,25 @@ export function playerTotals(playerStats: PlayerStatLike[]): PlayerTotals[] {
     byPlayer.set(key, [...(byPlayer.get(key) ?? []), r]);
   }
   return [...byPlayer.values()].map((rows) => {
-    const timeByRole = zeroByRole();
-    for (const r of rows) timeByRole[roleOf(r.playerHero)] += r.heroTimePlayed;
-    const role = ROLE_ORDER.reduce((best, r) => (timeByRole[r] > timeByRole[best] ? r : best), ROLE_ORDER[0]);
-    const top = [...rows].sort((a, b) => b.heroTimePlayed - a.heroTimePlayed || a.playerHero.localeCompare(b.playerHero))[0];
-    const sum = (pick: (r: PlayerStatLike) => number) => rows.reduce((n, r) => n + pick(r), 0);
+    const roleTotals = (role: Role): RoleTotals => {
+      const own = rows.filter((r) => roleOf(r.playerHero) === role);
+      return { ...totalsOf(own), hero: topHero(own) };
+    };
+    const byRole: Record<Role, RoleTotals> = {
+      Tank: roleTotals("Tank"),
+      Damage: roleTotals("Damage"),
+      Support: roleTotals("Support"),
+      Unknown: roleTotals("Unknown"),
+    };
+    const role = ROLE_ORDER.reduce((best, r) => (byRole[r].time > byRole[best].time ? r : best), ROLE_ORDER[0]);
+    const top = rows[0];
     return {
+      ...totalsOf(rows),
       team: top.playerTeam,
       name: top.playerName,
-      hero: top.playerHero,
+      hero: topHero(rows),
       role,
-      time: sum((r) => r.heroTimePlayed),
-      timeByRole,
-      eliminations: sum((r) => r.eliminations),
-      finalBlows: sum((r) => r.finalBlows),
-      deaths: sum((r) => r.deaths),
-      heroDamage: sum((r) => r.heroDamageDealt),
-      healing: sum((r) => r.healingDealt),
-      damageTaken: sum((r) => r.damageTaken),
-      damageBlocked: sum((r) => r.damageBlocked),
+      byRole,
     };
   });
 }
@@ -128,27 +156,32 @@ function roleShares(rows: DamageLike[], roleFor: (d: DamageLike) => Role): RoleS
   return ROLE_ORDER.map((role) => ({ role, damage: sum[role], share: total ? sum[role] / total : 0 }));
 }
 
-const ROLE_AXIS: Record<Role, { label: string; pick: (t: PlayerTotals) => number }> = {
+const ROLE_AXIS: Record<Role, { label: string; pick: (t: Totalsish) => number }> = {
   Support: { label: "Healing", pick: (t) => t.healing },
   Tank: { label: "Blocked", pick: (t) => t.damageBlocked },
   Damage: { label: "Damage taken", pick: (t) => t.damageTaken },
   Unknown: { label: "Damage taken", pick: (t) => t.damageTaken },
 };
 
-/** The enemy with the most hero time in the player's role (ties by name) and five per-10 axes against them. */
+/**
+ * The enemy with the most hero time in the player's role (ties by name) and five per-10 axes against them.
+ * The player's axes cover their whole map; the counterpart's cover only their rows in the player's role,
+ * and they are labelled with the hero they played most in it.
+ */
 function radarFor(player: PlayerTotals, all: PlayerTotals[]): TelemetryPlayer["radar"] {
   const opponent =
     all
-      .filter((o) => o.team !== player.team && o.timeByRole[player.role] > 0)
-      .sort((a, b) => b.timeByRole[player.role] - a.timeByRole[player.role] || a.name.localeCompare(b.name))[0] ?? null;
-  const axis = (label: string, pick: (t: PlayerTotals) => number): RadarAxis => {
+      .filter((o) => o.team !== player.team && o.byRole[player.role].time > 0)
+      .sort((a, b) => b.byRole[player.role].time - a.byRole[player.role].time || a.name.localeCompare(b.name))[0] ?? null;
+  const inRole = opponent?.byRole[player.role] ?? null;
+  const axis = (label: string, pick: (t: Totalsish) => number): RadarAxis => {
     const mine = per10(pick(player), player.time);
-    const theirs = opponent ? per10(pick(opponent), opponent.time) : 0;
+    const theirs = inRole ? per10(pick(inRole), inRole.time) : 0;
     return { label, player: mine, opponent: theirs, max: Math.max(mine, theirs) || 1 };
   };
   const roleAxis = ROLE_AXIS[player.role];
   return {
-    opponent: opponent ? { name: opponent.name, hero: opponent.hero, role: opponent.role } : null,
+    opponent: opponent && inRole ? { name: opponent.name, hero: inRole.hero, role: player.role } : null,
     axes: [
       axis("Elims", (t) => t.eliminations),
       axis("Final blows", (t) => t.finalBlows),
