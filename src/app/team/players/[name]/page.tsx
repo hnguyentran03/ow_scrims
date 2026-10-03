@@ -5,7 +5,7 @@ import { Stat } from "@/components/stat";
 import { Table, Td, Th } from "@/components/table";
 import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
-import { formatDuration, formatInt, formatPct, formatPer10, formatSeconds } from "@/lib/format";
+import { formatDuration, formatInt, formatPct, formatPer10, formatRatio, formatSeconds } from "@/lib/format";
 import { parseHero, parseRange, type SearchParams } from "@/lib/range";
 import { BEST_PERFORMANCE_MIN_SECONDS, buildPlayerPage, playerHeroes, resolvePlayerName, type BestPerformance, type HeroCount, type MethodCount, type PlayerCards } from "@/lib/stats/player";
 import { MIN_PROFILE_MAPS, MIN_PROFILE_SECONDS, type PersonalRecord, type ProfileCards } from "@/lib/stats/player-cards";
@@ -18,7 +18,6 @@ import { StatChart } from "./stat-chart";
 
 export const dynamic = "force-dynamic";
 
-const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
 const OUTCOME_LABEL = { won: "Won", lost: "Lost", undecided: "N/A" } as const;
 
 export default async function PlayerDetailPage({ params, searchParams }: { params: Promise<{ name: string }>; searchParams: SearchParams }) {
@@ -137,7 +136,7 @@ function Cards({ c }: { c: PlayerCards }) {
       <Stat label="First pick %" value={formatPct(c.firstPick.rate)} hint={`${c.firstPick.count} of ${c.firstPick.fights} fights on maps played; won ${c.firstPick.won}`} />
       <Stat label="First death %" value={formatPct(c.firstDeath.rate)} hint={`${c.firstDeath.count} of ${c.firstDeath.fights} fights on maps played`} />
       <Stat label="Reversal %" value={formatPct(c.reversal.rate)} hint={`${c.reversal.won} won of ${c.reversal.count} first deaths`} />
-      <Stat label="Kills per ult" value={two(c.killsPerUlt.perUlt)} hint={`${c.killsPerUlt.kills} kills over ${c.killsPerUlt.ults} ults`} />
+      <Stat label="Kills per ult" value={formatRatio(c.killsPerUlt.perUlt)} hint={`${c.killsPerUlt.kills} kills over ${c.killsPerUlt.ults} ults`} />
       <Stat label="Avg ult charge" value={formatSeconds(c.avgChargeSeconds)} hint="previous cast to charged" />
       <Stat label="Avg ult hold" value={formatSeconds(c.avgHoldSeconds)} hint="charged to cast" />
     </div>

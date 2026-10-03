@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { EmptyState } from "@/components/empty-state";
 import { Table, Td, Th } from "@/components/table";
-import { formatPct } from "@/lib/format";
+import { formatPct, formatRatio } from "@/lib/format";
 import type { SideKey } from "@/lib/stats/sides";
 import type { ImpactRatio, UltImpactRow } from "@/lib/stats/ult-impact";
 import { SideToggle } from "../side-toggle";
@@ -11,7 +11,6 @@ import { SideToggle } from "../side-toggle";
 /** "3–1 (75%)": wins, losses among decided fights, and the rate; draws are in the count but shown nowhere. */
 export const winLoss = (r: ImpactRatio) => (r.count === 0 ? "–" : `${r.won}–${r.decided - r.won} (${formatPct(r.rate)})`);
 export const lift = (v: number | null) => (v === null ? "–" : `${v > 0 ? "+" : ""}${Math.round(v * 100)}%`);
-const two = (v: number | null) => (v === null ? "–" : v.toFixed(2));
 
 export function UltImpactTable({ ours, theirs }: { ours: UltImpactRow[]; theirs: UltImpactRow[] }) {
   const [side, setSide] = useState<SideKey>("ours");
@@ -34,7 +33,7 @@ export function UltImpactTable({ ours, theirs }: { ours: UltImpactRow[]; theirs:
                 <Td numeric>{winLoss(r.with)}</Td>
                 <Td numeric>{winLoss(r.without)}</Td>
                 <Td numeric>{lift(r.lift)}</Td>
-                <Td numeric>{two(r.conversionKillsPerCast)}</Td>
+                <Td numeric>{formatRatio(r.conversionKillsPerCast)}</Td>
               </tr>
             ))}
           </tbody>

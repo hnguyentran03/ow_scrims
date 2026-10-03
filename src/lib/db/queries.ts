@@ -6,6 +6,8 @@ import {
 } from "./schema";
 import type { DamageLite } from "@/lib/stats/initiation";
 import { isCalibrated } from "@/lib/stats/calibration";
+import type { AbilityLike } from "@/lib/stats/ability-impact";
+import type { MapKeyed } from "@/lib/stats/team-rows";
 
 export type { DamageLite };
 
@@ -27,8 +29,6 @@ export type UltChargedRow = typeof ultimateCharged.$inferSelect;
 export type DamageRow = typeof damage.$inferSelect;
 export type HealingRow = typeof healing.$inferSelect;
 export type AbilityRow = typeof ability1Used.$inferSelect;
-/** An ability_1_used or ability_2_used row tagged with its slot. */
-export type SlottedAbilityRow = AbilityRow & { slot: 1 | 2 };
 export type SpawnRow = typeof heroSpawn.$inferSelect;
 export type ObjectiveUpdatedRow = typeof objectiveUpdated.$inferSelect;
 export type MapImageRow = typeof mapImages.$inferSelect;
@@ -52,8 +52,9 @@ export interface TeamRows {
   ultCharged: UltChargedRow[];
   playerStats: PlayerStatRow[];
   bans: MapBanRow[];
-  abilities: SlottedAbilityRow[];
+  abilities: (AbilityLike & MapKeyed)[];
   roundStarts: RoundStartRow[];
+  damage: (DamageLite & MapKeyed)[];
 }
 
 export interface ScrimSummary {
@@ -178,15 +179,13 @@ export async function getTelemetryRows(db: Db, mapId: number): Promise<{ damage:
   return { damage: damageRows, playerStats };
 }
 
-/** Kills plus the five damage columns fight initiation needs, both in match-time order; the rest of the damage row never leaves the database. */
-export async function getInitiationRows(db: Db, mapId: number): Promise<{ kills: KillRow[]; damage: DamageLite[] }> {
-  const kills = await killsFor(db, mapId);
-  const damageRows = await db
+/** The five damage columns initiation needs, in match-time order. Kills come from the page's own row set. */
+export async function getInitiationDamage(db: Db, mapId: number): Promise<DamageLite[]> {
+  return db
     .select({ matchTime: damage.matchTime, attackerTeam: damage.attackerTeam, attackerName: damage.attackerName, attackerHero: damage.attackerHero, victimTeam: damage.victimTeam })
     .from(damage)
     .where(eq(damage.mapId, mapId))
     .orderBy(asc(damage.matchTime), asc(damage.id));
-  return { kills, damage: damageRows };
 }
 
 /** Every row the replay tab needs: the events set plus positions (damage, healing, abilities), spawns, charge, and stats. */
@@ -245,14 +244,18 @@ export interface TeamTables {
   bans?: boolean;
   abilities?: boolean; // ability_1_used and ability_2_used, merged in time order
   rounds?: boolean; // round_start
+  damage?: boolean; // the five initiation columns only; about fifty times the kill volume
 }
 
-export const ALL_TEAM_TABLES: TeamTables = { kills: true, ults: true, charged: true, playerStats: true, bans: true, abilities: true, rounds: true };
+export const ALL_TEAM_TABLES: TeamTables = { kills: true, ults: true, charged: true, playerStats: true, bans: true, abilities: true, rounds: true, damage: true };
 
-/** Both ability tables for the given maps, merged by match time with slot 1 first on a tie. */
-async function abilitiesFor(db: Db, ids: number[]): Promise<SlottedAbilityRow[]> {
-  const a1 = await db.select().from(ability1Used).where(inArray(ability1Used.mapId, ids)).orderBy(asc(ability1Used.matchTime), asc(ability1Used.id));
-  const a2 = await db.select().from(ability2Used).where(inArray(ability2Used.mapId, ids)).orderBy(asc(ability2Used.matchTime), asc(ability2Used.id));
+/** Both ability tables for the given maps, five columns each, merged by match time with slot 1 first on a tie. */
+async function abilitiesFor(db: Db, ids: number[]): Promise<(AbilityLike & MapKeyed)[]> {
+  const cols = (t: typeof ability1Used | typeof ability2Used) => ({ mapId: t.mapId, matchTime: t.matchTime, playerTeam: t.playerTeam, playerName: t.playerName, playerHero: t.playerHero });
+  const [a1, a2] = await Promise.all([
+    db.select(cols(ability1Used)).from(ability1Used).where(inArray(ability1Used.mapId, ids)).orderBy(asc(ability1Used.matchTime), asc(ability1Used.id)),
+    db.select(cols(ability2Used)).from(ability2Used).where(inArray(ability2Used.mapId, ids)).orderBy(asc(ability2Used.matchTime), asc(ability2Used.id)),
+  ]);
   return [...a1.map((r) => ({ ...r, slot: 1 as const })), ...a2.map((r) => ({ ...r, slot: 2 as const }))].sort((x, y) => x.matchTime - y.matchTime || x.slot - y.slot);
 }
 
@@ -268,7 +271,9 @@ export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTab
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(asc(scrims.date), asc(scrims.id), asc(maps.order));
   const ids = mapRows.map((m) => m.id);
-  if (ids.length === 0) return { maps: mapRows, kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [] };
+  if (ids.length === 0) {
+    return { maps: mapRows, kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [], damage: [] };
+  }
   const kills = tables.kills ? await db.select().from(kill).where(inArray(kill.mapId, ids)).orderBy(asc(kill.matchTime), asc(kill.id)) : [];
   const ultStarts = tables.ults
     ? await db.select().from(ultimateStart).where(inArray(ultimateStart.mapId, ids)).orderBy(asc(ultimateStart.matchTime), asc(ultimateStart.id))
@@ -287,7 +292,14 @@ export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTab
   const roundStarts = tables.rounds
     ? await db.select().from(roundStart).where(inArray(roundStart.mapId, ids)).orderBy(asc(roundStart.matchTime), asc(roundStart.id))
     : [];
-  return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans, abilities, roundStarts };
+  const damageRows = tables.damage
+    ? await db
+        .select({ mapId: damage.mapId, matchTime: damage.matchTime, attackerTeam: damage.attackerTeam, attackerName: damage.attackerName, attackerHero: damage.attackerHero, victimTeam: damage.victimTeam })
+        .from(damage)
+        .where(inArray(damage.mapId, ids))
+        .orderBy(asc(damage.matchTime), asc(damage.id))
+    : [];
+  return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans, abilities, roundStarts, damage: damageRows };
 }
 
 export async function setMapWinner(db: Db, mapId: number, side: 1 | 2): Promise<void> {

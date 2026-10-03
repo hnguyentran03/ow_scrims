@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { groupFights, killKind, type KillLike } from "@/lib/stats/fights";
+import { fightsByMap, groupFights, killKind, type KillLike } from "@/lib/stats/fights";
 
 const k = (matchTime: number, victimTeam: string, victimName: string): KillLike => ({
   matchTime,
@@ -63,5 +63,16 @@ describe("fight scoring", () => {
     expect(killKind(kill(1, "A", "a", "A", "a"))).toBe("suicide");
     expect(killKind(kill(1, "A", "a", "A", "a", { isEnvironmental: "True" }))).toBe("environmental");
     expect(killKind(kill(1, "A", "0", "B", "0"))).toBe("kill");
+  });
+});
+
+describe("fightsByMap", () => {
+  it("groups fights per map and leaves maps without kills absent", () => {
+    const row = (mapId: number, matchTime: number) => ({ mapId, matchTime, attackerTeam: "A", attackerName: "a", victimTeam: "B", victimName: "b" });
+    const by = fightsByMap([row(2, 5), row(1, 10), row(1, 100), row(2, 6)]);
+    expect([...by.keys()].sort()).toEqual([1, 2]);
+    expect(by.get(1)!.map((f) => f.index)).toEqual([1, 2]);
+    expect(by.get(2)).toHaveLength(1);
+    expect(by.get(3)).toBeUndefined();
   });
 });

@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db";
 import { getTeamRows } from "@/lib/db/queries";
 import { formatPct } from "@/lib/format";
 import { parseRange, type SearchParams } from "@/lib/range";
+import { fightsByMap } from "@/lib/stats/fights";
 import { buildPerformance } from "@/lib/stats/performance";
 import { buildTeamOverview, MIN_MAP_PLAYS, type ModeExtremes } from "@/lib/stats/team-overview";
 import type { MapRecord, TypeRecord } from "@/lib/stats/trends";
@@ -17,7 +18,7 @@ export default async function TeamOverviewPage({ searchParams }: { searchParams:
   const rows = await getTeamRows(await getDb(), parseRange(await searchParams), { playerStats: true, kills: true, ults: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const o = buildTeamOverview(rows.maps, rows.playerStats);
-  const perf = buildPerformance(rows.maps, rows.playerStats, rows.kills, rows.ultStarts, rows.ultEnds);
+  const perf = buildPerformance(rows.maps, rows.playerStats, fightsByMap(rows.kills), rows.ultStarts, rows.ultEnds);
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,4 @@
-import { fightIndexAt, groupFights, type KillLike } from "./fights";
+import { fightIndexAt, type Fight, type KillLike } from "./fights";
 import { ROLE_ORDER, roleOf, type Role } from "./heroes";
 import { per10 } from "./overview";
 import { sides } from "./sides";
@@ -56,9 +56,8 @@ interface RoleAcc {
 const emptyAcc = (): RoleAcc => ({ playtime: 0, maps: new Set(), finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0, casts: 0, castsWon: 0 });
 
 /** Per-role cards over our side's maps in range. */
-export function buildPerformance(maps: TeamMapLike[], playerStats: StatLike[], kills: KillRowLike[], ultStarts: UltRowLike[], ultEnds: UltRowLike[]): Performance {
+export function buildPerformance(maps: TeamMapLike[], playerStats: StatLike[], fightsOf: Map<number, Fight[]>, ultStarts: UltRowLike[], ultEnds: UltRowLike[]): Performance {
   const finals = finalsByMap(playerStats);
-  const killsByMap = groupByMap(kills);
   const startsByMap = groupByMap(ultStarts);
   const endsByMap = groupByMap(ultEnds);
   const roles = new Map<Role, RoleAcc>();
@@ -80,7 +79,7 @@ export function buildPerformance(maps: TeamMapLike[], playerStats: StatLike[], k
       roles.set(role, acc);
     }
 
-    const fights = groupFights(killsByMap.get(map.id) ?? []);
+    const fights = fightsOf.get(map.id) ?? [];
     for (const cast of keptCasts(startsByMap.get(map.id) ?? [], endsByMap.get(map.id) ?? [])) {
       if (cast.team !== ours) continue;
       const acc = roles.get(roleOf(cast.hero)) ?? emptyAcc();

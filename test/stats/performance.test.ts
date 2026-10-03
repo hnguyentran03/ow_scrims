@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { KillLike } from "@/lib/stats/fights";
+import { fightsByMap, type KillLike } from "@/lib/stats/fights";
 import { buildPerformance, mainRoles, type KillRowLike, type UltRowLike } from "@/lib/stats/performance";
 import type { MapKeyed, StatLike, TeamMapLike } from "@/lib/stats/team-rows";
 import { sampleMapRows } from "./sample-rows";
@@ -40,29 +40,29 @@ describe("mainRoles", () => {
 
 describe("buildPerformance roles", () => {
   it("sums each role over our side's final rows and rates per 10 minutes of role time", () => {
-    const p = buildPerformance([map(1)], fiveStack(1), [], [], []);
+    const p = buildPerformance([map(1)], fiveStack(1), fightsByMap([]), [], []);
     expect(p.roles.map((r) => r.role)).toEqual(["Tank", "Damage", "Support"]);
     const damage = p.roles[1];
     expect(damage).toMatchObject({ playtime: 1200, maps: 1, kd: 2, damagePer10: 7500, healingPer10: 0, deathsPer10: 4, casts: 0, ultEfficiency: null });
   });
   it("credits a flexed player's whole map to their main role and gives null K/D with no deaths", () => {
     const rows = [stat(1, "Flex", "Reinhardt", 200, { finalBlows: 1, deaths: 0 }), stat(1, "Flex", "Tracer", 400, { finalBlows: 3, deaths: 0 })];
-    const p = buildPerformance([map(1)], rows, [], [], []);
+    const p = buildPerformance([map(1)], rows, fightsByMap([]), [], []);
     expect(p.roles).toHaveLength(1);
     expect(p.roles[0]).toMatchObject({ role: "Damage", playtime: 600, kd: null });
   });
   it("returns no roles for no maps", () => {
-    expect(buildPerformance([], [], [], [], [])).toEqual({ roles: [] });
+    expect(buildPerformance([], [], fightsByMap([]), [], [])).toEqual({ roles: [] });
   });
   it("ignores the other side and skips roles with no time", () => {
-    const p = buildPerformance([map(1)], [stat(1, "Enemy", "Ana", 600, { playerTeam: "B" }), stat(1, "Ours", "Tracer", 600)], [], [], []);
+    const p = buildPerformance([map(1)], [stat(1, "Enemy", "Ana", 600, { playerTeam: "B" }), stat(1, "Ours", "Tracer", 600)], fightsByMap([]), [], []);
     expect(p.roles.map((r) => r.role)).toEqual(["Damage"]);
   });
   it("rates ult efficiency as casts in won fights over casts, attributing casts like the teamfights tab", () => {
     // Fight 1 at 10–11 won by A; fight 2 at 50–51 won by B; a cast at 200 has no fight.
     const kills = [kill(1, 10), kill(1, 11), kill(1, 50, "B", "A"), kill(1, 51, "B", "A")];
     const starts = [ult(1, 9, "T", "Reinhardt"), ult(1, 50.5, "T", "Reinhardt"), ult(1, 200, "S1", "Ana"), ult(1, 10.5, "E", "Ana", "B")];
-    const p = buildPerformance([map(1)], fiveStack(1), kills, starts, []);
+    const p = buildPerformance([map(1)], fiveStack(1), fightsByMap(kills), starts, []);
     const by = Object.fromEntries(p.roles.map((r) => [r.role, r]));
     expect(by.Tank).toMatchObject({ casts: 2, ultEfficiency: 0.5 });
     expect(by.Support).toMatchObject({ casts: 1, ultEfficiency: 0 });
@@ -73,7 +73,7 @@ describe("buildPerformance roles", () => {
 describe("buildPerformance on a sample log", () => {
   it("pins the Antarctic Peninsula role cards", () => {
     const s = sampleMapRows("Log-2026-04-15-21-12-58", 1, 1);
-    const p = buildPerformance([s.map], s.playerStats, s.kills as (KillLike & MapKeyed)[], s.starts, s.ends);
+    const p = buildPerformance([s.map], s.playerStats, fightsByMap(s.kills as (KillLike & MapKeyed)[]), s.starts, s.ends);
     expect(p.roles.map((r) => r.role)).toEqual(["Tank", "Damage", "Support"]);
     for (const r of p.roles) {
       expect(r.maps).toBe(1);

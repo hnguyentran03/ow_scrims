@@ -1,4 +1,4 @@
-import { fightIndexAt, groupFights, type KillLike } from "./fights";
+import { fightIndexAt, type Fight } from "./fights";
 import { abilityName } from "./heroes";
 import { sideOf, sides, type SideKey } from "./sides";
 import { finalsByMap, groupByMap, type MapKeyed, type StatLike, type TeamMapLike } from "./team-rows";
@@ -52,8 +52,7 @@ const newAcc = (hero: string, slot: 1 | 2): Acc => ({ hero, slot, uses: 0, with:
 const SIDES: SideKey[] = ["ours", "theirs"];
 const key = (hero: string, slot: 1 | 2) => `${hero}|${slot}`;
 
-export function buildAbilityImpact(maps: TeamMapLike[], kills: (KillLike & MapKeyed)[], abilities: (AbilityLike & MapKeyed)[], playerStats: StatLike[]): AbilityImpact {
-  const killsBy = groupByMap(kills);
+export function buildAbilityImpact(maps: TeamMapLike[], fightsOf: Map<number, Fight[]>, abilities: (AbilityLike & MapKeyed)[], playerStats: StatLike[]): AbilityImpact {
   const abilitiesBy = groupByMap(abilities);
   const finals = finalsByMap(playerStats);
   const acc: Record<SideKey, Map<string, Acc>> = { ours: new Map(), theirs: new Map() };
@@ -62,7 +61,7 @@ export function buildAbilityImpact(maps: TeamMapLike[], kills: (KillLike & MapKe
     const mapAbilities = abilitiesBy.get(map.id) ?? [];
     if (mapAbilities.length === 0) continue;
     const s = sides(map);
-    const fights = groupFights(killsBy.get(map.id) ?? []);
+    const fights = fightsOf.get(map.id) ?? [];
     const rows = mapAbilities.map((r) => ({ ...r, side: sideOf(r.playerTeam, s), fightIndex: fightIndexAt(r.matchTime, fights) }));
     const mapFinals = finals.get(map.id) ?? [];
 
@@ -92,8 +91,9 @@ export function buildAbilityImpact(maps: TeamMapLike[], kills: (KillLike & MapKe
           const n = perFight.get(f.index) ?? 0;
           if (n === 0 && !played.has(a.hero)) continue;
           tally(n > 0 ? a.with : a.without, f, side, s);
-          if (f.winner === null) continue;
-          if (sideOf(f.winner, s) === side) { a.wonFights += 1; a.wonUses += n; }
+          const winner = f.winner === null ? null : sideOf(f.winner, s);
+          if (winner === null) continue;
+          if (winner === side) { a.wonFights += 1; a.wonUses += n; }
           else { a.lostFights += 1; a.lostUses += n; }
         }
         acc[side].set(k, a);

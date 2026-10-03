@@ -1,5 +1,6 @@
 import { Table, Td, Th } from "@/components/table";
 import { TEAM_COLORS } from "@/lib/colors";
+import { DAMAGE_OFF_MESSAGE } from "@/lib/copy";
 import { formatPct } from "@/lib/format";
 import type { Initiation, InitiationSummary } from "@/lib/stats/initiation";
 import type { SideKey, Sides } from "@/lib/stats/sides";
@@ -20,7 +21,7 @@ function summaryLine(side: SideKey, s: InitiationSummary, sides: Sides, total: n
 
 export function InitiationTable({ initiation, sides }: { initiation: Initiation; sides: Sides }) {
   if (!initiation.hasDamage) {
-    return <p className="text-sm text-muted">Damage logging was off for this map. Turn on damage logging in the ScrimTime Workshop settings before hosting.</p>;
+    return <p className="text-sm text-muted">{DAMAGE_OFF_MESSAGE}</p>;
   }
   if (initiation.fights.length === 0) return <p className="text-sm text-muted">No fights recorded.</p>;
   return (
@@ -32,7 +33,7 @@ export function InitiationTable({ initiation, sides }: { initiation: Initiation;
           <tr>
             <Th>Fight</Th>
             <Th>Engaged by</Th>
-            <Th numeric>Before first kill</Th>
+            <Th numeric>Lead on first kill</Th>
             <Th>Winner</Th>
           </tr>
         </thead>
@@ -51,7 +52,7 @@ export function InitiationTable({ initiation, sides }: { initiation: Initiation;
           ))}
         </tbody>
       </Table>
-      <p className="text-xs text-muted">A fight starts at its first kill.</p>
+      <p className="text-xs text-muted">A fight starts at its first kill; &quot;after&quot; means the first cross-team damage landed after it.</p>
     </div>
   );
 }

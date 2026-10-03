@@ -1,14 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { buildInitiation, INITIATION_LOOKBACK_SECONDS, type DamageLite } from "@/lib/stats/initiation";
-import { groupFights, type KillLike } from "@/lib/stats/fights";
+import { buildInitiation, buildTeamInitiation, INITIATION_LOOKBACK_SECONDS, type DamageLite } from "@/lib/stats/initiation";
+import { fightsByMap, groupFights, type KillLike } from "@/lib/stats/fights";
 import { parseLog } from "@/lib/parser/parse";
 import { deriveMapMeta } from "@/lib/parser/derive";
 import { sides } from "@/lib/stats/sides";
+import type { TeamMapLike } from "@/lib/stats/team-rows";
 
 const s = { ours: "A", theirs: "B" };
 const kill = (matchTime: number, attackerTeam: string, victimTeam: string): KillLike => ({ matchTime, attackerTeam, attackerName: `${attackerTeam}p`, victimTeam, victimName: `${victimTeam}p` });
 const dmg = (matchTime: number, attackerTeam: string, victimTeam: string, attackerName = `${attackerTeam}p`): DamageLite => ({ matchTime, attackerTeam, attackerName, attackerHero: "Ana", victimTeam });
+const teamMap = (id: number): TeamMapLike => ({ id, scrimId: id, scrimName: `vs ${id}`, scrimDate: "2026-09-10", mapName: "Busan", mapType: "Control", team1Name: "A", team2Name: "B", ourSide: 1, winnerSide: 1, durationSeconds: 600 });
+const tk = (mapId: number, matchTime: number, attackerTeam: string, victimTeam: string) => ({ ...kill(matchTime, attackerTeam, victimTeam), mapId });
+const td = (mapId: number, matchTime: number, attackerTeam: string, victimTeam: string) => ({ ...dmg(matchTime, attackerTeam, victimTeam), mapId });
 
 describe("buildInitiation", () => {
   it("picks the earliest cross-team damage within the lookback before the first kill", () => {
@@ -46,15 +50,15 @@ describe("buildInitiation", () => {
     ]);
     const damage = [dmg(95, "A", "B"), dmg(195, "A", "B"), dmg(295, "B", "A")];
     const r = buildInitiation(fights, damage, s);
-    expect(r.summary.ours).toEqual({ initiated: 2, wonWhenInitiated: 1, fightsNotInitiated: 1, wonWhenNotInitiated: 0, initiationWinRate: 0.5, nonInitiationWinRate: null });
-    expect(r.summary.theirs).toEqual({ initiated: 1, wonWhenInitiated: 0, fightsNotInitiated: 2, wonWhenNotInitiated: 1, initiationWinRate: null, nonInitiationWinRate: 0.5 });
+    expect(r.summary.ours).toEqual({ initiated: 2, wonWhenInitiated: 1, decidedInitiated: 2, fightsNotInitiated: 1, wonWhenNotInitiated: 0, decidedNotInitiated: 0, initiationWinRate: 0.5, nonInitiationWinRate: null });
+    expect(r.summary.theirs).toEqual({ initiated: 1, wonWhenInitiated: 0, decidedInitiated: 0, fightsNotInitiated: 2, wonWhenNotInitiated: 1, decidedNotInitiated: 2, initiationWinRate: null, nonInitiationWinRate: 0.5 });
   });
 
   it("shows an initiator on neither side without crediting either summary", () => {
     const fights = groupFights([kill(100, "A", "B")]);
     const r = buildInitiation(fights, [dmg(95, "C", "A")], s);
     expect(r.fights[0].initiator).toMatchObject({ side: null, team: "C", t: 95 });
-    const empty = { initiated: 0, wonWhenInitiated: 0, fightsNotInitiated: 0, wonWhenNotInitiated: 0, initiationWinRate: null, nonInitiationWinRate: null };
+    const empty = { initiated: 0, wonWhenInitiated: 0, decidedInitiated: 0, fightsNotInitiated: 0, wonWhenNotInitiated: 0, decidedNotInitiated: 0, initiationWinRate: null, nonInitiationWinRate: null };
     expect(r.summary.ours).toEqual(empty);
     expect(r.summary.theirs).toEqual(empty);
   });
@@ -90,5 +94,29 @@ describe("buildInitiation", () => {
         4,
       ]
     `);
+  });
+});
+
+describe("buildTeamInitiation", () => {
+  it("sums the per-map counters and recomputes rates from the sums", () => {
+    // Map 1: A engages and wins 2 fights. Map 2: A engages and loses 1, B engages and A wins 1.
+    const kills = [tk(1, 100, "A", "B"), tk(1, 200, "A", "B"), tk(2, 100, "B", "A"), tk(2, 200, "A", "B")];
+    const damage = [td(1, 95, "A", "B"), td(1, 195, "A", "B"), td(2, 95, "A", "B"), td(2, 195, "B", "A")];
+    const t = buildTeamInitiation([teamMap(1), teamMap(2)], fightsByMap(kills), damage);
+    expect(t).toMatchObject({ maps: 2, mapsWithDamage: 2 });
+    expect(t.summary.ours).toEqual({ initiated: 3, wonWhenInitiated: 2, decidedInitiated: 3, fightsNotInitiated: 1, wonWhenNotInitiated: 1, decidedNotInitiated: 1, initiationWinRate: 2 / 3, nonInitiationWinRate: 1 });
+    expect(t.summary.theirs.initiationWinRate).toBe(0);
+  });
+
+  it("counts a map without damage rows toward maps only", () => {
+    const t = buildTeamInitiation([teamMap(1), teamMap(2)], fightsByMap([tk(1, 100, "A", "B"), tk(2, 100, "A", "B")]), [td(1, 95, "A", "B")]);
+    expect(t).toMatchObject({ maps: 2, mapsWithDamage: 1 });
+    expect(t.summary.ours.initiated).toBe(1);
+  });
+
+  it("returns nulls with no damage at all", () => {
+    const t = buildTeamInitiation([teamMap(1)], fightsByMap([tk(1, 100, "A", "B")]), []);
+    expect(t.mapsWithDamage).toBe(0);
+    expect(t.summary.ours.initiationWinRate).toBeNull();
   });
 });

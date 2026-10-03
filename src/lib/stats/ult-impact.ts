@@ -1,4 +1,4 @@
-import { fightIndexAt, groupFights, type Fight, type KillLike } from "./fights";
+import { fightIndexAt, type Fight, type KillLike } from "./fights";
 import { roleOf, type Role } from "./heroes";
 import { sideOf, sides, type SideKey, type Sides } from "./sides";
 import { finalsByMap, groupByMap, rate, type MapKeyed, type StatLike, type TeamMapLike } from "./team-rows";
@@ -49,9 +49,10 @@ export const bucket = (): Bucket => ({ count: 0, decided: 0, won: 0 });
 /** Adds one fight to a bucket from `side`'s point of view. */
 export function tally(b: Bucket, f: Fight, side: SideKey, s: Sides): void {
   b.count += 1;
-  if (f.winner === null) return;
+  const winner = f.winner === null ? null : sideOf(f.winner, s);
+  if (winner === null) return;
   b.decided += 1;
-  if (sideOf(f.winner, s) === side) b.won += 1;
+  if (winner === side) b.won += 1;
 }
 
 export const toRatio = (b: Bucket): ImpactRatio => ({ ...b, rate: rate(b.won, b.decided) });
@@ -90,7 +91,7 @@ const SIDES: SideKey[] = ["ours", "theirs"];
 const mean = (xs: number[]) => (xs.length === 0 ? null : xs.reduce((a, b) => a + b, 0) / xs.length);
 
 export function buildUltImpact(
-  maps: TeamMapLike[], kills: (KillLike & MapKeyed)[], ultStarts: (UltLike & MapKeyed)[], ultEnds: (UltLike & MapKeyed)[], playerStats: StatLike[],
+  maps: TeamMapLike[], kills: (KillLike & MapKeyed)[], fightsOf: Map<number, Fight[]>, ultStarts: (UltLike & MapKeyed)[], ultEnds: (UltLike & MapKeyed)[], playerStats: StatLike[],
 ): UltImpact {
   const killsBy = groupByMap(kills);
   const startsBy = groupByMap(ultStarts);
@@ -101,7 +102,7 @@ export function buildUltImpact(
   for (const map of maps) {
     const s = sides(map);
     const mapKills = killsBy.get(map.id) ?? [];
-    const fights = groupFights(mapKills);
+    const fights = fightsOf.get(map.id) ?? [];
     const starts = startsBy.get(map.id) ?? [];
     const ends = endsBy.get(map.id) ?? [];
     // keptCasts and ultDetails both walk pairUltimates in cast order, so index i is the same cast in both.

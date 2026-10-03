@@ -1,5 +1,8 @@
+import { groupByMap, type MapKeyed } from "./map-keyed";
 import { finalRoundRows, type PlayerStatLike } from "./overview";
 import { sides } from "./sides";
+
+export { groupByMap, type MapKeyed };
 
 /** A map row joined with its scrim, as returned by getTeamRows. */
 export interface TeamMapLike {
@@ -16,21 +19,7 @@ export interface TeamMapLike {
   durationSeconds: number;
 }
 
-export interface MapKeyed {
-  mapId: number;
-}
-
 export type StatLike = PlayerStatLike & MapKeyed;
-
-export function groupByMap<T extends MapKeyed>(rows: T[]): Map<number, T[]> {
-  const out = new Map<number, T[]>();
-  for (const row of rows) {
-    const list = out.get(row.mapId) ?? [];
-    list.push(row);
-    out.set(row.mapId, list);
-  }
-  return out;
-}
 
 /** Final-round player_stat rows per map. finalRoundRows keys by team, player, and hero only, so group by map first. */
 export function finalsByMap<T extends StatLike>(rows: T[]): Map<number, T[]> {
