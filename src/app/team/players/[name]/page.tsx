@@ -44,7 +44,8 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
   const heroes = playerHeroes(rows.maps, rows.playerStats, name);
   const hero = parseHero(query, heroes);
   // A ?hero= the new range cannot satisfy would otherwise be silently ignored and kept in the URL.
-  if (hero === undefined && typeof query.hero === "string") redirect(`/team/players/${encodeURIComponent(name)}${rangeQuery(range)}`);
+  // An empty value is the hero select's own "all heroes" choice, not a stale filter, so it stays.
+  if (typeof query.hero === "string" && query.hero !== "" && hero === undefined) redirect(`/team/players/${encodeURIComponent(name)}${rangeQuery(range)}`);
   const p = buildPlayerPage(rows.maps, rows, name, hero);
   const hidden: Array<[string, string]> = [];
   if (range.from) hidden.push(["from", range.from]);
@@ -146,6 +147,8 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
   );
 }
 
+const samples = (n: number) => `${n} sample${n === 1 ? "" : "s"}`;
+
 function Cards({ c }: { c: PlayerCards }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -153,8 +156,8 @@ function Cards({ c }: { c: PlayerCards }) {
       <Stat label="First death %" value={formatPct(c.firstDeath.rate)} hint={`${c.firstDeath.count} of ${c.firstDeath.fights} fights on maps played`} />
       <Stat label="Reversal %" value={formatPct(c.reversal.rate)} hint={`${c.reversal.won} won of ${c.reversal.count} first deaths`} />
       <Stat label="Kills per ult" value={formatRatio(c.killsPerUlt.perUlt)} hint={`${c.killsPerUlt.kills} kills over ${c.killsPerUlt.ults} ults`} />
-      <Stat label="Avg ult charge" value={formatSeconds(c.avgChargeSeconds)} hint={`previous cast to charged, ${c.chargeSamples} samples`} />
-      <Stat label="Avg ult hold" value={formatSeconds(c.avgHoldSeconds)} hint={`charged to cast, ${c.holdSamples} samples`} />
+      <Stat label="Avg ult charge" value={formatSeconds(c.avgChargeSeconds)} hint={`previous cast to charged, ${samples(c.chargeSamples)}`} />
+      <Stat label="Avg ult hold" value={formatSeconds(c.avgHoldSeconds)} hint={`charged to cast, ${samples(c.holdSamples)}`} />
     </div>
   );
 }

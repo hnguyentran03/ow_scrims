@@ -74,14 +74,10 @@ describe("team queries", () => {
     expect(latest).toEqual(new Set(["Doomfist", "Bastion", "Ashe", "Baptiste", "Ana"]));
   });
 
-  it("lists every player who was ever on our side", async () => {
+  it("lists every player who was ever on our side, over every map rather than the recent window", async () => {
     const all = await ourRoster(db);
-    expect(all.size).toBeGreaterThan(5);
-    // Both fixture maps are inside the default recent window, so the two must agree exactly — this is
-    // what catches a dropped our-side predicate, which the subset check below would still pass.
-    expect(all).toEqual(await recentOurRoster(db));
-    const recent = await recentOurRoster(db, 1);
-    for (const n of recent) expect(all.has(n)).toBe(true);
+    expect(all).toEqual(new Set(["StellBell", "meowzy", "Dyeonnie", "Kloverr", "sleepyme", "Doomfist", "Bastion", "Ashe", "Baptiste", "Ana"]));
+    expect(all.size).toBeGreaterThan((await recentOurRoster(db, 1)).size);
   });
 
   it("loads only the tables a page asks for", async () => {
