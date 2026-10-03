@@ -1,4 +1,4 @@
-import { buildRoster } from "./roster";
+import type { RosterRow } from "./roster";
 import { sides } from "./sides";
 import { finalsByMap, outcome, rate, type StatLike, type TeamMapLike } from "./team-rows";
 import { winRateByMap, type MapRecord } from "./trends";
@@ -23,7 +23,7 @@ export interface PlayerMapMatrix {
 }
 
 /** Each of our players' record per map, rows in roster order and columns in the trends table's order. */
-export function playerMapMatrix(maps: TeamMapLike[], playerStats: StatLike[]): PlayerMapMatrix {
+export function playerMapMatrix(maps: TeamMapLike[], playerStats: StatLike[], roster: RosterRow[]): PlayerMapMatrix {
   const columns = winRateByMap(maps);
   const columnIndex = new Map(columns.map((c, i) => [c.mapName, i]));
   const finals = finalsByMap(playerStats);
@@ -44,6 +44,6 @@ export function playerMapMatrix(maps: TeamMapLike[], playerStats: StatLike[]): P
     }
   }
 
-  const rows = buildRoster(maps, playerStats).map((r) => ({ name: r.name, cells: cells.get(r.name) ?? columns.map(() => null) }));
+  const rows = roster.map((r) => ({ name: r.name, cells: cells.get(r.name) ?? columns.map(() => null) }));
   return { columns, rows };
 }

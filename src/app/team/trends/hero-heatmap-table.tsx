@@ -1,11 +1,24 @@
 import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
-import { Table, Td, Th } from "@/components/table";
+import { ShadedTable, type ShadedColumn, type ShadedRow } from "@/components/shaded-table";
 import { formatPct } from "@/lib/format";
-import { RAMP_CLASS, RAMP_TEXT, rampStep } from "@/lib/ramp";
+import { RAMP_CLASS, rampStep } from "@/lib/ramp";
 import type { HeroHeatmap } from "@/lib/stats/hero-heatmap";
 
 const LEGEND = [0, 0.25, 0.5, 0.75, 1] as const;
+
+/** One column per scrim, one row per hero; a never-picked hero keeps the base shade but dims its share. */
+export function heatmapToShaded(heatmap: HeroHeatmap): { columns: ShadedColumn[]; rows: ShadedRow[] } {
+  return {
+    columns: heatmap.columns.map((c) => ({ key: String(c.scrimId), label: c.date, title: c.name })),
+    rows: heatmap.rows.map((r) => ({
+      key: r.hero,
+      label: r.hero,
+      title: `${r.hero}, ${r.role}`,
+      cells: r.cells.map((cell) => ({ value: cell.share, text: formatPct(cell.share), title: `${cell.picks} of ${cell.maps} maps`, muted: cell.picks === 0 })),
+    })),
+  };
+}
 
 export function HeroHeatmapTable({ heatmap }: { heatmap: HeroHeatmap }) {
   return (
@@ -26,33 +39,7 @@ export function HeroHeatmapTable({ heatmap }: { heatmap: HeroHeatmap }) {
       {heatmap.rows.length === 0 ? (
         <EmptyState>No hero time on our side in this range.</EmptyState>
       ) : (
-        <Table>
-          <thead>
-            <tr>
-              <Th pin="first">Hero</Th>
-              {heatmap.columns.map((c) => (
-                <Th key={c.scrimId} numeric title={c.name} style={{ width: "7rem", minWidth: "7rem" }}>{c.date}</Th>
-              ))}
-              <Th aria-hidden style={{ width: "auto" }} />
-            </tr>
-          </thead>
-          <tbody>
-            {heatmap.rows.map((r) => (
-              <tr key={r.hero}>
-                <Td pin="first" title={`${r.hero}, ${r.role}`}>{r.hero}</Td>
-                {r.cells.map((cell, i) => {
-                  const step = rampStep(cell.share);
-                  return (
-                    <Td key={heatmap.columns[i].scrimId} numeric style={{ width: "7rem", minWidth: "7rem" }} className={`${RAMP_CLASS[step]} ${cell.picks === 0 ? "text-muted" : RAMP_TEXT[step]}`} title={`${cell.picks} of ${cell.maps} maps`}>
-                      {formatPct(cell.share)}
-                    </Td>
-                  );
-                })}
-                <Td aria-hidden />
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <ShadedTable pinHead="Hero" {...heatmapToShaded(heatmap)} />
       )}
     </Card>
   );
