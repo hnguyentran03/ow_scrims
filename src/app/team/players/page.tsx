@@ -17,7 +17,7 @@ export default async function PlayersPage({ searchParams }: { searchParams: Sear
   const rows = await getTeamRows(await getDb(), range, { playerStats: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const roster = buildRoster(rows.maps, rows.playerStats);
-  const matrix = playerMapMatrix(rows.maps, rows.playerStats);
+  const matrix = playerMapMatrix(rows.maps, rows.playerStats, roster);
   const href = (name: string) => `/team/players/${encodeURIComponent(name)}${rangeQuery(range)}`;
 
   return (

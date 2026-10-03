@@ -53,7 +53,7 @@ export function TelemetryPanel({ telemetry, sides }: { telemetry: Telemetry; sid
         <EmptyState>{DAMAGE_OFF_MESSAGE}</EmptyState>
       )}
 
-      <Card title="Matchup radar" note={opponent ? `vs ${opponent.name} (${opponent.hero}), per 10 min` : "No enemy played this role"}>
+      <Card title="Matchup radar" note={opponent ? `vs ${opponent.name} on ${opponent.hero}, per 10 min` : "No enemy played this role"}>
         <Radar axes={player.radar.axes} playerLabel={player.name} opponentLabel={opponent?.name ?? null} playerColor={color} opponentColor={opponentColor} />
       </Card>
     </div>

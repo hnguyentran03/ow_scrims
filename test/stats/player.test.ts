@@ -181,15 +181,17 @@ describe("buildPlayerPage", () => {
   });
 
   it("averages charge and hold seconds over timings that have a charge moment", () => {
-    expect(p.cards).toMatchObject({ avgChargeSeconds: 40, avgHoldSeconds: 7.5 });
-    expect(ana.cards).toMatchObject({ avgChargeSeconds: 40, avgHoldSeconds: 7.5 });
-    expect(genji.cards).toMatchObject({ avgChargeSeconds: null, avgHoldSeconds: null });
+    // Only map 1 logs ultimate_charged, and only for p1 on Ana: the casts at 30 and 95 are the two
+    // timings with both seconds, so both counts are 2 for p1 and for the Ana filter, and 0 for Genji.
+    expect(p.cards).toMatchObject({ avgChargeSeconds: 40, avgHoldSeconds: 7.5, chargeSamples: 2, holdSamples: 2 });
+    expect(ana.cards).toMatchObject({ avgChargeSeconds: 40, avgHoldSeconds: 7.5, chargeSamples: 2, holdSamples: 2 });
+    expect(genji.cards).toMatchObject({ avgChargeSeconds: null, avgHoldSeconds: null, chargeSamples: 0, holdSamples: 0 });
   });
 
   it("gives zero counts and null rates for a stranger", () => {
     expect(buildPlayerPage(maps, rows, "nobody").cards).toEqual({
       firstPick: { count: 0, fights: 0, won: 0, rate: null }, firstDeath: { count: 0, fights: 0, won: 0, rate: null }, reversal: { count: 0, won: 0, rate: null },
-      killsPerUlt: { ults: 0, kills: 0, perUlt: null }, avgChargeSeconds: null, avgHoldSeconds: null,
+      killsPerUlt: { ults: 0, kills: 0, perUlt: null }, avgChargeSeconds: null, avgHoldSeconds: null, chargeSamples: 0, holdSamples: 0,
     });
   });
 

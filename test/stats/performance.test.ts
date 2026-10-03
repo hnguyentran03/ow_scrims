@@ -68,6 +68,12 @@ describe("buildPerformance roles", () => {
     expect(by.Support).toMatchObject({ casts: 1, ultEfficiency: 0 });
     expect(by.Damage).toMatchObject({ casts: 0, ultEfficiency: null });
   });
+  it("credits a one-off ult on another role's hero to the caster's main role", () => {
+    const rows = [...fiveStack(1), stat(1, "S1", "Reinhardt", 30)];
+    const p = buildPerformance([map(1)], rows, fightsByMap([kill(1, 10), kill(1, 11)]), [ult(1, 10.5, "S1", "Reinhardt")], []);
+    expect(p.roles.find((r) => r.role === "Support")!.casts).toBe(1);
+    expect(p.roles.find((r) => r.role === "Tank")!.casts).toBe(0);
+  });
 });
 
 describe("buildPerformance on a sample log", () => {

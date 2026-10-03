@@ -1,11 +1,23 @@
 import { Card } from "@/components/card";
 import { EmptyState } from "@/components/empty-state";
-import { Table, Td, Th } from "@/components/table";
+import { ShadedTable, type ShadedColumn, type ShadedRow } from "@/components/shaded-table";
 import { formatPct } from "@/lib/format";
-import { RAMP_CLASS, RAMP_TEXT, rampStep } from "@/lib/ramp";
 import type { MatrixCell, PlayerMapMatrix } from "@/lib/stats/player-map-matrix";
 
 const cellTitle = (c: MatrixCell) => `${c.won}-${c.lost}${c.undecided > 0 ? `, ${c.undecided} undecided` : ""}, ${formatPct(c.winRate)}`;
+
+/** One column per map, one row per player; a map the player never had time on stays null. */
+export function matrixToShaded(matrix: PlayerMapMatrix): { columns: ShadedColumn[]; rows: ShadedRow[] } {
+  return {
+    columns: matrix.columns.map((c) => ({ key: c.mapName, label: c.mapName, title: c.mapType })),
+    rows: matrix.rows.map((r) => ({
+      key: r.name,
+      label: r.name,
+      title: r.name,
+      cells: r.cells.map((cell) => (cell ? { value: cell.winRate, text: `${cell.won}-${cell.lost}`, title: cellTitle(cell) } : null)),
+    })),
+  };
+}
 
 export function PlayerMapMatrixTable({ matrix }: { matrix: PlayerMapMatrix }) {
   return (
@@ -13,33 +25,7 @@ export function PlayerMapMatrixTable({ matrix }: { matrix: PlayerMapMatrix }) {
       {matrix.rows.length === 0 ? (
         <EmptyState>No hero time on our side in this range.</EmptyState>
       ) : (
-        <Table>
-          <thead>
-            <tr>
-              <Th pin="first">Player</Th>
-              {matrix.columns.map((c) => (
-                <Th key={c.mapName} numeric title={c.mapType} style={{ width: "7rem", minWidth: "7rem" }}>{c.mapName}</Th>
-              ))}
-              <Th aria-hidden style={{ width: "auto" }} />
-            </tr>
-          </thead>
-          <tbody>
-            {matrix.rows.map((r) => (
-              <tr key={r.name}>
-                <Td pin="first">{r.name}</Td>
-                {r.cells.map((cell, i) => {
-                  const step = cell ? rampStep(cell.winRate) : null;
-                  return (
-                    <Td key={matrix.columns[i].mapName} numeric style={{ width: "7rem", minWidth: "7rem" }} className={step !== null ? `${RAMP_CLASS[step]} ${RAMP_TEXT[step]}` : ""} title={cell ? cellTitle(cell) : undefined}>
-                      {cell ? `${cell.won}-${cell.lost}` : ""}
-                    </Td>
-                  );
-                })}
-                <Td aria-hidden />
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <ShadedTable pinHead="Player" {...matrixToShaded(matrix)} />
       )}
     </Card>
   );

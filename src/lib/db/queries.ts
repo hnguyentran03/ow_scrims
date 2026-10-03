@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, getTableColumns, gte, inArray, lte, ne, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, getTableColumns, gt, gte, inArray, lte, ne, sql, type SQL } from "drizzle-orm";
 import type { Db } from "./index";
 import {
   ability1Used, ability2Used, damage, healing, heroSpawn, heroSwap, kill, mapBans, mapImages, maps, matchEnd, matchStart, mercyRez, objectiveCaptured,
@@ -223,15 +223,31 @@ export async function setMapBans(db: Db, mapId: number, side: 1 | 2, heroes: str
   });
 }
 
+/** The name of our team on a map, whichever side we were on. Names `maps` directly, so never use it in a query that aliases `maps`. */
+const OUR_TEAM = sql`case when ${maps.ourSide} = 1 then ${maps.team1Name} else ${maps.team2Name} end`;
+
 /** Distinct player names on our side over the `limit` most recently uploaded maps. Feeds side inference for bulk upload. */
 export async function recentOurRoster(db: Db, limit = 20): Promise<Set<string>> {
   const recent = db.select({ id: maps.id }).from(maps).orderBy(desc(maps.uploadedAt), desc(maps.id)).limit(limit);
-  const ourTeam = sql`case when ${maps.ourSide} = 1 then ${maps.team1Name} else ${maps.team2Name} end`;
   const rows = await db
     .selectDistinct({ name: playerStat.playerName })
     .from(playerStat)
     .innerJoin(maps, eq(maps.id, playerStat.mapId))
-    .where(and(inArray(playerStat.mapId, recent), eq(playerStat.playerTeam, ourTeam)));
+    .where(and(inArray(playerStat.mapId, recent), eq(playerStat.playerTeam, OUR_TEAM)));
+  return new Set(rows.map((r) => r.name));
+}
+
+/**
+ * Every distinct name that ever played on our side, across every map. Tells an off-range teammate from
+ * a stranger. Zero-time rows are skipped, so a name that only ever appears as an unplayed swap is not
+ * reported as known.
+ */
+export async function ourRoster(db: Db): Promise<Set<string>> {
+  const rows = await db
+    .selectDistinct({ name: playerStat.playerName })
+    .from(playerStat)
+    .innerJoin(maps, eq(maps.id, playerStat.mapId))
+    .where(and(eq(playerStat.playerTeam, OUR_TEAM), gt(playerStat.heroTimePlayed, 0)));
   return new Set(rows.map((r) => r.name));
 }
 
