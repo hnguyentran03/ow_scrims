@@ -28,12 +28,15 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
   const range = parseRange(query);
   const db = await getDb();
   const rows = await getTeamRows(db, range, { playerStats: true, kills: true, ults: true, charged: true, rounds: true, assists: true });
-  if (rows.maps.length === 0) return <EmptyRange />;
-  const name = resolvePlayerName(rows.maps, rows.playerStats, raw);
+  const name = rows.maps.length === 0 ? undefined : resolvePlayerName(rows.maps, rows.playerStats, raw);
   if (name === undefined) {
+    // A known teammate keeps their header whatever the range holds; an unknown name gets the generic empty state or a 404.
     const known = await ourRoster(db);
     const candidate = nameCandidates(raw).find((n) => known.has(n));
-    if (candidate === undefined) notFound();
+    if (candidate === undefined) {
+      if (rows.maps.length === 0) return <EmptyRange />;
+      notFound();
+    }
     return (
       <div className="space-y-8">
         <PageHeader title={candidate} level={2} />
