@@ -318,8 +318,11 @@ export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTab
   return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans, abilities, roundStarts, damage: damageRows };
 }
 
+/** Records a manual winner. On Push, where the log carries no score, the winner is given 1 and the loser 0 so the scoreboard reads like any other map. */
 export async function setMapWinner(db: Db, mapId: number, side: 1 | 2): Promise<void> {
-  await db.update(maps).set({ winnerSide: side, winnerSource: "manual" }).where(eq(maps.id, mapId));
+  const [row] = await db.select({ mapType: maps.mapType }).from(maps).where(eq(maps.id, mapId));
+  const score = row?.mapType === "Push" ? { team1Score: side === 1 ? 1 : 0, team2Score: side === 2 ? 1 : 0 } : {};
+  await db.update(maps).set({ winnerSide: side, winnerSource: "manual", ...score }).where(eq(maps.id, mapId));
 }
 
 /** Deletes a map (events cascade) and returns its raw log path for file cleanup. */

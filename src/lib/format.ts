@@ -16,6 +16,11 @@ export function formatPer10(v: number): string {
   return v >= 100 ? formatInt(v) : v.toFixed(1);
 }
 
+/** Push logs carry no score, so a Push map's score is only meaningful once a winner has been set (which writes 1-0). */
+export function scoreKnown(map: { mapType: string; winnerSide: number | null }): boolean {
+  return map.mapType !== "Push" || map.winnerSide !== null;
+}
+
 export function resultLabel(map: { ourSide: number; winnerSide: number | null }): ResultLabel {
   if (map.winnerSide === null) return "N/A";
   return map.winnerSide === map.ourSide ? "Won" : "Lost";
