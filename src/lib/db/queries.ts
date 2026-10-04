@@ -4,7 +4,7 @@ import {
   ability1Used, ability2Used, damage, healing, heroSpawn, heroSwap, kill, mapBans, mapImages, maps, matchEnd, matchStart, mercyRez, objectiveCaptured,
   objectiveUpdated, offensiveAssist, playerStat, roundEnd, roundStart, scrims, ultimateCharged, ultimateEnd, ultimateStart,
 } from "./schema";
-import type { DamageLite } from "@/lib/stats/initiation";
+import type { DamageLite, DamageSides } from "@/lib/stats/initiation";
 import { isCalibrated } from "@/lib/stats/calibration";
 import type { AbilityLike } from "@/lib/stats/ability-impact";
 import type { MapKeyed } from "@/lib/stats/team-rows";
@@ -55,7 +55,7 @@ export interface TeamRows {
   bans: MapBanRow[];
   abilities: (AbilityLike & MapKeyed)[];
   roundStarts: RoundStartRow[];
-  damage: (DamageLite & MapKeyed)[];
+  damage: (DamageSides & MapKeyed)[];
   /** offensive_assist rows (four columns plus mapId) in match-time order. */
   assists: (UltLike & MapKeyed)[];
 }
@@ -294,38 +294,30 @@ export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTab
   if (ids.length === 0) {
     return { maps: mapRows, kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [], damage: [], assists: [] };
   }
-  const kills = tables.kills ? await db.select().from(kill).where(inArray(kill.mapId, ids)).orderBy(asc(kill.matchTime), asc(kill.id)) : [];
-  const ultStarts = tables.ults
-    ? await db.select().from(ultimateStart).where(inArray(ultimateStart.mapId, ids)).orderBy(asc(ultimateStart.matchTime), asc(ultimateStart.id))
-    : [];
-  const ultEnds = tables.ults
-    ? await db.select().from(ultimateEnd).where(inArray(ultimateEnd.mapId, ids)).orderBy(asc(ultimateEnd.matchTime), asc(ultimateEnd.id))
-    : [];
-  const ultCharged = tables.charged
-    ? await db.select().from(ultimateCharged).where(inArray(ultimateCharged.mapId, ids)).orderBy(asc(ultimateCharged.matchTime), asc(ultimateCharged.id))
-    : [];
-  const playerStats = tables.playerStats
-    ? await db.select().from(playerStat).where(inArray(playerStat.mapId, ids)).orderBy(asc(playerStat.matchTime), asc(playerStat.id))
-    : [];
-  const bans = tables.bans ? await db.select().from(mapBans).where(inArray(mapBans.mapId, ids)).orderBy(asc(mapBans.id)) : [];
-  const abilities = tables.abilities ? await abilitiesFor(db, ids) : [];
-  const roundStarts = tables.rounds
-    ? await db.select().from(roundStart).where(inArray(roundStart.mapId, ids)).orderBy(asc(roundStart.matchTime), asc(roundStart.id))
-    : [];
-  const damageRows = tables.damage
-    ? await db
-        .select({ mapId: damage.mapId, matchTime: damage.matchTime, attackerTeam: damage.attackerTeam, attackerName: damage.attackerName, attackerHero: damage.attackerHero, victimTeam: damage.victimTeam })
-        .from(damage)
-        .where(inArray(damage.mapId, ids))
-        .orderBy(asc(damage.matchTime), asc(damage.id))
-    : [];
-  const assists = tables.assists
-    ? await db
-        .select({ mapId: offensiveAssist.mapId, matchTime: offensiveAssist.matchTime, playerTeam: offensiveAssist.playerTeam, playerName: offensiveAssist.playerName, playerHero: offensiveAssist.playerHero })
-        .from(offensiveAssist)
-        .where(inArray(offensiveAssist.mapId, ids))
-        .orderBy(asc(offensiveAssist.matchTime), asc(offensiveAssist.id))
-    : [];
+  const [kills, ultStarts, ultEnds, ultCharged, playerStats, bans, abilities, roundStarts, damageRows, assists] = await Promise.all([
+    tables.kills ? db.select().from(kill).where(inArray(kill.mapId, ids)).orderBy(asc(kill.matchTime), asc(kill.id)) : [],
+    tables.ults ? db.select().from(ultimateStart).where(inArray(ultimateStart.mapId, ids)).orderBy(asc(ultimateStart.matchTime), asc(ultimateStart.id)) : [],
+    tables.ults ? db.select().from(ultimateEnd).where(inArray(ultimateEnd.mapId, ids)).orderBy(asc(ultimateEnd.matchTime), asc(ultimateEnd.id)) : [],
+    tables.charged ? db.select().from(ultimateCharged).where(inArray(ultimateCharged.mapId, ids)).orderBy(asc(ultimateCharged.matchTime), asc(ultimateCharged.id)) : [],
+    tables.playerStats ? db.select().from(playerStat).where(inArray(playerStat.mapId, ids)).orderBy(asc(playerStat.matchTime), asc(playerStat.id)) : [],
+    tables.bans ? db.select().from(mapBans).where(inArray(mapBans.mapId, ids)).orderBy(asc(mapBans.id)) : [],
+    tables.abilities ? abilitiesFor(db, ids) : [],
+    tables.rounds ? db.select().from(roundStart).where(inArray(roundStart.mapId, ids)).orderBy(asc(roundStart.matchTime), asc(roundStart.id)) : [],
+    tables.damage
+      ? db
+          .select({ mapId: damage.mapId, matchTime: damage.matchTime, attackerTeam: damage.attackerTeam, victimTeam: damage.victimTeam })
+          .from(damage)
+          .where(inArray(damage.mapId, ids))
+          .orderBy(asc(damage.matchTime), asc(damage.id))
+      : [],
+    tables.assists
+      ? db
+          .select({ mapId: offensiveAssist.mapId, matchTime: offensiveAssist.matchTime, playerTeam: offensiveAssist.playerTeam, playerName: offensiveAssist.playerName, playerHero: offensiveAssist.playerHero })
+          .from(offensiveAssist)
+          .where(inArray(offensiveAssist.mapId, ids))
+          .orderBy(asc(offensiveAssist.matchTime), asc(offensiveAssist.id))
+      : [],
+  ]);
   return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans, abilities, roundStarts, damage: damageRows, assists };
 }
 
