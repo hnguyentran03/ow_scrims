@@ -5,7 +5,7 @@ import { archivo, bebas } from "./fonts";
 import { NavLinks } from "./nav-links";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "ow-scrims", description: "Overwatch scrim analytics" };
+export const metadata: Metadata = { title: "OW Scrims", description: "Overwatch scrim analytics" };
 
 const NAV = [
   { href: "/", label: "Scrims" },
@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen bg-ground text-ink antialiased">
         <header className="border-b border-line">
           <nav className="mx-auto flex h-12 max-w-6xl items-center gap-6 px-4 text-base">
-            <Link href="/" className="font-display text-lg tracking-[0.04em] text-ink">ow-scrims</Link>
+            <Link href="/" className="font-display text-lg tracking-[0.04em] text-ink">OW Scrims</Link>
             <NavLinks links={NAV} />
           </nav>
         </header>

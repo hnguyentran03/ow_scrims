@@ -23,7 +23,7 @@ export function UltImpactTable({ ours, theirs }: { ours: UltImpactRow[]; theirs:
       ) : (
         <Table>
           <thead>
-            <tr><Th>Hero</Th><Th numeric>Casts</Th><Th numeric>With</Th><Th numeric>Without</Th><Th numeric>Lift</Th><Th numeric>Conv. kills / cast</Th></tr>
+            <tr><Th>Hero</Th><Th numeric>Casts</Th><Th numeric>With</Th><Th numeric>Without</Th><Th numeric>Lift</Th><Th numeric>Team final blows / cast</Th></tr>
           </thead>
           <tbody>
             {rows.map((r) => (

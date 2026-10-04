@@ -29,7 +29,7 @@ export function KillsByFightChart({ points, sides }: { points: StepPoint[]; side
   return (
     <div className="space-y-2">
       <Legend sides={sides} />
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Kills by fight" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Final blows by fight" onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
         <Axes yTicks={yTicks} yScale={y} yFormat={(v) => String(Math.abs(v))} />
         <line x1={M.left} x2={W - M.right} y1={y(0)} y2={y(0)} className="stroke-muted" />
         <path d={path(1, "ours")} fill="none" stroke={TEAM_COLORS.ours} strokeWidth={2} />

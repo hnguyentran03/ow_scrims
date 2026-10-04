@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Badge } from "@/components/badge";
 import { PageHeader } from "@/components/page-header";
 import { Scoreboard } from "@/components/scoreboard";
-import { resultLabel } from "@/lib/format";
+import { resultLabel, scoreKnown } from "@/lib/format";
 import { resultTone } from "@/lib/result";
 import { loadMap, type MapParams } from "./load-map";
 import { MapTabs } from "./map-tabs";
@@ -15,7 +15,7 @@ export default async function MapLayout({ children, params }: { children: React.
   const label = resultLabel(map);
   const ourScore = map.ourSide === 1 ? map.team1Score : map.team2Score;
   const theirScore = map.ourSide === 1 ? map.team2Score : map.team1Score;
-  const score = (n: number) => (map.mapType === "Push" ? "N/A" : String(n));
+  const score = (n: number) => (scoreKnown(map) ? String(n) : "N/A");
   const bansFor = (ours: boolean) => bans.filter((b) => (b.side === map.ourSide) === ours).map((b) => b.hero).join(", ") || "none";
   return (
     <div className="space-y-6">

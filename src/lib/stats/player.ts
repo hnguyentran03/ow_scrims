@@ -29,6 +29,8 @@ export interface PlayerRows {
   ultEnds: UltRowLike[];
   ultCharged: UltRowLike[];
   roundStarts: RoundRowLike[];
+  /** offensive_assist rows: one per assist, same shape as an ult row. */
+  assists: UltRowLike[];
 }
 
 export interface PlayerOverview {
@@ -98,15 +100,9 @@ export interface FightShare {
 export interface PlayerCards {
   firstPick: FightShare;
   firstDeath: FightShare;
-  /** Fights our side won after this player died first, over fights where they died first. */
-  reversal: {
-    /** Fights where the player died first. */
-    count: number;
-    /** Of those, the ones our side still won — the reversals. */
-    won: number;
-    rate: number | null;
-  };
   killsPerUlt: { ults: number; kills: number; perUlt: number | null };
+  /** Eliminations during the ult (the player's final blows plus offensive assists inside the window) over the same paired ults killsPerUlt divides by. */
+  elimsPerUlt: { ults: number; elims: number; perUlt: number | null };
   avgChargeSeconds: number | null;
   avgHoldSeconds: number | null;
   /**
@@ -174,12 +170,14 @@ function buildCards(
   const startsBy = groupByMap(rows.ultStarts);
   const endsBy = groupByMap(rows.ultEnds);
   const chargedBy = groupByMap(rows.ultCharged);
+  const assistsBy = groupByMap(rows.assists);
   const mine = (u: UltLike, ours: string) => u.playerTeam === ours && u.playerName === name && (filter === null || u.playerHero === filter);
   let fights = 0;
   const pick = { count: 0, won: 0 };
   const death = { count: 0, won: 0 };
   let ults = 0;
   let ultKills = 0;
+  let ultAssists = 0;
   const charge: number[] = [];
   const hold: number[] = [];
 
@@ -201,6 +199,7 @@ function buildCards(
       ults += 1;
       if (!end) continue;
       ultKills += kills.filter((k) => k.attackerTeam === ours && k.attackerName === name && k.matchTime >= start.matchTime && k.matchTime <= end.matchTime && killKind(k) === "kill").length;
+      ultAssists += (assistsBy.get(m.id) ?? []).filter((a) => mine(a, ours) && a.matchTime >= start.matchTime && a.matchTime <= end.matchTime).length;
     }
     for (const t of ultTimings(chargedBy.get(m.id) ?? [], starts, ends)) {
       if (!mine(t.start, ours) || t.chargeSeconds === null || t.holdSeconds === null) continue;
@@ -212,8 +211,8 @@ function buildCards(
   return {
     firstPick: { ...pick, fights, rate: rate(pick.count, fights) },
     firstDeath: { ...death, fights, rate: rate(death.count, fights) },
-    reversal: { count: death.count, won: death.won, rate: rate(death.won, death.count) },
     killsPerUlt: { ults, kills: ultKills, perUlt: rate(ultKills, ults) },
+    elimsPerUlt: { ults, elims: ultKills + ultAssists, perUlt: rate(ultKills + ultAssists, ults) },
     avgChargeSeconds: avg(charge),
     avgHoldSeconds: avg(hold),
     chargeSamples: charge.length,

@@ -38,7 +38,7 @@ export function EventsList({ events, sides }: { events: Events; sides: Sides }) 
         <span>{t.rounds} rounds</span>
         <span>{t.fights} fights</span>
         <span>{t.ults} ults</span>
-        <span>{t.ultKills} ults with kills</span>
+        <span>{t.ultKills} ults with final blows</span>
         <span>{t.multikills} multikills</span>
         <span>{t.swaps} swaps</span>
         <span>{t.captures} captures</span>
@@ -71,13 +71,13 @@ export function describeEvent(e: EventEntry, sides: Sides): string {
     case "swap": return `${e.player} swapped ${e.from} → ${e.to}`;
     case "ult": {
       const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
-      const parts = [`${e.player} (${e.hero}) used ultimate${e.kills ? `, ${plural(e.kills, "kill")}` : ""}`];
-      if (e.conversionKills) parts.push(`${plural(e.conversionKills, "team kill")} in ${CONVERSION_WINDOW_SECONDS} s`);
+      const parts = [`${e.player} (${e.hero}) used ultimate${e.kills ? `, ${plural(e.kills, "final blow")}` : ""}`];
+      if (e.conversionKills) parts.push(`${plural(e.conversionKills, "team final blow")} in ${CONVERSION_WINDOW_SECONDS} s`);
       if (e.diedDuringUlt) parts.push("died during ult");
       if (e.fightIndex) parts.push(`fight ${e.fightIndex}`);
       return parts.join(", ");
     }
-    case "ult_kill": return `${e.player} (${e.hero}) got ${e.kills} kill${e.kills === 1 ? "" : "s"} with ultimate`;
+    case "ult_kill": return `${e.player} (${e.hero}) got ${e.kills} final blow${e.kills === 1 ? "" : "s"} with ultimate`;
     case "fight": return `Fight ${e.fightIndex}, ${e.winner ? `won by ${e.winner}` : "even"} (${sides.ours} ${e.ours} – ${e.theirs} ${sides.theirs})`;
     case "multikill": return `${e.player} (${e.hero}) multikill, ${e.kills} kills in fight ${e.fightIndex}`;
     case "ajax": return `Ajax: ${e.player} (${teamName(e.team)}) died during Sound Barrier${e.fightIndex ? `, fight ${e.fightIndex}` : ""}`;

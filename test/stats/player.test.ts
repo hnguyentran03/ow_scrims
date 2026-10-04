@@ -67,7 +67,9 @@ const kills: Kill[] = [
 const ultStarts: Ult[] = [ult(1, 11, "B", "q1", "Genji"), ult(1, 30, "A", "p1", "Ana"), ult(1, 95, "A", "p1", "Ana"), ult(2, 50, "B", "p1", "Ana"), ult(3, 18, "A", "p1", "Genji")];
 const ultEnds: Ult[] = [ult(1, 13, "B", "q1", "Genji"), ult(1, 38, "A", "p1", "Ana"), ult(1, 105, "A", "p1", "Ana"), ult(3, 26, "A", "p1", "Genji")];
 const ultCharged: Ult[] = [ult(1, 20, "A", "p1", "Ana"), ult(1, 90, "A", "p1", "Ana")];
-const rows: PlayerRows = { playerStats, kills, ultStarts, ultEnds, ultCharged, roundStarts: [{ mapId: 1, matchTime: 5, roundNumber: 1 }] };
+// p1's assists: one inside each of map 1's first ult (30–38) and map 3's ult (18–26); one at t=60 outside any window; one by the opposing "p1" on map 2.
+const assists: Ult[] = [ult(1, 33, "A", "p1", "Ana"), ult(3, 21, "A", "p1", "Genji"), ult(1, 60, "A", "p1", "Ana"), ult(2, 52, "A", "p1", "Ana")];
+const rows: PlayerRows = { playerStats, kills, ultStarts, ultEnds, ultCharged, roundStarts: [{ mapId: 1, matchTime: 5, roundNumber: 1 }], assists };
 
 describe("playerHeroes", () => {
   it("lists our player's heroes by playtime and nothing for a stranger", () => {
@@ -153,25 +155,29 @@ describe("buildPlayerPage", () => {
     expect(none.overview).toEqual({ maps: 0, timePlayed: 0, record: { won: 0, lost: 0, undecided: 0 }, winRate: null, per10: { eliminations: 0, finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0, healingReceived: 0, damageTaken: 0, damageBlocked: 0, ultsEarned: 0, ultsUsed: 0 } });
   });
 
-  it("counts first picks (first counted kill) and first deaths (any kill row) against fights on the player's maps, and reversals among first deaths", () => {
+  it("counts first picks (first counted kill) and first deaths (any kill row) against fights on the player's maps, ", () => {
     // firstPick uses the fight's first counted kill: map 3's environmental row at t=19 is skipped,
     // so the first pick there is still p1's counted kill at t=20 — unchanged from before that row existed.
     expect(p.cards.firstPick).toEqual({ count: 3, fights: 6, won: 3, rate: 0.5 });
     // firstDeath uses the fight's first kill row of any kind: map 3's environmental row at t=19 is
     // p1's first death on that fight, adding one more count and one more win (A, ours, still wins it).
     expect(p.cards.firstDeath).toEqual({ count: 3, fights: 6, won: 2, rate: 0.5 });
-    expect(p.cards.reversal).toEqual({ count: 3, won: 2, rate: 2 / 3 });
   });
 
   it("restricts the fight cards by hero on the kill row under a filter", () => {
     expect(ana.cards.firstPick).toEqual({ count: 2, fights: 5, won: 2, rate: 0.4 });
     expect(ana.cards.firstDeath).toEqual({ count: 1, fights: 5, won: 1, rate: 0.2 });
-    expect(ana.cards.reversal).toEqual({ count: 1, won: 1, rate: 1 });
     // Under the Genji filter, playerMaps are maps 2 and 3 (genji has hero-time on both), so fights = 2 + 1 = 3.
     // Genji's first deaths are map 2's second fight (t=60, A wins, not ours) and map 3's environmental
     // row (t=19, copied attacker/victim hero Genji, A wins, ours) — count 2, won 1 (map 3 only).
     expect(genji.cards.firstDeath).toEqual({ count: 2, fights: 3, won: 1, rate: 2 / 3 });
-    expect(genji.cards.reversal).toEqual({ count: 2, won: 1, rate: 0.5 });
+  });
+
+  it("counts eliminations during the ult as final blows plus offensive assists inside the window, over the same ults", () => {
+    // Final blows per ult are 3 / 1 / 2 (below); assists inside a window add one on map 1 (Ana) and one on map 3 (Genji).
+    expect(p.cards.elimsPerUlt).toEqual({ ults: 4, elims: 5, perUlt: 1.25 });
+    expect(ana.cards.elimsPerUlt).toEqual({ ults: 3, elims: 2, perUlt: 2 / 3 });
+    expect(genji.cards.elimsPerUlt).toEqual({ ults: 1, elims: 3, perUlt: 3 });
   });
 
   it("counts kills per ult by the events rule, zero for an ult without an end", () => {
@@ -190,8 +196,8 @@ describe("buildPlayerPage", () => {
 
   it("gives zero counts and null rates for a stranger", () => {
     expect(buildPlayerPage(maps, rows, "nobody").cards).toEqual({
-      firstPick: { count: 0, fights: 0, won: 0, rate: null }, firstDeath: { count: 0, fights: 0, won: 0, rate: null }, reversal: { count: 0, won: 0, rate: null },
-      killsPerUlt: { ults: 0, kills: 0, perUlt: null }, avgChargeSeconds: null, avgHoldSeconds: null, chargeSamples: 0, holdSamples: 0,
+      firstPick: { count: 0, fights: 0, won: 0, rate: null }, firstDeath: { count: 0, fights: 0, won: 0, rate: null },
+      killsPerUlt: { ults: 0, kills: 0, perUlt: null }, elimsPerUlt: { ults: 0, elims: 0, perUlt: null }, avgChargeSeconds: null, avgHoldSeconds: null, chargeSamples: 0, holdSamples: 0,
     });
   });
 

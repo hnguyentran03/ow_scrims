@@ -2,12 +2,13 @@ import { and, asc, count, desc, eq, getTableColumns, gt, gte, inArray, lte, ne, 
 import type { Db } from "./index";
 import {
   ability1Used, ability2Used, damage, healing, heroSpawn, heroSwap, kill, mapBans, mapImages, maps, matchEnd, matchStart, mercyRez, objectiveCaptured,
-  objectiveUpdated, playerStat, roundEnd, roundStart, scrims, ultimateCharged, ultimateEnd, ultimateStart,
+  objectiveUpdated, offensiveAssist, playerStat, roundEnd, roundStart, scrims, ultimateCharged, ultimateEnd, ultimateStart,
 } from "./schema";
 import type { DamageLite } from "@/lib/stats/initiation";
 import { isCalibrated } from "@/lib/stats/calibration";
 import type { AbilityLike } from "@/lib/stats/ability-impact";
 import type { MapKeyed } from "@/lib/stats/team-rows";
+import type { UltLike } from "@/lib/stats/ultimates";
 
 export type { DamageLite };
 
@@ -55,6 +56,8 @@ export interface TeamRows {
   abilities: (AbilityLike & MapKeyed)[];
   roundStarts: RoundStartRow[];
   damage: (DamageLite & MapKeyed)[];
+  /** offensive_assist rows (four columns plus mapId) in match-time order. */
+  assists: (UltLike & MapKeyed)[];
 }
 
 export interface ScrimSummary {
@@ -260,10 +263,11 @@ export interface TeamTables {
   bans?: boolean;
   abilities?: boolean; // ability_1_used and ability_2_used, merged in time order
   rounds?: boolean; // round_start
-  damage?: boolean; // the five initiation columns only; about fifty times the kill volume
+  damage?: boolean;
+  assists?: boolean; // offensive_assist, four columns // the five initiation columns only; about fifty times the kill volume
 }
 
-export const ALL_TEAM_TABLES: TeamTables = { kills: true, ults: true, charged: true, playerStats: true, bans: true, abilities: true, rounds: true, damage: true };
+export const ALL_TEAM_TABLES: TeamTables = { kills: true, ults: true, charged: true, playerStats: true, bans: true, abilities: true, rounds: true, damage: true, assists: true };
 
 /** Both ability tables for the given maps, five columns each, merged by match time with slot 1 first on a tie. */
 async function abilitiesFor(db: Db, ids: number[]): Promise<(AbilityLike & MapKeyed)[]> {
@@ -288,7 +292,7 @@ export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTab
     .orderBy(asc(scrims.date), asc(scrims.id), asc(maps.order));
   const ids = mapRows.map((m) => m.id);
   if (ids.length === 0) {
-    return { maps: mapRows, kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [], damage: [] };
+    return { maps: mapRows, kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [], damage: [], assists: [] };
   }
   const kills = tables.kills ? await db.select().from(kill).where(inArray(kill.mapId, ids)).orderBy(asc(kill.matchTime), asc(kill.id)) : [];
   const ultStarts = tables.ults
@@ -315,11 +319,21 @@ export async function getTeamRows(db: Db, range: DateRange = {}, tables: TeamTab
         .where(inArray(damage.mapId, ids))
         .orderBy(asc(damage.matchTime), asc(damage.id))
     : [];
-  return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans, abilities, roundStarts, damage: damageRows };
+  const assists = tables.assists
+    ? await db
+        .select({ mapId: offensiveAssist.mapId, matchTime: offensiveAssist.matchTime, playerTeam: offensiveAssist.playerTeam, playerName: offensiveAssist.playerName, playerHero: offensiveAssist.playerHero })
+        .from(offensiveAssist)
+        .where(inArray(offensiveAssist.mapId, ids))
+        .orderBy(asc(offensiveAssist.matchTime), asc(offensiveAssist.id))
+    : [];
+  return { maps: mapRows, kills, ultStarts, ultEnds, ultCharged, playerStats, bans, abilities, roundStarts, damage: damageRows, assists };
 }
 
+/** Records a manual winner. On Push, where the log carries no score, the winner is given 1 and the loser 0 so the scoreboard reads like any other map. */
 export async function setMapWinner(db: Db, mapId: number, side: 1 | 2): Promise<void> {
-  await db.update(maps).set({ winnerSide: side, winnerSource: "manual" }).where(eq(maps.id, mapId));
+  const [row] = await db.select({ mapType: maps.mapType }).from(maps).where(eq(maps.id, mapId));
+  const score = row?.mapType === "Push" ? { team1Score: side === 1 ? 1 : 0, team2Score: side === 2 ? 1 : 0 } : {};
+  await db.update(maps).set({ winnerSide: side, winnerSource: "manual", ...score }).where(eq(maps.id, mapId));
 }
 
 /** Deletes a map (events cascade) and returns its raw log path for file cleanup. */

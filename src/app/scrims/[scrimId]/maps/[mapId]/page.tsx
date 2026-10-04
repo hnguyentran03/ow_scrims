@@ -1,5 +1,5 @@
 import { getMapStats } from "@/lib/db/queries";
-import { formatDuration, formatInt } from "@/lib/format";
+import { formatDuration, formatInt, scoreKnown } from "@/lib/format";
 import { findAjaxes } from "@/lib/stats/events";
 import { killKind } from "@/lib/stats/fights";
 import { buildOverview } from "@/lib/stats/overview";
@@ -27,7 +27,7 @@ export default async function MapPage({ params }: { params: MapParams }) {
   return (
     <div className="space-y-8">
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <Stat label="Score" value={map.mapType === "Push" ? "N/A" : `${ourScore} - ${theirScore}`} />
+        <Stat label="Score" value={scoreKnown(map) ? `${ourScore} - ${theirScore}` : "N/A"} />
         <Stat label="Match time" value={formatDuration(map.durationSeconds)} />
         <Stat label="Hero damage" value={`${formatInt(ours.heroDamage)} / ${formatInt(theirs.heroDamage)}`} hint={`${sides.ours} / ${sides.theirs}`} />
         <Stat label="Healing" value={`${formatInt(ours.healing)} / ${formatInt(theirs.healing)}`} hint={`${sides.ours} / ${sides.theirs}`} />
@@ -46,7 +46,7 @@ export default async function MapPage({ params }: { params: MapParams }) {
               <Td muted>Most first deaths</Td>
               <Td numeric>{overview.analysis.mostFirstDeaths ? `${overview.analysis.mostFirstDeaths.name} (${overview.analysis.mostFirstDeaths.team}), ${overview.analysis.mostFirstDeaths.count}` : "none"}</Td>
             </tr>
-            <tr><Td muted>Ultimate value (kills with ults)</Td><Td numeric>{sides.ours} {ultKills(sides.ours)} / {sides.theirs} {ultKills(sides.theirs)}</Td></tr>
+            <tr><Td muted>Ultimate value (final blows with ults)</Td><Td numeric>{sides.ours} {ultKills(sides.ours)} / {sides.theirs} {ultKills(sides.theirs)}</Td></tr>
             <tr><Td muted>Ajaxes (Lúcio died mid-ult)</Td><Td numeric>{sides.ours} {ajaxCount(sides.ours)} / {sides.theirs} {ajaxCount(sides.theirs)}</Td></tr>
           </tbody>
         </Table>

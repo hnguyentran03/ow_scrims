@@ -35,7 +35,7 @@ export default async function KillfeedPage({ params }: { params: MapParams }) {
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Match time" value={formatDuration(kf.header.matchTime)} />
-        <Stat label="Kills" value={pair(kf.header.kills)} hint={hint} />
+        <Stat label="Final blows" value={pair(kf.header.kills)} hint={hint} />
         <Stat label="Deaths" value={pair(kf.header.deaths)} hint={hint} />
         <Stat label="Fight wins" value={pair(kf.header.fightWins)} hint={hint} />
       </section>

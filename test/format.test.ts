@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatInt, formatPct, formatPer10, formatRatio, formatSeconds, resultLabel } from "@/lib/format";
+import { formatDuration, formatInt, formatPct, formatPer10, formatRatio, formatSeconds, resultLabel, scoreKnown } from "@/lib/format";
 
 describe("format", () => {
   it("formats seconds as mm:ss", () => {
@@ -29,5 +29,13 @@ describe("formatPct / formatSeconds", () => {
     expect(formatSeconds(null)).toBe("–");
     expect(formatRatio(0.8333)).toBe("0.83");
     expect(formatRatio(null)).toBe("–");
+  });
+});
+
+describe("scoreKnown", () => {
+  it("hides a Push score until a winner is set, and never hides another mode's score", () => {
+    expect(scoreKnown({ mapType: "Push", winnerSide: null })).toBe(false);
+    expect(scoreKnown({ mapType: "Push", winnerSide: 1 })).toBe(true);
+    expect(scoreKnown({ mapType: "Control", winnerSide: null })).toBe(true);
   });
 });

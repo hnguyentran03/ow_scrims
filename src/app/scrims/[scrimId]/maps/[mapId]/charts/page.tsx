@@ -43,7 +43,7 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
   const combos = ultCombos(rows.ultStarts, rows.ultEnds, fights);
   const counters = counterUlts(rows.ultStarts, rows.ultEnds);
   const advantage = ultAdvantageByFight(rows.ultCharged, rows.ultStarts, rows.ultEnds, fights, sides);
-  const tempoNote = tempo.markers.length === 0 ? "No kills or ultimates recorded" : `${fights.length} fights, ${casts.length} ults`;
+  const tempoNote = tempo.markers.length === 0 ? "No final blows or ultimates recorded" : `${fights.length} fights, ${casts.length} ults`;
 
   return (
     <div className="space-y-6">
@@ -66,10 +66,10 @@ export default async function ChartsPage({ params }: { params: MapParams }) {
         </Card>
       </div>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card title="Kills by fight" note={`${fights.length} fights`}>
+        <Card title="Final blows by fight" note={`${fights.length} fights`}>
           <KillsByFightChart points={steps} sides={sides} />
         </Card>
-        <Card title="Final blows by role" note={roles.dropped ? `${roles.dropped} kills by unknown heroes not shown` : undefined}>
+        <Card title="Final blows by role" note={roles.dropped ? `${roles.dropped} final blows by unknown heroes not shown` : undefined}>
           <FinalBlowsByRoleChart bars={roles.bars} sides={sides} />
         </Card>
         <Card title="Cumulative hero damage by round" note={rounds.length === 0 ? "No player stats recorded" : undefined}>

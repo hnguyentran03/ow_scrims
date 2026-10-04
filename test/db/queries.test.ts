@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
+import { eq } from "drizzle-orm";
 import { createTestDb, type Db } from "@/lib/db";
+import { maps } from "@/lib/db/schema";
 import { createScrim, deleteMap, deleteScrim, getChartRows, getCompareRows, getEventRows, getInitiationDamage, getKillfeedRows, getMap, getMapStats, getReplayRows, getScrim, getTelemetryRows, listSameMapReplays, listScrims, setMapWinner } from "@/lib/db/queries";
 import { insertParsedMap } from "@/lib/db/insert-map";
 import { parseLog } from "@/lib/parser/parse";
@@ -160,9 +162,18 @@ describe("queries", () => {
     );
   });
 
-  it("sets a manual winner", async () => {
+  it("sets a manual winner and leaves a scored map's score alone", async () => {
+    const before = (await getMap(db, mapId))!.map;
     await setMapWinner(db, mapId, 2);
-    expect((await getMap(db, mapId))?.map).toMatchObject({ winnerSide: 2, winnerSource: "manual" });
+    expect((await getMap(db, mapId))?.map).toMatchObject({ winnerSide: 2, winnerSource: "manual", team1Score: before.team1Score, team2Score: before.team2Score });
+  });
+
+  it("gives a Push winner 1 and the loser 0, since the log carries no score", async () => {
+    await db.update(maps).set({ mapType: "Push", team1Score: 0, team2Score: 0 }).where(eq(maps.id, mapId));
+    await setMapWinner(db, mapId, 1);
+    expect((await getMap(db, mapId))?.map).toMatchObject({ winnerSide: 1, team1Score: 1, team2Score: 0 });
+    await setMapWinner(db, mapId, 2);
+    expect((await getMap(db, mapId))?.map).toMatchObject({ winnerSide: 2, team1Score: 0, team2Score: 1 });
   });
 
   it("deletes a map and then the scrim, returning raw log paths", async () => {

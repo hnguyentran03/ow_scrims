@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { getDb } from "@/lib/db";
 import { getScrim } from "@/lib/db/queries";
-import { resultLabel } from "@/lib/format";
+import { resultLabel, scoreKnown } from "@/lib/format";
 import { parsePositiveInt } from "@/lib/ids";
 import { resultTone } from "@/lib/result";
 import { deleteMapAction, deleteScrimAction } from "@/app/actions";
@@ -54,7 +54,7 @@ export default async function ScrimPage({ params }: { params: Promise<{ scrimId:
                 </div>
                 <div className="flex flex-wrap gap-x-3 text-sm text-muted">
                   <span>{m.mapType}</span>
-                  <span className="text-ink">{m.mapType === "Push" ? "score N/A" : `${ours} - ${theirs}`}</span>
+                  <span className="text-ink">{scoreKnown(m) ? `${ours} - ${theirs}` : "score N/A"}</span>
                 </div>
                 <BansEditor scrimId={scrim.id} mapId={m.id} ourSide={m.ourSide} bans={bans.filter((b) => b.mapId === m.id)} />
                 <form action={deleteMapAction.bind(null, scrim.id, m.id)}>

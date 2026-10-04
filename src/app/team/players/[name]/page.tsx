@@ -27,7 +27,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
   const query = await searchParams;
   const range = parseRange(query);
   const db = await getDb();
-  const rows = await getTeamRows(db, range, { playerStats: true, kills: true, ults: true, charged: true, rounds: true });
+  const rows = await getTeamRows(db, range, { playerStats: true, kills: true, ults: true, charged: true, rounds: true, assists: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const name = resolvePlayerName(rows.maps, rows.playerStats, raw);
   if (name === undefined) {
@@ -74,6 +74,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
         <Stat label="Deaths / 10" value={formatPer10(o.per10.deaths)} />
         <Stat label="Hero damage / 10" value={formatPer10(o.per10.heroDamage)} />
         <Stat label="Healing / 10" value={formatPer10(o.per10.healing)} />
+        <Stat label="Healing received / 10" value={formatPer10(o.per10.healingReceived)} />
         <Stat label="Damage taken / 10" value={formatPer10(o.per10.damageTaken)} />
         <Stat label="Damage blocked / 10" value={formatPer10(o.per10.damageBlocked)} />
       </div>
@@ -136,7 +137,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card title="Final blows by method"><MethodList rows={p.finalBlowsByMethod} /></Card>
-        <Card title="Died to most" note="any kill row"><HeroList rows={p.diedToMost} /></Card>
+        <Card title="Died to most" note="by final blow"><HeroList rows={p.diedToMost} /></Card>
         <Card title="Final blows on most"><HeroList rows={p.finalBlowsOnMost} /></Card>
       </div>
 
@@ -154,8 +155,8 @@ function Cards({ c }: { c: PlayerCards }) {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       <Stat label="First pick %" value={formatPct(c.firstPick.rate)} hint={`${c.firstPick.count} of ${c.firstPick.fights} fights on maps played; won ${c.firstPick.won}`} />
       <Stat label="First death %" value={formatPct(c.firstDeath.rate)} hint={`${c.firstDeath.count} of ${c.firstDeath.fights} fights on maps played`} />
-      <Stat label="Reversal %" value={formatPct(c.reversal.rate)} hint={`${c.reversal.won} won of ${c.reversal.count} first deaths`} />
-      <Stat label="Kills per ult" value={formatRatio(c.killsPerUlt.perUlt)} hint={`${c.killsPerUlt.kills} kills over ${c.killsPerUlt.ults} ults`} />
+      <Stat label="Final blows per ult" value={formatRatio(c.killsPerUlt.perUlt)} hint={`${c.killsPerUlt.kills} final blows over ${c.killsPerUlt.ults} ults`} />
+      <Stat label="Elims per ult" value={formatRatio(c.elimsPerUlt.perUlt)} hint={`${c.elimsPerUlt.elims} final blows and assists during ${c.elimsPerUlt.ults} ults`} />
       <Stat label="Avg ult charge" value={formatSeconds(c.avgChargeSeconds)} hint={`previous cast to charged, ${samples(c.chargeSamples)}`} />
       <Stat label="Avg ult hold" value={formatSeconds(c.avgHoldSeconds)} hint={`charged to cast, ${samples(c.holdSamples)}`} />
     </div>
