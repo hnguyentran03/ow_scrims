@@ -4,13 +4,17 @@ import { groupByMap, rate, type MapKeyed, type TeamMapLike } from "./team-rows";
 
 export const INITIATION_LOOKBACK_SECONDS = 10;
 
-/** The five damage columns initiation needs; getInitiationDamage selects exactly these. */
-export interface DamageLite {
+/** The three damage columns that decide who engaged first; the team path loads only these. */
+export interface DamageSides {
   matchTime: number;
   attackerTeam: string;
+  victimTeam: string;
+}
+
+/** The five damage columns the per-map table needs (initiator name and hero too); getInitiationDamage selects exactly these. */
+export interface DamageLite extends DamageSides {
   attackerName: string;
   attackerHero: string;
-  victimTeam: string;
 }
 
 export interface FightInitiation {
@@ -39,48 +43,55 @@ export interface Initiation {
   hasDamage: boolean;
 }
 
+/** Per fight, the earliest cross-team damage row in the lookback window, or null. */
+function initiatorsOf<T extends DamageSides>(fights: Fight[], damage: T[]): (T | null)[] {
+  const cross = damage.filter((d) => d.attackerTeam !== d.victimTeam);
+  return fights.map((f, i) => {
+    const prev = fights[i - 1];
+    const from = f.start - INITIATION_LOOKBACK_SECONDS;
+    return cross.find((d) => d.matchTime >= from && d.matchTime <= f.end && !(prev && d.matchTime >= prev.start && d.matchTime <= prev.end)) ?? null;
+  });
+}
+
+/** Per-side counts from each fight's initiator and winner; rates divide by decided fights only. */
+function summarize(fights: Fight[], initiators: (DamageSides | null)[], s: Sides): Record<SideKey, InitiationSummary> {
+  const acc = { ours: emptySummary(), theirs: emptySummary() };
+  fights.forEach((f, i) => {
+    const row = initiators[i];
+    const me = row ? sideOf(row.attackerTeam, s) : null;
+    if (!me) return;
+    const other: SideKey = me === "ours" ? "theirs" : "ours";
+    const winner = f.winner ? sideOf(f.winner, s) : null;
+    acc[me].initiated += 1;
+    acc[other].fightsNotInitiated += 1;
+    if (winner) {
+      acc[me].decidedInitiated += 1;
+      acc[other].decidedNotInitiated += 1;
+      if (winner === me) acc[me].wonWhenInitiated += 1;
+      else acc[other].wonWhenNotInitiated += 1;
+    }
+  });
+  for (const side of ["ours", "theirs"] as const) {
+    acc[side].initiationWinRate = rate(acc[side].wonWhenInitiated, acc[side].decidedInitiated);
+    acc[side].nonInitiationWinRate = rate(acc[side].wonWhenNotInitiated, acc[side].decidedNotInitiated);
+  }
+  return acc;
+}
+
 /**
  * Who engaged first in each fight: the earliest cross-team damage row from up to INITIATION_LOOKBACK_SECONDS before the first kill to the fight's end, never one inside the previous fight.
  * `damage` must be in ascending match-time order (as `getInitiationDamage` returns it); the earliest candidate is the first match in array order.
  */
 export function buildInitiation(fights: Fight[], damage: DamageLite[], s: Sides): Initiation {
-  const cross = damage.filter((d) => d.attackerTeam !== d.victimTeam);
-  const acc: Record<SideKey, { initiated: number; wonWhenInitiated: number; fightsNotInitiated: number; wonWhenNotInitiated: number; decidedInitiated: number; decidedNotInitiated: number }> = {
-    ours: { initiated: 0, wonWhenInitiated: 0, fightsNotInitiated: 0, wonWhenNotInitiated: 0, decidedInitiated: 0, decidedNotInitiated: 0 },
-    theirs: { initiated: 0, wonWhenInitiated: 0, fightsNotInitiated: 0, wonWhenNotInitiated: 0, decidedInitiated: 0, decidedNotInitiated: 0 },
-  };
+  const initiators = initiatorsOf(fights, damage);
   const out: FightInitiation[] = fights.map((f, i) => {
-    const prev = fights[i - 1];
-    const from = f.start - INITIATION_LOOKBACK_SECONDS;
-    const row = cross.find((d) => d.matchTime >= from && d.matchTime <= f.end && !(prev && d.matchTime >= prev.start && d.matchTime <= prev.end));
+    const row = initiators[i];
     const winner = f.winner ? sideOf(f.winner, s) : null;
     const firstKill = f.kills.find((k) => killKind(k) === "kill");
     const initiator = row ? { side: sideOf(row.attackerTeam, s), team: row.attackerTeam, name: row.attackerName, hero: row.attackerHero, t: row.matchTime } : null;
-    if (initiator?.side) {
-      const me = initiator.side;
-      const other: SideKey = me === "ours" ? "theirs" : "ours";
-      acc[me].initiated += 1;
-      acc[other].fightsNotInitiated += 1;
-      if (winner) {
-        acc[me].decidedInitiated += 1;
-        acc[other].decidedNotInitiated += 1;
-        if (winner === me) acc[me].wonWhenInitiated += 1;
-        else acc[other].wonWhenNotInitiated += 1;
-      }
-    }
     return { index: f.index, initiator, secondsToFirstKill: initiator ? f.start - initiator.t : null, firstKillSide: firstKill ? sideOf(firstKill.attackerTeam, s) : null, winner };
   });
-  const finish = (a: (typeof acc)["ours"]): InitiationSummary => ({
-    initiated: a.initiated,
-    wonWhenInitiated: a.wonWhenInitiated,
-    decidedInitiated: a.decidedInitiated,
-    fightsNotInitiated: a.fightsNotInitiated,
-    wonWhenNotInitiated: a.wonWhenNotInitiated,
-    decidedNotInitiated: a.decidedNotInitiated,
-    initiationWinRate: rate(a.wonWhenInitiated, a.decidedInitiated),
-    nonInitiationWinRate: rate(a.wonWhenNotInitiated, a.decidedNotInitiated),
-  });
-  return { fights: out, summary: { ours: finish(acc.ours), theirs: finish(acc.theirs) }, hasDamage: damage.length > 0 };
+  return { fights: out, summary: summarize(fights, initiators, s), hasDamage: damage.length > 0 };
 }
 
 export interface TeamInitiation {
@@ -91,7 +102,9 @@ export interface TeamInitiation {
   mapsWithDamage: number;
 }
 
-const emptySummary = (): InitiationSummary => ({ initiated: 0, wonWhenInitiated: 0, decidedInitiated: 0, fightsNotInitiated: 0, wonWhenNotInitiated: 0, decidedNotInitiated: 0, initiationWinRate: null, nonInitiationWinRate: null });
+function emptySummary(): InitiationSummary {
+  return { initiated: 0, wonWhenInitiated: 0, decidedInitiated: 0, fightsNotInitiated: 0, wonWhenNotInitiated: 0, decidedNotInitiated: 0, initiationWinRate: null, nonInitiationWinRate: null };
+}
 
 function addSummary(into: InitiationSummary, s: InitiationSummary): void {
   into.initiated += s.initiated;
@@ -104,8 +117,8 @@ function addSummary(into: InitiationSummary, s: InitiationSummary): void {
   into.nonInitiationWinRate = rate(into.wonWhenNotInitiated, into.decidedNotInitiated);
 }
 
-/** buildInitiation per map that logged damage, counters summed per side and rates recomputed from the sums. */
-export function buildTeamInitiation(maps: TeamMapLike[], fights: Map<number, Fight[]>, damage: (DamageLite & MapKeyed)[]): TeamInitiation {
+/** The per-side summary per map that logged damage (three damage columns suffice), counters summed and rates recomputed from the sums. */
+export function buildTeamInitiation(maps: TeamMapLike[], fights: Map<number, Fight[]>, damage: (DamageSides & MapKeyed)[]): TeamInitiation {
   const damageBy = groupByMap(damage);
   const summary = { ours: emptySummary(), theirs: emptySummary() };
   let mapsWithDamage = 0;
@@ -113,9 +126,10 @@ export function buildTeamInitiation(maps: TeamMapLike[], fights: Map<number, Fig
     const rows = damageBy.get(map.id);
     if (!rows || rows.length === 0) continue;
     mapsWithDamage += 1;
-    const one = buildInitiation(fights.get(map.id) ?? [], rows, sides(map));
-    addSummary(summary.ours, one.summary.ours);
-    addSummary(summary.theirs, one.summary.theirs);
+    const fs = fights.get(map.id) ?? [];
+    const one = summarize(fs, initiatorsOf(fs, rows), sides(map));
+    addSummary(summary.ours, one.ours);
+    addSummary(summary.theirs, one.theirs);
   }
   return { summary, maps: maps.length, mapsWithDamage };
 }

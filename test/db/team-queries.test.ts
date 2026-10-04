@@ -104,13 +104,13 @@ describe("team queries", () => {
     expect(stats.playerStats).toHaveLength(40 + 50);
   });
 
-  it("loads the five initiation damage columns per map only when asked", async () => {
+  it("loads the three initiation damage columns per map only when asked", async () => {
     const off = await getTeamRows(db, {}, { kills: true });
     expect(off.damage).toEqual([]);
     // Antarctic (2026-04-15) logged no damage; Aatlis (2026-09-18) has 2690 damage lines in the log.
     const on = await getTeamRows(db, {}, { damage: true, kills: true });
     expect(on.damage.length).toBeGreaterThan(on.kills.length * 10);
-    expect(Object.keys(on.damage[0]).sort()).toEqual(["attackerHero", "attackerName", "attackerTeam", "mapId", "matchTime", "victimTeam"]);
+    expect(Object.keys(on.damage[0]).sort()).toEqual(["attackerTeam", "mapId", "matchTime", "victimTeam"]);
     expect(on.damage.every((d, i) => i === 0 || on.damage[i - 1].matchTime <= d.matchTime)).toBe(true);
     expect(new Set(on.damage.map((d) => d.mapId))).toEqual(new Set([aatlis]));
   });
