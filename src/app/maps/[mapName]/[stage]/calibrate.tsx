@@ -87,7 +87,7 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
   return (
     <Card
       title="Calibration"
-      note={`${calibration ? `Saved with ${calibration.pairs.length} pairs` : "Not calibrated"}${sourceLabel ? `, kills from ${sourceLabel}` : ""}`}
+      note={`${calibration ? `Saved with ${calibration.pairs.length} pairs` : "Not calibrated"}${sourceLabel ? `, final blows from ${sourceLabel}` : ""}`}
     >
       <p className="text-sm text-muted">
         Pick a kill from the list whose spot you remember, then click where it happened on the image. Three pairs spread across the stage
@@ -162,7 +162,7 @@ export function Calibrate({ imageId, calibration, points, sourceLabel }: { image
             )}
           </div>
           <div>
-            <h3 className="mb-1 text-sm text-muted">Kills on this stage</h3>
+            <h3 className="mb-1 text-sm text-muted">Final blows on this stage</h3>
             <ul className="max-h-96 space-y-1 overflow-y-auto">
               {points.map((p, i) => (
                 <li key={i}>

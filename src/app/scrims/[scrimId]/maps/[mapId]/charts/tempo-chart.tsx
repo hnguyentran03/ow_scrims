@@ -11,7 +11,7 @@ import { Axes, H, innerH, Legend, linear, M, svgPoint, ticks, Tooltip, W } from 
 type Variant = keyof Tempo["series"];
 const VARIANTS: Array<{ key: Variant; label: string }> = [
   { key: "combined", label: "Combined" },
-  { key: "kills", label: "Kills" },
+  { key: "kills", label: "Final blows" },
   { key: "ults", label: "Ults" },
 ];
 const SHOWN: Record<Variant, Array<"kill" | "ult">> = { combined: ["kill", "ult"], kills: ["kill"], ults: ["ult"] };
@@ -100,7 +100,7 @@ export function TempoChart({ tempo, sides }: { tempo: Tempo; sides: Sides }) {
           </>
         )}
       </svg>
-      <p className="text-xs text-muted">Filled dots are kills, rings are ultimate casts. Fight spans are shaded by winner.</p>
+      <p className="text-xs text-muted">Filled dots are final blows, rings are ultimate casts. Fight spans are shaded by winner.</p>
     </div>
   );
 }

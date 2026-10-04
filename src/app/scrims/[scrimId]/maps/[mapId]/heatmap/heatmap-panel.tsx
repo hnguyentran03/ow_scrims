@@ -17,7 +17,7 @@ import { markerRadius, NO_POSITIONS, StageCanvas } from "../stage-canvas";
 
 export type Layer = "kills" | "deaths" | "fights" | "damage" | "healing" | "presence" | "routes" | "territory";
 const LAYERS: Array<{ key: Layer; label: string }> = [
-  { key: "kills", label: "Kills" }, { key: "deaths", label: "Deaths" }, { key: "fights", label: "Fights" }, { key: "damage", label: "Damage" },
+  { key: "kills", label: "Final blows" }, { key: "deaths", label: "Deaths" }, { key: "fights", label: "Fights" }, { key: "damage", label: "Damage" },
   { key: "healing", label: "Healing" }, { key: "presence", label: "Presence" }, { key: "routes", label: "Routes" }, { key: "territory", label: "Territory" },
 ];
 const DENSITY: Layer[] = ["damage", "healing", "presence"];
@@ -169,7 +169,7 @@ function Cross({ m, r }: { m: Marker; r: number }) {
 function legend(layers: Set<Layer>, heatmap: Heatmap, sides: Sides, filterSide: SideKey | "both"): string {
   const parts: string[] = [];
   const side = filterSide === "both" ? `${sides.ours} blue, ${sides.theirs} red` : sides[filterSide];
-  if (layers.has("kills")) parts.push(`dots are kills (${side})`);
+  if (layers.has("kills")) parts.push(`dots are final blows (${side})`);
   if (layers.has("deaths")) parts.push("crosses are deaths");
   if (layers.has("fights")) parts.push("numbered rings are fight centres");
   if (layers.has("damage")) parts.push(`damage up to ${formatInt(Math.max(0, ...heatmap.density.damage.map((c) => c.v)))} per cell`);

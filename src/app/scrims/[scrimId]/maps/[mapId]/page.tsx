@@ -46,7 +46,7 @@ export default async function MapPage({ params }: { params: MapParams }) {
               <Td muted>Most first deaths</Td>
               <Td numeric>{overview.analysis.mostFirstDeaths ? `${overview.analysis.mostFirstDeaths.name} (${overview.analysis.mostFirstDeaths.team}), ${overview.analysis.mostFirstDeaths.count}` : "none"}</Td>
             </tr>
-            <tr><Td muted>Ultimate value (kills with ults)</Td><Td numeric>{sides.ours} {ultKills(sides.ours)} / {sides.theirs} {ultKills(sides.theirs)}</Td></tr>
+            <tr><Td muted>Ultimate value (final blows with ults)</Td><Td numeric>{sides.ours} {ultKills(sides.ours)} / {sides.theirs} {ultKills(sides.theirs)}</Td></tr>
             <tr><Td muted>Ajaxes (Lúcio died mid-ult)</Td><Td numeric>{sides.ours} {ajaxCount(sides.ours)} / {sides.theirs} {ajaxCount(sides.theirs)}</Td></tr>
           </tbody>
         </Table>
