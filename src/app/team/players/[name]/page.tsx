@@ -74,6 +74,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
         <Stat label="Deaths / 10" value={formatPer10(o.per10.deaths)} />
         <Stat label="Hero damage / 10" value={formatPer10(o.per10.heroDamage)} />
         <Stat label="Healing / 10" value={formatPer10(o.per10.healing)} />
+        <Stat label="Healing received / 10" value={formatPer10(o.per10.healingReceived)} />
         <Stat label="Damage taken / 10" value={formatPer10(o.per10.damageTaken)} />
         <Stat label="Damage blocked / 10" value={formatPer10(o.per10.damageBlocked)} />
       </div>
