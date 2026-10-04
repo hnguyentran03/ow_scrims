@@ -33,7 +33,10 @@ export async function setMapWinnerAction(scrimId: number, mapId: number, side: 1
   scrimId = requireId(scrimId);
   mapId = requireId(mapId);
   if (side !== 1 && side !== 2) throw new Error("invalid id");
-  await setMapWinner(await getDb(), mapId, side);
+  const db = await getDb();
+  const data = await getMap(db, mapId);
+  if (!data || data.scrim.id !== scrimId) throw new Error("map not found");
+  await setMapWinner(db, mapId, side);
   revalidatePath(`/scrims/${scrimId}`);
   revalidatePath(`/scrims/${scrimId}/maps/${mapId}`, "layout");
 }
