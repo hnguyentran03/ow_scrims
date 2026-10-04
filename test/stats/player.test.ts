@@ -67,7 +67,9 @@ const kills: Kill[] = [
 const ultStarts: Ult[] = [ult(1, 11, "B", "q1", "Genji"), ult(1, 30, "A", "p1", "Ana"), ult(1, 95, "A", "p1", "Ana"), ult(2, 50, "B", "p1", "Ana"), ult(3, 18, "A", "p1", "Genji")];
 const ultEnds: Ult[] = [ult(1, 13, "B", "q1", "Genji"), ult(1, 38, "A", "p1", "Ana"), ult(1, 105, "A", "p1", "Ana"), ult(3, 26, "A", "p1", "Genji")];
 const ultCharged: Ult[] = [ult(1, 20, "A", "p1", "Ana"), ult(1, 90, "A", "p1", "Ana")];
-const rows: PlayerRows = { playerStats, kills, ultStarts, ultEnds, ultCharged, roundStarts: [{ mapId: 1, matchTime: 5, roundNumber: 1 }] };
+// p1's assists: one inside each of map 1's first ult (30–38) and map 3's ult (18–26); one at t=60 outside any window; one by the opposing "p1" on map 2.
+const assists: Ult[] = [ult(1, 33, "A", "p1", "Ana"), ult(3, 21, "A", "p1", "Genji"), ult(1, 60, "A", "p1", "Ana"), ult(2, 52, "A", "p1", "Ana")];
+const rows: PlayerRows = { playerStats, kills, ultStarts, ultEnds, ultCharged, roundStarts: [{ mapId: 1, matchTime: 5, roundNumber: 1 }], assists };
 
 describe("playerHeroes", () => {
   it("lists our player's heroes by playtime and nothing for a stranger", () => {
@@ -171,11 +173,11 @@ describe("buildPlayerPage", () => {
     expect(genji.cards.firstDeath).toEqual({ count: 2, fights: 3, won: 1, rate: 2 / 3 });
   });
 
-  it("divides the player's eliminations by the same ults, summing the hero-filtered final rows on our side", () => {
-    // p1's our-side rows: map 1 Ana 10, map 2 Ana 2 and Genji 1, map 3 Genji 8 (map 2's opposing "p1" is not ours).
-    expect(p.cards.elimsPerUlt).toEqual({ ults: 4, elims: 21, perUlt: 5.25 });
-    expect(ana.cards.elimsPerUlt).toEqual({ ults: 3, elims: 12, perUlt: 4 });
-    expect(genji.cards.elimsPerUlt).toEqual({ ults: 1, elims: 9, perUlt: 9 });
+  it("counts eliminations during the ult as final blows plus offensive assists inside the window, over the same ults", () => {
+    // Final blows per ult are 3 / 1 / 2 (below); assists inside a window add one on map 1 (Ana) and one on map 3 (Genji).
+    expect(p.cards.elimsPerUlt).toEqual({ ults: 4, elims: 5, perUlt: 1.25 });
+    expect(ana.cards.elimsPerUlt).toEqual({ ults: 3, elims: 2, perUlt: 2 / 3 });
+    expect(genji.cards.elimsPerUlt).toEqual({ ults: 1, elims: 3, perUlt: 3 });
   });
 
   it("counts kills per ult by the events rule, zero for an ult without an end", () => {

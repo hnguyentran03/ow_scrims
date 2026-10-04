@@ -44,6 +44,9 @@ describe("team queries", () => {
     expect(rows.roundStarts.slice(0, 2).map((r) => r.mapId)).toEqual([antarctic, aatlis]);
     expect(rows.roundStarts.filter((r) => r.mapId === antarctic).map((r) => r.roundNumber)).toEqual([1, 2, 3]);
     expect(rows.damage.length).toBeGreaterThan(0);
+    // Antarctic logs 21 offensive assists and Aatlis 19; four columns plus mapId, in time order.
+    expect(rows.assists).toHaveLength(21 + 19);
+    expect(Object.keys(rows.assists[0]).sort()).toEqual(["mapId", "matchTime", "playerHero", "playerName", "playerTeam"]);
   });
 
   it("filters by an inclusive date range and runs no event query for an empty range", async () => {
@@ -51,7 +54,7 @@ describe("team queries", () => {
     expect((await getTeamRows(db, { to: "2026-09-10" })).maps.map((m) => m.id)).toEqual([antarctic]);
     expect((await getTeamRows(db, { from: "2026-09-12", to: "2026-09-12" })).maps.map((m) => m.id)).toEqual([aatlis]);
     const none = await getTeamRows(db, { from: "2027-01-01" });
-    expect(none).toEqual({ maps: [], kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [], damage: [] });
+    expect(none).toEqual({ maps: [], kills: [], ultStarts: [], ultEnds: [], ultCharged: [], playerStats: [], bans: [], abilities: [], roundStarts: [], damage: [], assists: [] });
   });
 
   it("replaces one side's bans and returns them with the scrim and the map", async () => {

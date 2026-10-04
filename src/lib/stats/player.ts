@@ -29,6 +29,8 @@ export interface PlayerRows {
   ultEnds: UltRowLike[];
   ultCharged: UltRowLike[];
   roundStarts: RoundRowLike[];
+  /** offensive_assist rows: one per assist, same shape as an ult row. */
+  assists: UltRowLike[];
 }
 
 export interface PlayerOverview {
@@ -99,7 +101,7 @@ export interface PlayerCards {
   firstPick: FightShare;
   firstDeath: FightShare;
   killsPerUlt: { ults: number; kills: number; perUlt: number | null };
-  /** Eliminations (the player_stat column, which counts assists) over the same paired ults killsPerUlt divides by. */
+  /** Eliminations during the ult (the player's final blows plus offensive assists inside the window) over the same paired ults killsPerUlt divides by. */
   elimsPerUlt: { ults: number; elims: number; perUlt: number | null };
   avgChargeSeconds: number | null;
   avgHoldSeconds: number | null;
@@ -162,18 +164,20 @@ function topCounts(counts: Map<string, number>, limit: number): HeroCount[] {
 
 function buildCards(
   playerMaps: TeamMapLike[], rows: PlayerRows, name: string, filter: string | null,
-  attackedBy: (k: KillLike, ours: string) => boolean, victimIs: (k: KillLike, ours: string) => boolean, elims: number,
+  attackedBy: (k: KillLike, ours: string) => boolean, victimIs: (k: KillLike, ours: string) => boolean,
 ): PlayerCards {
   const killsBy = groupByMap(rows.kills);
   const startsBy = groupByMap(rows.ultStarts);
   const endsBy = groupByMap(rows.ultEnds);
   const chargedBy = groupByMap(rows.ultCharged);
+  const assistsBy = groupByMap(rows.assists);
   const mine = (u: UltLike, ours: string) => u.playerTeam === ours && u.playerName === name && (filter === null || u.playerHero === filter);
   let fights = 0;
   const pick = { count: 0, won: 0 };
   const death = { count: 0, won: 0 };
   let ults = 0;
   let ultKills = 0;
+  let ultAssists = 0;
   const charge: number[] = [];
   const hold: number[] = [];
 
@@ -195,6 +199,7 @@ function buildCards(
       ults += 1;
       if (!end) continue;
       ultKills += kills.filter((k) => k.attackerTeam === ours && k.attackerName === name && k.matchTime >= start.matchTime && k.matchTime <= end.matchTime && killKind(k) === "kill").length;
+      ultAssists += (assistsBy.get(m.id) ?? []).filter((a) => mine(a, ours) && a.matchTime >= start.matchTime && a.matchTime <= end.matchTime).length;
     }
     for (const t of ultTimings(chargedBy.get(m.id) ?? [], starts, ends)) {
       if (!mine(t.start, ours) || t.chargeSeconds === null || t.holdSeconds === null) continue;
@@ -207,7 +212,7 @@ function buildCards(
     firstPick: { ...pick, fights, rate: rate(pick.count, fights) },
     firstDeath: { ...death, fights, rate: rate(death.count, fights) },
     killsPerUlt: { ults, kills: ultKills, perUlt: rate(ultKills, ults) },
-    elimsPerUlt: { ults, elims, perUlt: rate(elims, ults) },
+    elimsPerUlt: { ults, elims: ultKills + ultAssists, perUlt: rate(ultKills + ultAssists, ults) },
     avgChargeSeconds: avg(charge),
     avgHoldSeconds: avg(hold),
     chargeSamples: charge.length,
@@ -290,7 +295,7 @@ export function buildPlayerPage(maps: TeamMapLike[], rows: PlayerRows, name: str
     diedToMost: topCounts(diedTo, MATCHUP_LIMIT),
     finalBlowsOnMost: topCounts(blowsOn, MATCHUP_LIMIT),
     chart,
-    cards: buildCards(playerMaps, rows, name, filter, attackedBy, victimIs, playerRows.reduce((n, r) => n + r.eliminations, 0)),
+    cards: buildCards(playerMaps, rows, name, filter, attackedBy, victimIs),
     profile: buildProfileCards(maps, rows, name, filter),
   };
 }

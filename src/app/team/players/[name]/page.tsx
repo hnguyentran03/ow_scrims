@@ -27,7 +27,7 @@ export default async function PlayerDetailPage({ params, searchParams }: { param
   const query = await searchParams;
   const range = parseRange(query);
   const db = await getDb();
-  const rows = await getTeamRows(db, range, { playerStats: true, kills: true, ults: true, charged: true, rounds: true });
+  const rows = await getTeamRows(db, range, { playerStats: true, kills: true, ults: true, charged: true, rounds: true, assists: true });
   if (rows.maps.length === 0) return <EmptyRange />;
   const name = resolvePlayerName(rows.maps, rows.playerStats, raw);
   if (name === undefined) {
@@ -155,7 +155,7 @@ function Cards({ c }: { c: PlayerCards }) {
       <Stat label="First pick %" value={formatPct(c.firstPick.rate)} hint={`${c.firstPick.count} of ${c.firstPick.fights} fights on maps played; won ${c.firstPick.won}`} />
       <Stat label="First death %" value={formatPct(c.firstDeath.rate)} hint={`${c.firstDeath.count} of ${c.firstDeath.fights} fights on maps played`} />
       <Stat label="Final blows per ult" value={formatRatio(c.killsPerUlt.perUlt)} hint={`${c.killsPerUlt.kills} final blows over ${c.killsPerUlt.ults} ults`} />
-      <Stat label="Elims per ult" value={formatRatio(c.elimsPerUlt.perUlt)} hint={`${c.elimsPerUlt.elims} eliminations over ${c.elimsPerUlt.ults} ults`} />
+      <Stat label="Elims per ult" value={formatRatio(c.elimsPerUlt.perUlt)} hint={`${c.elimsPerUlt.elims} final blows and assists during ${c.elimsPerUlt.ults} ults`} />
       <Stat label="Avg ult charge" value={formatSeconds(c.avgChargeSeconds)} hint={`previous cast to charged, ${samples(c.chargeSamples)}`} />
       <Stat label="Avg ult hold" value={formatSeconds(c.avgHoldSeconds)} hint={`charged to cast, ${samples(c.holdSamples)}`} />
     </div>
