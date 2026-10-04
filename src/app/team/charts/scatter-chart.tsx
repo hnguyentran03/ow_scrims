@@ -6,7 +6,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Field, Select } from "@/components/field";
 import { ROLE_COLORS } from "@/lib/colors";
 import { formatPer10 } from "@/lib/format";
-import { ROLE_ORDER } from "@/lib/stats/heroes";
+import { ROLE_ORDER, type Role } from "@/lib/stats/heroes";
 import { linearFit } from "@/lib/stats/regression";
 import { heroesOf, PRESETS, type ScatterPoint } from "@/lib/stats/scatter";
 import { STAT_KEYS, STAT_LABELS, type StatKey } from "@/lib/stats/stat-keys";
@@ -32,6 +32,8 @@ export function ScatterChart({ points }: { points: ScatterPoint[] }) {
   const [x, setX] = useState<StatKey>(PRESETS[0].x);
   const [y, setY] = useState<StatKey>(PRESETS[0].y);
   const [hero, setHero] = useState<string>("");
+  const [hiddenRoles, setHiddenRoles] = useState<Set<Role>>(() => new Set());
+  const [hiddenPlayers, setHiddenPlayers] = useState<Set<string>>(() => new Set());
   const [trend, setTrend] = useState(true);
   const [hover, setHover] = useState<ScatterPoint | null>(null);
   const trendId = useId();
@@ -41,7 +43,8 @@ export function ScatterChart({ points }: { points: ScatterPoint[] }) {
 
   const heroes = heroesOf(points);
   const activeHero = heroes.includes(hero) ? hero : "";
-  const shown = activeHero ? points.filter((p) => p.hero === activeHero) : points;
+  const players = [...new Set(points.map((p) => p.player))].sort((a, b) => a.localeCompare(b));
+  const shown = points.filter((p) => (!activeHero || p.hero === activeHero) && !hiddenRoles.has(p.role) && !hiddenPlayers.has(p.player));
   const xLabel = STAT_LABELS[x];
   const yLabel = STAT_LABELS[y];
   const xMaxRaw = Math.max(1, ...shown.map((p) => p.per10[x]));
@@ -51,7 +54,12 @@ export function ScatterChart({ points }: { points: ScatterPoint[] }) {
   const sx = linear(0, xDomain.max, M.left, W - M.right);
   const sy = linear(0, yDomain.max, H - M.bottom, M.top);
   const fit = linearFit(shown.map((p) => ({ x: p.per10[x], y: p.per10[y] })));
-  const roles = ROLE_ORDER.filter((r) => r !== "Unknown" || shown.some((p) => p.role === r));
+  const roles = ROLE_ORDER.filter((r) => r !== "Unknown" || points.some((p) => p.role === r));
+  const toggle = <T,>(set: Set<T>, value: T): Set<T> => {
+    const next = new Set(set);
+    if (next.has(value)) next.delete(value); else next.add(value);
+    return next;
+  };
 
   function choosePreset(key: string) {
     setPreset(key);
@@ -112,16 +120,34 @@ export function ScatterChart({ points }: { points: ScatterPoint[] }) {
       <p className="text-xs text-muted">
         {!trend ? "Trend line off." : fit ? `Trend: r = ${fit.r.toFixed(2)} over ${fit.n} points` : `Trend line needs at least three points with different ${xLabel} values.`}
       </p>
-      <div className="flex flex-wrap gap-4 text-xs text-muted">
-        {roles.map((r) => (
-          <span key={r} className="flex items-center gap-1">
-            <span className="inline-block h-3 w-3" style={{ background: ROLE_COLORS[r] }} aria-hidden />
-            {r}
-          </span>
-        ))}
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted" role="group" aria-label="Roles">
+        <span>Roles</span>
+        {roles.map((r) => {
+          const on = !hiddenRoles.has(r);
+          return (
+            <button key={r} type="button" aria-pressed={on} onClick={() => setHiddenRoles(toggle(hiddenRoles, r))} className={`flex items-center gap-1 border border-line px-2 py-0.5 text-ink hover:bg-raised focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--color-accent)] ${on ? "bg-raised" : "opacity-50"}`}>
+              <span className="inline-block h-3 w-3" style={{ background: ROLE_COLORS[r] }} aria-hidden />
+              {r}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted" role="group" aria-label="Players">
+        <span>Players</span>
+        {players.map((name) => {
+          const on = !hiddenPlayers.has(name);
+          return (
+            <button key={name} type="button" aria-pressed={on} onClick={() => setHiddenPlayers(toggle(hiddenPlayers, name))} className={`border border-line px-2 py-0.5 text-ink hover:bg-raised focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_var(--color-accent)] ${on ? "bg-raised" : "opacity-50"}`}>
+              {name}
+            </button>
+          );
+        })}
+        {hiddenPlayers.size > 0 && (
+          <button type="button" onClick={() => setHiddenPlayers(new Set())} className="px-1 text-muted hover:text-ink">Show all</button>
+        )}
       </div>
       {shown.length === 0 ? (
-        <EmptyState>No points for this hero in this range.</EmptyState>
+        <EmptyState>No points for this hero, these roles, and these players in this range.</EmptyState>
       ) : (
         <>
           <svg viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} className="w-full" role="img" aria-label={`${xLabel} against ${yLabel} per 10 minutes`} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
