@@ -98,15 +98,9 @@ export interface FightShare {
 export interface PlayerCards {
   firstPick: FightShare;
   firstDeath: FightShare;
-  /** Fights our side won after this player died first, over fights where they died first. */
-  reversal: {
-    /** Fights where the player died first. */
-    count: number;
-    /** Of those, the ones our side still won — the reversals. */
-    won: number;
-    rate: number | null;
-  };
   killsPerUlt: { ults: number; kills: number; perUlt: number | null };
+  /** Eliminations (the player_stat column, which counts assists) over the same paired ults killsPerUlt divides by. */
+  elimsPerUlt: { ults: number; elims: number; perUlt: number | null };
   avgChargeSeconds: number | null;
   avgHoldSeconds: number | null;
   /**
@@ -168,7 +162,7 @@ function topCounts(counts: Map<string, number>, limit: number): HeroCount[] {
 
 function buildCards(
   playerMaps: TeamMapLike[], rows: PlayerRows, name: string, filter: string | null,
-  attackedBy: (k: KillLike, ours: string) => boolean, victimIs: (k: KillLike, ours: string) => boolean,
+  attackedBy: (k: KillLike, ours: string) => boolean, victimIs: (k: KillLike, ours: string) => boolean, elims: number,
 ): PlayerCards {
   const killsBy = groupByMap(rows.kills);
   const startsBy = groupByMap(rows.ultStarts);
@@ -212,8 +206,8 @@ function buildCards(
   return {
     firstPick: { ...pick, fights, rate: rate(pick.count, fights) },
     firstDeath: { ...death, fights, rate: rate(death.count, fights) },
-    reversal: { count: death.count, won: death.won, rate: rate(death.won, death.count) },
     killsPerUlt: { ults, kills: ultKills, perUlt: rate(ultKills, ults) },
+    elimsPerUlt: { ults, elims, perUlt: rate(elims, ults) },
     avgChargeSeconds: avg(charge),
     avgHoldSeconds: avg(hold),
     chargeSamples: charge.length,
@@ -296,7 +290,7 @@ export function buildPlayerPage(maps: TeamMapLike[], rows: PlayerRows, name: str
     diedToMost: topCounts(diedTo, MATCHUP_LIMIT),
     finalBlowsOnMost: topCounts(blowsOn, MATCHUP_LIMIT),
     chart,
-    cards: buildCards(playerMaps, rows, name, filter, attackedBy, victimIs),
+    cards: buildCards(playerMaps, rows, name, filter, attackedBy, victimIs, playerRows.reduce((n, r) => n + r.eliminations, 0)),
     profile: buildProfileCards(maps, rows, name, filter),
   };
 }

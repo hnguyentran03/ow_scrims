@@ -154,8 +154,8 @@ function Cards({ c }: { c: PlayerCards }) {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       <Stat label="First pick %" value={formatPct(c.firstPick.rate)} hint={`${c.firstPick.count} of ${c.firstPick.fights} fights on maps played; won ${c.firstPick.won}`} />
       <Stat label="First death %" value={formatPct(c.firstDeath.rate)} hint={`${c.firstDeath.count} of ${c.firstDeath.fights} fights on maps played`} />
-      <Stat label="Reversal %" value={formatPct(c.reversal.rate)} hint={`${c.reversal.won} won of ${c.reversal.count} first deaths`} />
       <Stat label="Final blows per ult" value={formatRatio(c.killsPerUlt.perUlt)} hint={`${c.killsPerUlt.kills} final blows over ${c.killsPerUlt.ults} ults`} />
+      <Stat label="Elims per ult" value={formatRatio(c.elimsPerUlt.perUlt)} hint={`${c.elimsPerUlt.elims} eliminations over ${c.elimsPerUlt.ults} ults`} />
       <Stat label="Avg ult charge" value={formatSeconds(c.avgChargeSeconds)} hint={`previous cast to charged, ${samples(c.chargeSamples)}`} />
       <Stat label="Avg ult hold" value={formatSeconds(c.avgHoldSeconds)} hint={`charged to cast, ${samples(c.holdSamples)}`} />
     </div>

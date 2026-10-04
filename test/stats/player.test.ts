@@ -153,25 +153,29 @@ describe("buildPlayerPage", () => {
     expect(none.overview).toEqual({ maps: 0, timePlayed: 0, record: { won: 0, lost: 0, undecided: 0 }, winRate: null, per10: { eliminations: 0, finalBlows: 0, deaths: 0, heroDamage: 0, healing: 0, healingReceived: 0, damageTaken: 0, damageBlocked: 0, ultsEarned: 0, ultsUsed: 0 } });
   });
 
-  it("counts first picks (first counted kill) and first deaths (any kill row) against fights on the player's maps, and reversals among first deaths", () => {
+  it("counts first picks (first counted kill) and first deaths (any kill row) against fights on the player's maps, ", () => {
     // firstPick uses the fight's first counted kill: map 3's environmental row at t=19 is skipped,
     // so the first pick there is still p1's counted kill at t=20 — unchanged from before that row existed.
     expect(p.cards.firstPick).toEqual({ count: 3, fights: 6, won: 3, rate: 0.5 });
     // firstDeath uses the fight's first kill row of any kind: map 3's environmental row at t=19 is
     // p1's first death on that fight, adding one more count and one more win (A, ours, still wins it).
     expect(p.cards.firstDeath).toEqual({ count: 3, fights: 6, won: 2, rate: 0.5 });
-    expect(p.cards.reversal).toEqual({ count: 3, won: 2, rate: 2 / 3 });
   });
 
   it("restricts the fight cards by hero on the kill row under a filter", () => {
     expect(ana.cards.firstPick).toEqual({ count: 2, fights: 5, won: 2, rate: 0.4 });
     expect(ana.cards.firstDeath).toEqual({ count: 1, fights: 5, won: 1, rate: 0.2 });
-    expect(ana.cards.reversal).toEqual({ count: 1, won: 1, rate: 1 });
     // Under the Genji filter, playerMaps are maps 2 and 3 (genji has hero-time on both), so fights = 2 + 1 = 3.
     // Genji's first deaths are map 2's second fight (t=60, A wins, not ours) and map 3's environmental
     // row (t=19, copied attacker/victim hero Genji, A wins, ours) — count 2, won 1 (map 3 only).
     expect(genji.cards.firstDeath).toEqual({ count: 2, fights: 3, won: 1, rate: 2 / 3 });
-    expect(genji.cards.reversal).toEqual({ count: 2, won: 1, rate: 0.5 });
+  });
+
+  it("divides the player's eliminations by the same ults, summing the hero-filtered final rows on our side", () => {
+    // p1's our-side rows: map 1 Ana 10, map 2 Ana 2 and Genji 1, map 3 Genji 8 (map 2's opposing "p1" is not ours).
+    expect(p.cards.elimsPerUlt).toEqual({ ults: 4, elims: 21, perUlt: 5.25 });
+    expect(ana.cards.elimsPerUlt).toEqual({ ults: 3, elims: 12, perUlt: 4 });
+    expect(genji.cards.elimsPerUlt).toEqual({ ults: 1, elims: 9, perUlt: 9 });
   });
 
   it("counts kills per ult by the events rule, zero for an ult without an end", () => {
@@ -190,8 +194,8 @@ describe("buildPlayerPage", () => {
 
   it("gives zero counts and null rates for a stranger", () => {
     expect(buildPlayerPage(maps, rows, "nobody").cards).toEqual({
-      firstPick: { count: 0, fights: 0, won: 0, rate: null }, firstDeath: { count: 0, fights: 0, won: 0, rate: null }, reversal: { count: 0, won: 0, rate: null },
-      killsPerUlt: { ults: 0, kills: 0, perUlt: null }, avgChargeSeconds: null, avgHoldSeconds: null, chargeSamples: 0, holdSamples: 0,
+      firstPick: { count: 0, fights: 0, won: 0, rate: null }, firstDeath: { count: 0, fights: 0, won: 0, rate: null },
+      killsPerUlt: { ults: 0, kills: 0, perUlt: null }, elimsPerUlt: { ults: 0, elims: 0, perUlt: null }, avgChargeSeconds: null, avgHoldSeconds: null, chargeSamples: 0, holdSamples: 0,
     });
   });
 
