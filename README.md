@@ -18,6 +18,8 @@ pnpm lint && pnpm typecheck
 pnpm db:generate  # after editing src/lib/db/schema.ts
 ```
 
+GitHub Actions runs the same four checks on every push to main and every pull request (`.github/workflows/ci.yml`); a failed Playwright run keeps its traces as a workflow artifact.
+
 ## Collecting logs
 
 The app ingests the per-map log files written by the ScrimTime Workshop code through Overwatch's Workshop Inspector:
