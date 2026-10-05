@@ -15,8 +15,22 @@ RestartSec=3
 MemoryMax=600M
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=/var/lib/ow-scrims /tmp
-PrivateTmp=false
+# Next writes its runtime cache under the deployed tree; deploy.sh creates the directory,
+# and the "-" prefix keeps a missing one from failing the mount namespace outright.
+ReadWritePaths=/var/lib/ow-scrims -/opt/ow-scrims/.next/cache
+# A private /tmp instead of the shared one: nothing is handed over through /tmp any more
+# (the snapshot push installs its dump under /var/lib/ow-scrims).
+PrivateTmp=true
+ProtectHome=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+# The app talks to Postgres over a unix socket and to nothing off the box.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+UMask=0077
 
 [Install]
 WantedBy=multi-user.target
