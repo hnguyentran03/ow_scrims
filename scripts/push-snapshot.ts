@@ -60,7 +60,12 @@ function drizzleHash(): string {
 }
 
 async function main() {
-  if (existsSync(path.join(SOURCE, "postmaster.pid"))) fail(`stop the dev server first; ${SOURCE} is open by another process`);
+  if (existsSync(path.join(SOURCE, "postmaster.pid"))) {
+    fail(
+      `stop the dev server first; ${SOURCE} is open by another process.\n` +
+        `If no dev server is running, the file is stale from a server that was killed rather than closed: delete ${path.join(SOURCE, "postmaster.pid")} and re-run.`,
+    );
+  }
   if (!existsSync(SOURCE)) fail(`${SOURCE} not found`);
 
   await rm(SNAPSHOT_DIR, { recursive: true, force: true });
