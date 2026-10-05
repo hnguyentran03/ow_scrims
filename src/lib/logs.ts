@@ -15,7 +15,7 @@ export async function writeRawLog(mapId: number, bytes: Buffer, dir: string = de
   const full = path.join(dir, `${mapId}.txt`);
   await writeFile(full, bytes);
   const rel = path.relative(process.cwd(), full);
-  return rel.startsWith("..") || path.isAbsolute(rel) ? full : rel;
+  return rel === ".." || rel.startsWith(".." + path.sep) || path.isAbsolute(rel) ? full : rel;
 }
 
 /** Accepts either form writeRawLog returns; resolve is a no-op for an absolute path. */

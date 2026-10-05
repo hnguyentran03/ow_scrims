@@ -28,11 +28,22 @@ describe("raw log storage", () => {
     const inside = path.join(process.cwd(), ".test-logs");
     const rel = await writeRawLog(7, Buffer.from("x"), inside);
     expect(rel).toBe(path.join(".test-logs", "7.txt"));
+    expect(existsSync(path.resolve(process.cwd(), rel))).toBe(true);
     await deleteRawLog(rel);
+    expect(existsSync(path.resolve(process.cwd(), rel))).toBe(false);
     rmSync(inside, { recursive: true, force: true });
     const explicit = path.join(dir, "sub");
     const abs = await writeRawLog(8, Buffer.from("y"), explicit);
     expect(abs).toBe(path.join(explicit, "8.txt"));
+    expect(existsSync(abs)).toBe(true);
     await deleteRawLog(abs);
+    expect(existsSync(abs)).toBe(false);
+
+    // A cwd subdirectory whose name happens to start with two dots is still inside cwd.
+    const dotsDir = path.join(process.cwd(), "..dots-test");
+    const dotsRel = await writeRawLog(9, Buffer.from("z"), dotsDir);
+    expect(dotsRel).toBe(path.join("..dots-test", "9.txt"));
+    await deleteRawLog(dotsRel);
+    rmSync(dotsDir, { recursive: true, force: true });
   });
 });
