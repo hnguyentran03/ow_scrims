@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Db } from "@/lib/db";
 import { SandboxRegistry, type SandboxBackend, type SandboxHandle } from "@/lib/db/sandbox-registry";
 
@@ -120,5 +120,60 @@ describe("SandboxRegistry", () => {
     const reaped = await reg.reapIdle();
     expect(reaped).toEqual([B]);
     expect(reg.size).toBe(0);
+  });
+
+  it("still serves the new sandbox when evicting the old one fails", async () => {
+    let t = 0;
+    const destroyed: string[] = [];
+    const backend: SandboxBackend = {
+      async create(id) {
+        return { db: { id } as unknown as Db, close: async () => {} };
+      },
+      async destroy(id) {
+        if (id === A) throw new Error("drop failed");
+        destroyed.push(id);
+      },
+    };
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const reg = new SandboxRegistry(backend, { idleMs: 10_000, max: 1, now: () => t });
+      await reg.create(A); t = 1;
+      const dbB = await reg.create(B);
+      expect(dbB).toEqual({ id: B });
+      expect(reg.has(B)).toBe(true);
+      expect(errors).toHaveBeenCalledWith("sandbox eviction failed", A, expect.any(Error));
+      // drop() forgets the entry before destroying it, so the failed eviction leaves the
+      // table at the cap with the dead id gone rather than at max + 1.
+      expect(reg.size).toBe(1);
+      expect(reg.ids()).toEqual([B]);
+      expect(destroyed).toEqual([]);
+    } finally {
+      errors.mockRestore();
+    }
+  });
+
+  it("never lets a rejected creation surface as an unhandled rejection", async () => {
+    const unhandled: unknown[] = [];
+    const onUnhandled = (err: unknown) => unhandled.push(err);
+    process.on("unhandledRejection", onUnhandled);
+    try {
+      const backend: SandboxBackend = {
+        async create(id) {
+          if (id === B) throw new Error("boom");
+          return { db: { id } as unknown as Db, close: async () => {} };
+        },
+        // Slow enough that B's rejection would go unobserved while the eviction runs.
+        destroy: async () => { await new Promise((r) => setTimeout(r, 10)); },
+      };
+      let t = 0;
+      const reg = new SandboxRegistry(backend, { idleMs: 10_000, max: 1, now: () => t });
+      await reg.create(A); t = 1;
+      await expect(reg.create(B)).rejects.toThrow("boom");
+      expect(reg.has(B)).toBe(false);
+      await new Promise((r) => setTimeout(r, 30));
+      expect(unhandled).toEqual([]);
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
   });
 });

@@ -34,6 +34,9 @@ const ALIAS_FILE = path.join(ROOT, "data", "alias-map.json");
 const STATE_FILE = path.join(ROOT, ".push-state.json");
 const SSH_HOST = process.env.OW_SSH_HOST ?? "ow-scrims";
 const REMOTE_RESTORE = "/opt/ow-scrims/deploy/restore-template.sh";
+/** Where scp can write as `ubuntu`, and where the dump is installed for `owscrims` to read and delete. */
+const REMOTE_STAGED = "/tmp/snapshot.sql.gz";
+const REMOTE_DUMP = "/var/lib/ow-scrims/snapshot.sql.gz";
 
 const args = new Set(process.argv.slice(2));
 const dryRun = args.has("--dry-run");
@@ -108,8 +111,17 @@ async function main() {
 
   if (localOnly) return;
 
-  execFileSync("scp", ["-q", DUMP_GZ, `${SSH_HOST}:/tmp/snapshot.sql.gz`], { stdio: "inherit" });
-  execFileSync("ssh", [SSH_HOST, "sudo", "-u", "owscrims", "bash", REMOTE_RESTORE, "/tmp/snapshot.sql.gz"], { stdio: "inherit" });
+  execFileSync("scp", ["-q", DUMP_GZ, `${SSH_HOST}:${REMOTE_STAGED}`], { stdio: "inherit" });
+  // ssh lands the dump as `ubuntu`, but the restore runs as `owscrims` and removes the
+  // dump when it is done — impossible under /tmp's sticky bit. Hand the file over to that
+  // user under its own directory first, so the restore's cleanup succeeds and the push
+  // reaches the point where it records .push-state.json.
+  const remote = [
+    `sudo install -o owscrims -g owscrims -m 600 ${REMOTE_STAGED} ${REMOTE_DUMP}`,
+    `rm -f ${REMOTE_STAGED}`,
+    `sudo -u owscrims bash ${REMOTE_RESTORE} ${REMOTE_DUMP}`,
+  ].join(" && ");
+  execFileSync("ssh", [SSH_HOST, remote], { stdio: "inherit" });
   await writeFile(STATE_FILE, JSON.stringify({ pushedAt: new Date().toISOString(), drizzleHash: drizzleHash() }, null, 2) + "\n");
   console.log("snapshot live");
 }

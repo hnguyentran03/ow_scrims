@@ -67,13 +67,24 @@ export class SandboxRegistry {
     // Registered before CREATE DATABASE runs, so concurrent requests share this promise
     // and the reaper never treats a half-made sandbox as unknown.
     const ready = this.backend.create(id);
+    // The eviction below awaits real I/O, so a creation that fails first would reach
+    // Node as an unhandled rejection before anything awaits `ready`.
+    ready.catch(() => {});
     this.entries.set(id, { ready, lastSeen: this.now() });
     try {
-      // Evict in a loop after registering, so concurrent insertions all see the true size
-      while (this.entries.size > this.opts.max) {
-        const oldest = this.oldestId();
-        if (!oldest || oldest === id) break;
-        await this.drop(oldest);
+      let evicting: string | undefined;
+      try {
+        // Evict in a loop after registering, so concurrent insertions all see the true size
+        while (this.entries.size > this.opts.max) {
+          const oldest = this.oldestId();
+          if (!oldest || oldest === id) break;
+          evicting = oldest;
+          await this.drop(oldest);
+        }
+      } catch (err) {
+        // A sandbox that will not die is the box's problem, not this visitor's: the cap is
+        // a disk bound, and leaking one database beats failing the write that triggered it.
+        console.error("sandbox eviction failed", evicting, err);
       }
       return (await ready).db;
     } catch (err) {

@@ -21,7 +21,14 @@ rsync -a --delete "./deploy/" "./.next/standalone/deploy/"
 
 rsync -az --delete --exclude data --exclude .snapshot --exclude .push-state.json --exclude 'alias-map.json' --rsync-path="sudo -u owscrims rsync" "./.next/standalone/" "$HOST:/opt/ow-scrims/"
 ssh "$HOST" sudo systemctl restart ow-scrims
-ssh "$HOST" 'sleep 2; systemctl is-active ow-scrims && curl -fsS -o /dev/null -w "app answered %{http_code}\n" http://127.0.0.1:3000/'
+# instrumentation.ts sweeps every orphaned sandbox database before the server answers, so
+# readiness is not instant after a restart; poll instead of sleeping a fixed two seconds.
+ssh "$HOST" 'systemctl is-active ow-scrims || exit 1
+for i in $(seq 1 30); do
+  curl -fsS -o /dev/null -w "app answered %{http_code}\n" http://127.0.0.1:3000/ && exit 0
+  sleep 2
+done
+echo "app did not answer within 60s" >&2; exit 1'
 
 # Schema changes need a fresh snapshot: the sandboxes copy the template's schema, not the code's.
 current="$(find drizzle -type f | sort | xargs shasum -a 256 | shasum -a 256 | cut -d' ' -f1)"
