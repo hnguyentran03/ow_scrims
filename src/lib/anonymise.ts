@@ -113,7 +113,7 @@ export function extendAliasMap(map: AliasMap, reals: Iterable<string>, random: (
   return { added };
 }
 
-const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+export const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 /** Replaces every mapped name inside a scrim name, longest first, case-insensitively, as a plain substring, in a single pass. */
 export function rewriteScrimName(name: string, map: AliasMap): string {

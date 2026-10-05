@@ -3,7 +3,7 @@
  */
 import { sql } from "drizzle-orm";
 import type { Db } from "./db";
-import { PLAYER_COLUMNS, TEAM_COLUMNS, isSkipped, rewriteScrimName, type AliasMap, type Column } from "./anonymise";
+import { PLAYER_COLUMNS, TEAM_COLUMNS, escapeRe, isSkipped, rewriteScrimName, type AliasMap, type Column } from "./anonymise";
 
 const ident = (name: string) => sql.identifier(name);
 
@@ -114,10 +114,17 @@ export async function verifyAnonymised(db: Db, map: AliasMap): Promise<string[]>
 
   const needles = [...reals].filter((r) => r.length >= MIN_SCANNED_NAME).map((r) => [r, r.toLowerCase()] as const);
   if (needles.length > 0) {
+    // A pseudonym's first character is copied from its real name and can itself be a short real
+    // name's substring ("zed" inside "Hzedol"). Mask every pseudonym occurrence before scanning so
+    // that only a real name surviving OUTSIDE of a pseudonym is reported; a masked span is by
+    // construction an actual pseudonym, so this can never hide a genuine leak.
+    const masks = [...pseudonyms].filter((p) => p.length > 0).sort((a, b) => b.length - a.length);
+    const maskPattern = masks.length > 0 ? new RegExp(masks.map(escapeRe).join("|"), "gi") : null;
     for (const { label, query } of SCANNED_TEXT) {
       const seen = new Map<string, string>();
       for (const { v } of await execRows<{ v: string }>(db, query)) {
-        const lower = v.toLowerCase();
+        const masked = maskPattern ? v.replace(maskPattern, " ") : v;
+        const lower = masked.toLowerCase();
         for (const [real, needle] of needles) if (lower.includes(needle) && !seen.has(real)) seen.set(real, v);
       }
       for (const [real, v] of seen) problems.push(`real name in ${label}: ${real} (${JSON.stringify(v)})`);

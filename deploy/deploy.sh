@@ -26,7 +26,7 @@ rsync -a --delete "./drizzle/" "./.next/standalone/drizzle/"
 rsync -a --delete "./deploy/" "./.next/standalone/deploy/"
 
 rsync -az --delete \
-  --exclude data --exclude .snapshot --exclude .push-state.json --exclude 'alias-map.json' \
+  --exclude /data --exclude /.snapshot --exclude /.push-state.json --exclude '/data/alias-map.json' \
   --exclude /test --exclude /docs --exclude /e2e --exclude /.superpowers --exclude /.claude \
   --rsync-path="sudo -u owscrims rsync" "./.next/standalone/" "$HOST:/opt/ow-scrims/"
 ssh "$HOST" sudo systemctl restart ow-scrims

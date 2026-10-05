@@ -11,7 +11,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
-/** A fixed generator: an unseeded one can hand out a pseudonym that happens to contain a real name, which the scrim-name scan would then flag. */
+/** A fixed generator, for reproducible pseudonyms across runs (verifyAnonymised now masks pseudonym occurrences before scanning, so a pseudonym containing a real name no longer causes a false positive either way). */
 function seeded(seed = 1) {
   return () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
 }
@@ -134,5 +134,27 @@ describe("verifyAnonymised on free text", () => {
     const fresh = await createTestDb();
     await createScrim(fresh, { name: "Rocket Round", date: "2026-10-01", opponentName: "Qumadi" });
     expect(await verifyAnonymised(fresh, map)).toEqual([]); // "Ro" is in "Rocket Round" but too short to scan
+  });
+});
+
+describe("verifyAnonymised masks pseudonym occurrences before scanning", () => {
+  // Pseudonyms start with the real name's first character, then alternate consonants/vowels, so a
+  // pseudonym can incidentally contain a short real name as a substring ("zed" inside "Hzedol").
+  const map: AliasMap = { names: { Zed: "Hzedol", Rook: "Rilota" } };
+
+  it("verifies clean when a real name only appears inside a pseudonym", async () => {
+    const fresh = await createTestDb();
+    await createScrim(fresh, { name: "Hzedol vs Rilota", date: "2026-10-01", opponentName: "Team 1" });
+    expect(await verifyAnonymised(fresh, map)).toEqual([]);
+  });
+
+  it("still fails when the real name appears outside of any pseudonym", async () => {
+    const fresh = await createTestDb();
+    await createScrim(fresh, { name: "Zed vs Rilota", date: "2026-10-01", opponentName: "Team 1" });
+    const problems = await verifyAnonymised(fresh, map);
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("scrim.name");
+    expect(problems[0]).toContain("Zed");
+    expect(problems[0]).toContain("Zed vs Rilota");
   });
 });
