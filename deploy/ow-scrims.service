@@ -9,6 +9,8 @@ Group=owscrims
 WorkingDirectory=/opt/ow-scrims
 EnvironmentFile=/etc/ow-scrims/env
 Environment=NODE_OPTIONS=--max-old-space-size=384
+# Pinned here, not only in the env file: without it the standalone server binds every interface, past Caddy.
+Environment=HOSTNAME=127.0.0.1
 ExecStart=/usr/bin/node server.js
 Restart=always
 RestartSec=3

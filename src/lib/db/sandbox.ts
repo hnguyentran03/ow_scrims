@@ -95,7 +95,7 @@ export async function sweepOrphans(): Promise<void> {
   const rt = must();
   for (const name of await rt.backend.listSandboxDatabases()) {
     const id = name.slice(SANDBOX_DB_PREFIX.length);
-    if (!rt.registry.has(id)) await rt.backend.dropDatabase(name);
+    if (isSandboxId(id) && !rt.registry.has(id)) await rt.backend.dropDatabase(name);
   }
   let dirs: string[] = [];
   try {

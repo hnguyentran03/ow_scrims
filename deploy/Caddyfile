@@ -1,4 +1,6 @@
 scrims.hnguyentran.com {
+	# Matches MAX_UPLOAD_MB in /etc/ow-scrims/env; rejects oversized bodies before they reach Node.
+	request_body { max_size 8MB }
 	encode zstd gzip
 	header {
 		Strict-Transport-Security "max-age=31536000"
