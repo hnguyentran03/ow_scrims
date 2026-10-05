@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "push-snapshot": "tsx scripts/push-snapshot.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "0.5.8",
