@@ -83,4 +83,42 @@ describe("SandboxRegistry", () => {
     expect(f.destroyed).toEqual([A]);
     expect(reg.has(A)).toBe(false);
   });
+
+  it("keeps the cap under concurrent creates", async () => {
+    let t = 0;
+    const f = fakeBackend();
+    const reg = new SandboxRegistry(f.backend, { idleMs: 10_000, max: 2, now: () => t });
+    await reg.create(A); t = 1;
+    await reg.create(B); t = 2;
+    const D = "d".repeat(32);
+    await Promise.all([reg.create(C), reg.create(D)]);
+    expect(reg.size).toBe(2);
+    expect(f.destroyed.sort()).toEqual([A, B].sort());
+    expect(reg.ids().sort()).toEqual([C, D].sort());
+  });
+
+  it("reapIdle continues after a destroy failure", async () => {
+    let t = 0;
+    let destroyCount = 0;
+    const f = fakeBackend();
+    const backend: SandboxBackend = {
+      async create(id) {
+        await f.backend.create(id);
+        const handle: SandboxHandle = { db: { id } as unknown as Db, close: async () => {} };
+        return handle;
+      },
+      async destroy(id, handle) {
+        destroyCount++;
+        if (destroyCount === 1) throw new Error("destroy failed");
+        await f.backend.destroy(id, handle);
+      },
+    };
+    const reg = new SandboxRegistry(backend, { idleMs: 100, max: 5, now: () => t });
+    await reg.create(A); t = 50;
+    await reg.create(B); t = 149;
+    t = 200;
+    const reaped = await reg.reapIdle();
+    expect(reaped).toEqual([B]);
+    expect(reg.size).toBe(0);
+  });
 });

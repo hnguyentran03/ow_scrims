@@ -64,15 +64,17 @@ export class SandboxRegistry {
       existing.lastSeen = this.now();
       return (await existing.ready).db;
     }
-    if (this.entries.size >= this.opts.max) {
-      const oldest = this.oldestId();
-      if (oldest) await this.drop(oldest);
-    }
     // Registered before CREATE DATABASE runs, so concurrent requests share this promise
     // and the reaper never treats a half-made sandbox as unknown.
     const ready = this.backend.create(id);
     this.entries.set(id, { ready, lastSeen: this.now() });
     try {
+      // Evict in a loop after registering, so concurrent insertions all see the true size
+      while (this.entries.size > this.opts.max) {
+        const oldest = this.oldestId();
+        if (!oldest || oldest === id) break;
+        await this.drop(oldest);
+      }
       return (await ready).db;
     } catch (err) {
       this.entries.delete(id);
@@ -97,8 +99,16 @@ export class SandboxRegistry {
   async reapIdle(): Promise<string[]> {
     const cutoff = this.now() - this.opts.idleMs;
     const stale = [...this.entries].filter(([, e]) => e.lastSeen <= cutoff).map(([id]) => id);
-    for (const id of stale) await this.drop(id);
-    return stale;
+    const dropped: string[] = [];
+    for (const id of stale) {
+      try {
+        await this.drop(id);
+        dropped.push(id);
+      } catch (err) {
+        console.error("sandbox drop failed", id, err);
+      }
+    }
+    return dropped;
   }
 
   private oldestId(): string | undefined {
