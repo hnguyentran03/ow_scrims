@@ -7,12 +7,19 @@ HOST="${OW_SSH_HOST:-ow-scrims}"
 
 BUILD_STANDALONE=1 pnpm build
 [[ -f .next/standalone/server.js ]] || { echo "no standalone output; is BUILD_STANDALONE honoured in next.config.ts?"; exit 1; }
-rsync -a --delete .next/static/ .next/standalone/.next/static/
-rsync -a --delete public/ .next/standalone/public/
-rsync -a --delete drizzle/ .next/standalone/drizzle/
-rsync -a --delete deploy/ .next/standalone/deploy/
 
-rsync -az --delete --rsync-path="sudo -u owscrims rsync" .next/standalone/ "$HOST:/opt/ow-scrims/"
+# Belt and suspenders: the trace is scoped by outputFileTracingExcludes in next.config.ts, but refuse
+# outright if real data or the snapshot pipeline's state ever end up in the standalone output anyway.
+for p in data .snapshot .push-state.json "data/alias-map.json"; do
+  [[ -e ".next/standalone/$p" ]] && { echo "refusing to deploy: .next/standalone/$p exists; check outputFileTracingExcludes"; exit 1; }
+done
+
+rsync -a --delete "./.next/static/" "./.next/standalone/.next/static/"
+rsync -a --delete "./public/" "./.next/standalone/public/"
+rsync -a --delete "./drizzle/" "./.next/standalone/drizzle/"
+rsync -a --delete "./deploy/" "./.next/standalone/deploy/"
+
+rsync -az --delete --exclude data --exclude .snapshot --exclude .push-state.json --exclude 'alias-map.json' --rsync-path="sudo -u owscrims rsync" "./.next/standalone/" "$HOST:/opt/ow-scrims/"
 ssh "$HOST" sudo systemctl restart ow-scrims
 ssh "$HOST" 'sleep 2; systemctl is-active ow-scrims && curl -fsS -o /dev/null -w "app answered %{http_code}\n" http://127.0.0.1:3000/'
 

@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite"],
   // deploy/deploy.sh sets BUILD_STANDALONE; `next start` (Playwright, local) refuses a standalone build, so it is opt-in.
   output: process.env.BUILD_STANDALONE ? "standalone" : undefined,
+  // map-images.ts builds a runtime fs path, so the tracer falls back to copying the whole project into
+  // .next/standalone; drop everything that must never reach the box (real data, specs, test fixtures).
+  outputFileTracingExcludes: {
+    "/*": ["data/**", ".snapshot/**", ".superpowers/**", ".claude/**", "docs/**", "test/**", "e2e/**", "test-results/**", "playwright-report/**"],
+  },
   // next/image is unused; this keeps sharp's platform binaries out of the picture on the box.
   images: { unoptimized: true },
 };

@@ -41,7 +41,7 @@ systemctl restart postgresql
 # App user, role, directories
 id -u owscrims >/dev/null 2>&1 || useradd --system --create-home --home-dir /var/lib/ow-scrims --shell /bin/bash owscrims
 sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='owscrims'" | grep -q 1 || sudo -u postgres psql -c "CREATE ROLE owscrims LOGIN CREATEDB"
-install -d -o owscrims -g owscrims /opt/ow-scrims /var/lib/ow-scrims/sandboxes
+install -d -o owscrims -g owscrims /opt/ow-scrims /var/lib/ow-scrims/sandboxes /var/lib/ow-scrims/logs /var/lib/ow-scrims/map-images
 install -d -m 750 -o root -g owscrims /etc/ow-scrims
 [[ -f /etc/ow-scrims/env ]] || install -m 640 -o root -g owscrims "$HERE/env.example" /etc/ow-scrims/env
 
