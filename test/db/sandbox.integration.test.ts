@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { mkdtempSync, mkdirSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -44,6 +44,7 @@ describe.skipIf(!adminUrl)("sandboxes on Postgres", () => {
     const dbA = await registry.create(a);
     const dbB = await registry.create(b);
     mkdirSync(path.join(uploadRoot, a), { recursive: true });
+    mkdirSync(path.join(uploadRoot, b), { recursive: true });
 
     await dbA.insert(scrims).values({ name: "Only in A", date: "2026-10-02", opponentName: "X" });
     expect((await dbA.select().from(scrims)).map((s) => s.name).sort()).toEqual(["Only in A", "Seed"]);
@@ -56,11 +57,32 @@ describe.skipIf(!adminUrl)("sandboxes on Postgres", () => {
     expect((await registry.reapIdle()).sort()).toEqual([a, b].sort());
     expect(await backend.listSandboxDatabases()).toEqual([]);
     expect(existsSync(path.join(uploadRoot, a))).toBe(false);
+    expect(existsSync(path.join(uploadRoot, b))).toBe(false);
   });
 
   it("opens a pool to an existing database without creating anything", async () => {
     const handle = backend.open(templateDb);
     expect((await handle.db.select().from(scrims)).map((s) => s.name)).toEqual(["Seed"]);
     await handle.close();
+  });
+
+  it("still drops the database and upload directory when the handle's close rejects", async () => {
+    const id = newSandboxId();
+    const real = await backend.create(id);
+    const wrapped = {
+      db: real.db,
+      close: async () => {
+        await real.close();
+        throw new Error("close failed");
+      },
+    };
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      await expect(backend.destroy(id, wrapped)).resolves.toBeUndefined();
+      expect(spy).toHaveBeenCalledWith("sandbox pool close failed", id, expect.any(Error));
+      expect(await backend.listSandboxDatabases()).not.toContain(sandboxDbName(id));
+    } finally {
+      spy.mockRestore();
+    }
   });
 });

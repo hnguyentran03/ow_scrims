@@ -55,14 +55,29 @@ export class PostgresSandboxBackend implements SandboxBackend {
   }
 
   async destroy(id: string, handle: SandboxHandle | null): Promise<void> {
-    if (handle) await handle.close();
-    await this.dropDatabase(sandboxDbName(id));
-    await rm(path.join(this.cfg.uploadRoot, id), { recursive: true, force: true });
+    if (handle) {
+      // DROP DATABASE ... WITH (FORCE) below disconnects backends itself, so a failure
+      // here must not stop the drop and the upload-directory cleanup that follow.
+      try {
+        await handle.close();
+      } catch (err) {
+        console.error("sandbox pool close failed", id, err);
+      }
+    }
+    try {
+      await this.dropDatabase(sandboxDbName(id));
+    } finally {
+      await rm(path.join(this.cfg.uploadRoot, id), { recursive: true, force: true });
+    }
   }
 
   async listSandboxDatabases(): Promise<string[]> {
-    const r = await this.admin.query<{ datname: string }>("SELECT datname FROM pg_database WHERE datname LIKE $1 ORDER BY datname", [`${SANDBOX_DB_PREFIX}%`]);
-    return r.rows.map((x) => x.datname);
+    const pattern = `${SANDBOX_DB_PREFIX.replaceAll("_", "\\_")}%`;
+    const r = await this.admin.query<{ datname: string }>(
+      "SELECT datname FROM pg_database WHERE datname LIKE $1 ESCAPE '\\' ORDER BY datname",
+      [pattern],
+    );
+    return r.rows.map((x) => x.datname).filter((name) => name.startsWith(SANDBOX_DB_PREFIX));
   }
 
   async dropDatabase(name: string): Promise<void> {
