@@ -67,4 +67,9 @@ test.describe.serial("core flow", () => {
     await expect(page.getByText("No scrims yet")).toBeVisible();
     created.length = 0;
   });
+
+  test("no sandbox bar outside sandbox mode", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("status")).toHaveCount(0);
+  });
 });
