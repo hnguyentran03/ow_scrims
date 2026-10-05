@@ -100,9 +100,10 @@ export function pseudonym(real: string, taken: Set<string>, random: () => number
 
 /** Adds a pseudonym for every real name not already mapped. Mutates `map`; returns what was added. */
 export function extendAliasMap(map: AliasMap, reals: Iterable<string>, random: () => number = Math.random): { added: Record<string, string> } {
-  const taken = new Set<string>([...Object.keys(map.names), ...Object.values(map.names), ...reals]);
+  const list = [...reals];
+  const taken = new Set<string>([...Object.keys(map.names), ...Object.values(map.names), ...list]);
   const added: Record<string, string> = {};
-  for (const real of reals) {
+  for (const real of list) {
     if (real in map.names || isSkipped(real)) continue;
     const p = pseudonym(real, taken, random);
     map.names[real] = p;
@@ -114,10 +115,11 @@ export function extendAliasMap(map: AliasMap, reals: Iterable<string>, random: (
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/** Replaces every mapped name inside a scrim name, longest first, case-insensitively, as a plain substring. */
+/** Replaces every mapped name inside a scrim name, longest first, case-insensitively, as a plain substring, in a single pass. */
 export function rewriteScrimName(name: string, map: AliasMap): string {
   const reals = Object.keys(map.names).filter((r) => r.length > 0).sort((a, b) => b.length - a.length);
-  let out = name;
-  for (const real of reals) out = out.replace(new RegExp(escapeRe(real), "gi"), map.names[real]);
-  return out;
+  if (reals.length === 0) return name;
+  const byLower = new Map(reals.map((real) => [real.toLowerCase(), map.names[real]]));
+  const pattern = new RegExp(reals.map(escapeRe).join("|"), "gi");
+  return name.replace(pattern, (match) => byLower.get(match.toLowerCase()) ?? match);
 }

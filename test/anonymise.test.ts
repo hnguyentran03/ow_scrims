@@ -50,6 +50,16 @@ describe("extendAliasMap", () => {
     expect(map.names.Ben.toLowerCase()).not.toBe("bolari");
     expect(map.names.Bolari.toLowerCase()).not.toBe("bolari");
   });
+  it("materialises a one-shot iterator so both reals get added", () => {
+    const map: AliasMap = { names: {} };
+    const gen = (function* () {
+      yield "Ben";
+      yield "Zed";
+    })();
+    const { added } = extendAliasMap(map, gen, seeded());
+    expect(Object.keys(added).sort()).toEqual(["Ben", "Zed"]);
+    expect(Object.keys(map.names).sort()).toEqual(["Ben", "Zed"]);
+  });
 });
 
 describe("rewriteScrimName", () => {
@@ -59,6 +69,10 @@ describe("rewriteScrimName", () => {
   });
   it("leaves a name-free scrim name alone", () => {
     expect(rewriteScrimName("Scrim 3", map)).toBe("Scrim 3");
+  });
+  it("replaces in a single pass, so a short name inside an inserted pseudonym is not re-substituted", () => {
+    const overlap: AliasMap = { names: { Ben: "Bolari", lar: "Lumo" } };
+    expect(rewriteScrimName("Ben and lar", overlap)).toBe("Bolari and Lumo");
   });
 });
 
