@@ -12,7 +12,7 @@ function seeded(seed = 1) {
 
 describe("pseudonym", () => {
   it("keeps the first character and case, is lower-case pronounceable after it, 5–9 chars", () => {
-    for (const real of ["HaveBlue", "sterilite", "Zed", "x", "Émile"]) {
+    for (const real of ["Quillfeather", "marigold", "Zed", "x", "Émile"]) {
       const p = pseudonym(real, new Set(), seeded());
       expect(p[0]).toBe(real[0]);
       expect(p.slice(1)).toMatch(/^[a-z]+$/);
@@ -33,19 +33,19 @@ describe("pseudonym", () => {
 
 describe("extendAliasMap", () => {
   it("adds only new names, keeps existing pseudonyms, and skips sentinels and default labels", () => {
-    const map: AliasMap = { names: { HaveBlue: "Hodura" } };
-    const reals = ["HaveBlue", "Ben", "Zed", "0", "Team 1"];
+    const map: AliasMap = { names: { Quillfeather: "Hodura" } };
+    const reals = ["Quillfeather", "Ben", "Zed", "0", "Team 1"];
     const { added } = extendAliasMap(map, reals, seeded());
-    expect(map.names.HaveBlue).toBe("Hodura");
+    expect(map.names.Quillfeather).toBe("Hodura");
     expect(Object.keys(added).sort()).toEqual(["Ben", "Zed"]);
-    expect(Object.keys(map.names).sort()).toEqual(["Ben", "HaveBlue", "Zed"]);
+    expect(Object.keys(map.names).sort()).toEqual(["Ben", "Quillfeather", "Zed"]);
     const lower = Object.values(map.names).map((s) => s.toLowerCase());
     expect(new Set(lower).size).toBe(lower.length);                       // no two reals share a pseudonym
     for (const p of lower) expect(reals.map((r) => r.toLowerCase())).not.toContain(p);   // no pseudonym equals a real name
   });
   it("never hands out a pseudonym that equals another real name", () => {
     const map: AliasMap = { names: {} };
-    // "Bolari" is both a plausible generated tail and a real name in this roster; the generator must avoid it.
+    // "Bolari" is both a plausible generated tail and one of the real names being mapped; the generator must avoid it.
     extendAliasMap(map, ["Ben", "Bolari"], seeded(7));
     expect(map.names.Ben.toLowerCase()).not.toBe("bolari");
     expect(map.names.Bolari.toLowerCase()).not.toBe("bolari");

@@ -22,7 +22,7 @@ import { sql } from "drizzle-orm";
 import * as schema from "../src/lib/db/schema";
 import type { Db } from "../src/lib/db";
 import { extendAliasMap, type AliasMap } from "../src/lib/anonymise";
-import { applyAliases, clearRawLogPaths, collectNames, verifyAnonymised } from "../src/lib/anonymise-db";
+import { applyAliases, clearUploadMetadata, collectNames, countAliasMatches, verifyAnonymised } from "../src/lib/anonymise-db";
 
 const ROOT = process.cwd();
 const SOURCE = path.resolve(ROOT, process.env.OW_SOURCE_DB ?? path.join("data", "db"));
@@ -91,6 +91,10 @@ async function main() {
   for (const [real, p] of Object.entries(added)) console.log(`  ${real} -> ${p}`);
 
   if (dryRun) {
+    // Read-only: the alias table countAliasMatches loads is a temp table, and the copy
+    // under .snapshot is thrown away on the next run either way.
+    console.log("rows each column would rewrite:");
+    for (const [col, n] of Object.entries(await countAliasMatches(db, map))) if (n > 0) console.log(`  ${col}: ${n} rows`);
     console.log("dry run: nothing written");
     await pg.close();
     return;
@@ -99,9 +103,11 @@ async function main() {
   await writeFile(ALIAS_FILE, JSON.stringify(map, null, 2) + "\n");
   const counts = await applyAliases(db, map);
   for (const [col, n] of Object.entries(counts)) if (n > 0) console.log(`  ${col}: ${n} rows`);
+  // Before verification, not after: the scan reads map.original_filename, and a ScrimTime
+  // filename carries the team names that this blanks.
+  await clearUploadMetadata(db);
   const problems = await verifyAnonymised(db, map);
   if (problems.length) fail(`verification failed:\n  ${problems.join("\n  ")}`);
-  await clearRawLogPaths(db);
 
   const dump = await pgDump({ pg, args: ["--no-owner", "--rows-per-insert=1000"] });
   await writeFile(DUMP, Buffer.from(await dump.arrayBuffer()));

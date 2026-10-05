@@ -70,7 +70,40 @@ export async function applyAliases(db: Db, map: AliasMap): Promise<Record<string
   return counts;
 }
 
-/** Problems found after applying: any real name still present in a name column, or a pseudonym that equals a real name. */
+/**
+ * Rows each column would rewrite, without writing anything. For --dry-run: the alias table
+ * is a temp table, so this leaves the database it reads untouched.
+ */
+export async function countAliasMatches(db: Db, map: AliasMap): Promise<Record<string, number>> {
+  await loadAliasTable(db, map);
+  const counts: Record<string, number> = {};
+  for (const c of [...PLAYER_COLUMNS, ...TEAM_COLUMNS]) {
+    const [row] = await execRows<{ n: number | string }>(
+      db,
+      sql`SELECT count(*) AS n FROM ${ident(c.table)} t JOIN alias a ON t.${ident(c.column)} = a.real`,
+    );
+    counts[`${c.table}.${c.column}`] = Number(row?.n ?? 0);
+  }
+  return counts;
+}
+
+/**
+ * Shorter real names match inside ordinary words ("Ro" in "Rocket"), so the free-text scan
+ * below only looks for names of at least this length.
+ */
+const MIN_SCANNED_NAME = 3;
+
+/** The free-text columns no alias column covers: a hand-typed scrim name and the uploaded file's name. */
+const SCANNED_TEXT: { label: string; query: ReturnType<typeof sql> }[] = [
+  { label: "scrim.name", query: sql`SELECT name AS v FROM scrim WHERE name IS NOT NULL` },
+  { label: "map.original_filename", query: sql`SELECT original_filename AS v FROM map WHERE original_filename IS NOT NULL` },
+];
+
+/**
+ * Problems found after applying: any real name still present in a name column, a pseudonym
+ * that equals a real name, or a real name surviving as a substring of a scrim name or an
+ * uploaded filename — neither of which the column sweep rewrites value-for-value.
+ */
 export async function verifyAnonymised(db: Db, map: AliasMap): Promise<string[]> {
   const problems: string[] = [];
   const reals = new Set(Object.keys(map.names));
@@ -78,9 +111,26 @@ export async function verifyAnonymised(db: Db, map: AliasMap): Promise<string[]>
   for (const real of reals) if (pseudonyms.has(real)) problems.push(`pseudonym equals a real name: ${real}`);
   const { all } = await collectNames(db);
   for (const v of all) if (!pseudonyms.has(v)) problems.push(`not a pseudonym: ${v}`);
+
+  const needles = [...reals].filter((r) => r.length >= MIN_SCANNED_NAME).map((r) => [r, r.toLowerCase()] as const);
+  if (needles.length > 0) {
+    for (const { label, query } of SCANNED_TEXT) {
+      const seen = new Map<string, string>();
+      for (const { v } of await execRows<{ v: string }>(db, query)) {
+        const lower = v.toLowerCase();
+        for (const [real, needle] of needles) if (lower.includes(needle) && !seen.has(real)) seen.set(real, v);
+      }
+      for (const [real, v] of seen) problems.push(`real name in ${label}: ${real} (${JSON.stringify(v)})`);
+    }
+  }
   return problems;
 }
 
-export async function clearRawLogPaths(db: Db): Promise<void> {
-  await db.execute(sql`UPDATE map SET raw_log_path = NULL`);
+/**
+ * Blanks the upload trail before the dump: the raw-log path, whose file never ships, and
+ * the original filename, which ScrimTime names after the teams that played. The column is
+ * NOT NULL, so it gets a constant rather than NULL.
+ */
+export async function clearUploadMetadata(db: Db): Promise<void> {
+  await db.execute(sql`UPDATE map SET raw_log_path = NULL, original_filename = 'log.txt'`);
 }
