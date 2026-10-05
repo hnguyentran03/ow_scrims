@@ -1,0 +1,22 @@
+[Unit]
+Description=OW Scrims (Next.js standalone)
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+User=owscrims
+Group=owscrims
+WorkingDirectory=/opt/ow-scrims
+EnvironmentFile=/etc/ow-scrims/env
+Environment=NODE_OPTIONS=--max-old-space-size=384
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+MemoryMax=600M
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/ow-scrims /tmp
+PrivateTmp=false
+
+[Install]
+WantedBy=multi-user.target
