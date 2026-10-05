@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { getWritableSandbox } from "@/lib/db";
+import { sandboxLogDir } from "@/lib/db/sandbox";
 import { parsePositiveInt } from "@/lib/ids";
 import { handleUpload, MAX_UPLOAD_BYTES, UploadError } from "@/lib/upload";
 
@@ -30,7 +31,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/scrims/[scr
 
   try {
     const ourSide = side === "auto" ? "auto" : side === "1" ? 1 : 2;
-    const result = await handleUpload(await getDb(), { scrimId, file, ourSide });
+    const { db, sandboxId } = await getWritableSandbox();
+    const result = await handleUpload(db, { scrimId, file, ourSide, logDir: sandboxId ? sandboxLogDir(sandboxId) : undefined });
     revalidatePath(`/scrims/${scrimId}`);
     revalidatePath("/");
     revalidatePath("/team", "layout");

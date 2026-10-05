@@ -53,7 +53,7 @@ export function chooseSide(rosters: Rosters, known: Set<string>): Side | null {
   return null;
 }
 
-export async function handleUpload(db: Db, input: { scrimId: number; file: File; ourSide: Side | "auto" }): Promise<UploadResult> {
+export async function handleUpload(db: Db, input: { scrimId: number; file: File; ourSide: Side | "auto"; logDir?: string }): Promise<UploadResult> {
   const { scrimId, file } = input;
 
   const [scrim] = await db.select({ id: scrims.id }).from(scrims).where(eq(scrims.id, scrimId));
@@ -93,7 +93,7 @@ export async function handleUpload(db: Db, input: { scrimId: number; file: File;
     throw err;
   }
 
-  const rawLogPath = await writeRawLog(mapId, bytes);
+  const rawLogPath = await writeRawLog(mapId, bytes, input.logDir);
   await db.update(maps).set({ rawLogPath }).where(eq(maps.id, mapId));
 
   return { mapId, mapName: meta.mapName, warnings: parsed.warnings };

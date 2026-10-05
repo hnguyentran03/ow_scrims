@@ -29,7 +29,7 @@ describe("handleUpload", () => {
     const result = await handleUpload(db, { scrimId, file: asFile("Log-2026-04-15-21-12-58.txt", text), ourSide: 2 });
     expect(result.warnings).toEqual([]);
     const [map] = await db.select().from(maps).where(eq(maps.id, result.mapId));
-    expect(map.rawLogPath).toBe(path.relative(process.cwd(), path.join(dir, `${result.mapId}.txt`)));
+    expect(path.resolve(process.cwd(), map.rawLogPath!)).toBe(path.join(dir, `${result.mapId}.txt`));
     expect(map.originalFilename).toBe("Log-2026-04-15-21-12-58.txt");
     expect(readFileSync(path.join(dir, `${result.mapId}.txt`), "utf8")).toBe(text);
   });
