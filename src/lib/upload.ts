@@ -8,8 +8,33 @@ import { deriveMapMeta, type MapMeta, type Side } from "@/lib/parser/derive";
 import { ParseError } from "@/lib/parser/errors";
 import { parseLog, type ParsedLog } from "@/lib/parser/parse";
 
-export const MAX_UPLOAD_BYTES = 50 * 1024 * 1024;
+const DEFAULT_MAX_UPLOAD_MB = 50;
 const ALLOWED_EXTENSION = /\.(txt|log)$/i;
+/** Past this many parser warnings the rest are summarised, so one bad log cannot return megabytes of JSON. */
+export const MAX_WARNINGS = 100;
+
+/**
+ * The upload cap in megabytes, from MAX_UPLOAD_MB. The box sets it low: a 50 MB log
+ * peaks around 600 MB of heap while parsing, which is the whole of the unit's MemoryMax.
+ */
+export function maxUploadMb(): number {
+  const n = Number(process.env.MAX_UPLOAD_MB);
+  return Number.isInteger(n) && n > 0 ? n : DEFAULT_MAX_UPLOAD_MB;
+}
+
+export function maxUploadBytes(): number {
+  return maxUploadMb() * 1024 * 1024;
+}
+
+export function tooLargeMessage(): string {
+  return `file is larger than ${maxUploadMb()} MB`;
+}
+
+/** Keeps the first MAX_WARNINGS warnings, with one entry standing in for the rest. */
+export function capWarnings(warnings: string[]): string[] {
+  if (warnings.length <= MAX_WARNINGS) return warnings;
+  return [...warnings.slice(0, MAX_WARNINGS), `… and ${warnings.length - MAX_WARNINGS} more`];
+}
 
 /** A side is chosen when it shares at least this many names with the roster… */
 export const ROSTER_MIN_MATCH = 3;
@@ -53,27 +78,42 @@ export function chooseSide(rosters: Rosters, known: Set<string>): Side | null {
   return null;
 }
 
-export async function handleUpload(db: Db, input: { scrimId: number; file: File; ourSide: Side | "auto" }): Promise<UploadResult> {
-  const { scrimId, file } = input;
+/** A validated and parsed upload, ready to commit. Produced before any sandbox is cloned. */
+export interface ParsedUpload {
+  filename: string;
+  bytes: Buffer;
+  parsed: ParsedLog;
+  meta: MapMeta;
+}
 
-  const [scrim] = await db.select({ id: scrims.id }).from(scrims).where(eq(scrims.id, scrimId));
-  if (!scrim) throw new UploadError("scrim not found", 404);
-
+/**
+ * Everything that can reject an upload without touching a database: the extension, the
+ * size, and the parse itself. Kept separate from handleUpload so the route can refuse
+ * garbage before a visitor's sandbox is created for it.
+ */
+export async function parseUpload(file: File): Promise<ParsedUpload> {
   if (!ALLOWED_EXTENSION.test(file.name)) throw new UploadError("upload a .txt or .log Workshop log", 400);
-  if (file.size > MAX_UPLOAD_BYTES) throw new UploadError("file is larger than 50MB", 400);
+  if (file.size > maxUploadBytes()) throw new UploadError(tooLargeMessage(), 400);
 
   const bytes = Buffer.from(await file.arrayBuffer());
   const text = bytes.toString("utf8");
 
-  let parsed: ParsedLog;
-  let meta: MapMeta;
   try {
-    parsed = parseLog(text);
-    meta = deriveMapMeta(parsed);
+    const parsed = parseLog(text);
+    return { filename: file.name, bytes, parsed, meta: deriveMapMeta(parsed) };
   } catch (err) {
     if (err instanceof ParseError) throw new UploadError(err.message, 400);
     throw err;
   }
+}
+
+/** Commits a parsed upload: picks our side, inserts the rows, writes the raw log. */
+export async function handleUpload(db: Db, input: { scrimId: number; upload: ParsedUpload; ourSide: Side | "auto"; logDir?: string }): Promise<UploadResult> {
+  const { scrimId, upload } = input;
+  const { bytes, parsed, meta } = upload;
+
+  const [scrim] = await db.select({ id: scrims.id }).from(scrims).where(eq(scrims.id, scrimId));
+  if (!scrim) throw new UploadError("scrim not found", 404);
 
   let ourSide: Side;
   if (input.ourSide === "auto") {
@@ -87,14 +127,14 @@ export async function handleUpload(db: Db, input: { scrimId: number; file: File;
 
   let mapId: number;
   try {
-    mapId = await insertParsedMap(db, { scrimId, ourSide, parsed, meta, originalFilename: file.name });
+    mapId = await insertParsedMap(db, { scrimId, ourSide, parsed, meta, originalFilename: upload.filename });
   } catch (err) {
     if (err instanceof DuplicateMapError) throw new UploadError(err.message, 400);
     throw err;
   }
 
-  const rawLogPath = await writeRawLog(mapId, bytes);
+  const rawLogPath = await writeRawLog(mapId, bytes, input.logDir);
   await db.update(maps).set({ rawLogPath }).where(eq(maps.id, mapId));
 
-  return { mapId, mapName: meta.mapName, warnings: parsed.warnings };
+  return { mapId, mapName: meta.mapName, warnings: capWarnings(parsed.warnings) };
 }

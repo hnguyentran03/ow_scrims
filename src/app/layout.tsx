@@ -3,9 +3,10 @@ import Link from "next/link";
 import { POSITION_FEATURES_ENABLED } from "@/lib/flags";
 import { archivo, bebas } from "./fonts";
 import { NavLinks } from "./nav-links";
+import { SandboxBar } from "./sandbox-bar";
 import "./globals.css";
 
-export const metadata: Metadata = { title: "OW Scrims", description: "Overwatch scrim analytics" };
+export const metadata: Metadata = { title: "OW Scrims", description: "Overwatch scrim analytics", robots: { index: false, follow: false } };
 
 const NAV = [
   { href: "/", label: "Scrims" },
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <NavLinks links={NAV} />
           </nav>
         </header>
+        <SandboxBar />
         <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
       </body>
     </html>

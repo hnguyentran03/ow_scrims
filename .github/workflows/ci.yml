@@ -19,6 +19,18 @@ jobs:
     name: Lint, typecheck, unit tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Service container for test/db/sandbox.integration.test.ts
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4 # reads the pnpm version from package.json's packageManager field
@@ -30,6 +42,8 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck # runs next typegen first, which writes the RouteContext types tsc needs
       - run: pnpm test
+        env:
+          TEST_DATABASE_URL: postgres://postgres@localhost:5432/postgres
 
   e2e:
     name: Playwright

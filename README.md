@@ -11,6 +11,8 @@ pnpm dev          # http://localhost:3000, data in ./data
 
 Create a scrim, drop its log files onto the scrim page, and open the map and Team tabs. `pnpm test`, `pnpm test:e2e`, `pnpm lint`, and `pnpm typecheck` are the checks; GitHub Actions runs them on every push and pull request. Implementation details are in `docs/DOCS.md`.
 
+A public copy runs at scrims.hnguyentran.com with pseudonymised names; every visitor gets a throwaway sandbox on their first change. Deployment and the snapshot push are described in `docs/DOCS.md`.
+
 ## Collecting logs
 
 The app ingests the per-map log files that the ScrimTime Workshop code writes through Overwatch's Workshop Inspector:

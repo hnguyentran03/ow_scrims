@@ -1,8 +1,10 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getDb } from "@/lib/db";
+import { getDb, getWritableDb, requestSandboxId } from "@/lib/db";
+import { SANDBOX_COOKIE } from "@/lib/db/sandbox-id";
 import { createScrim, deleteMap, deleteMapImage, deleteScrim, getMap, getReplayRows, setCalibration, setMapBans, setMapWinner } from "@/lib/db/queries";
 import { parseBanInput } from "@/lib/bans";
 import { parseCalibrationInput } from "@/lib/calibration-input";
@@ -24,7 +26,7 @@ function requireId(n: unknown): number {
 export async function createScrimAction(_prev: CreateScrimState, formData: FormData): Promise<CreateScrimState> {
   const { values, errors } = validateScrimInput({ name: formData.get("name"), date: formData.get("date"), opponentName: formData.get("opponentName") });
   if (errors) return { values, errors };
-  const id = await createScrim(await getDb(), values);
+  const id = await createScrim(await getWritableDb(), values);
   revalidatePath("/");
   redirect(`/scrims/${id}`);
 }
@@ -33,7 +35,7 @@ export async function setMapWinnerAction(scrimId: number, mapId: number, side: 1
   scrimId = requireId(scrimId);
   mapId = requireId(mapId);
   if (side !== 1 && side !== 2) throw new Error("invalid id");
-  const db = await getDb();
+  const db = await getWritableDb();
   const data = await getMap(db, mapId);
   if (!data || data.scrim.id !== scrimId) throw new Error("map not found");
   await setMapWinner(db, mapId, side);
@@ -44,7 +46,7 @@ export async function setMapWinnerAction(scrimId: number, mapId: number, side: 1
 export async function deleteMapAction(scrimId: number, mapId: number): Promise<void> {
   scrimId = requireId(scrimId);
   mapId = requireId(mapId);
-  const rawLogPath = await deleteMap(await getDb(), mapId);
+  const rawLogPath = await deleteMap(await getWritableDb(), mapId);
   await deleteRawLog(rawLogPath);
   revalidatePath(`/scrims/${scrimId}`);
   redirect(`/scrims/${scrimId}`);
@@ -52,7 +54,7 @@ export async function deleteMapAction(scrimId: number, mapId: number): Promise<v
 
 export async function deleteScrimAction(scrimId: number): Promise<void> {
   scrimId = requireId(scrimId);
-  const paths = await deleteScrim(await getDb(), scrimId);
+  const paths = await deleteScrim(await getWritableDb(), scrimId);
   await Promise.all(paths.map(deleteRawLog));
   revalidatePath("/");
   redirect("/");
@@ -60,7 +62,7 @@ export async function deleteScrimAction(scrimId: number): Promise<void> {
 
 export async function setMapBansAction(scrimId: number, mapId: number, side: 1 | 2, heroes: string[]): Promise<void> {
   const input = parseBanInput({ scrimId, mapId, side, heroes });
-  const db = await getDb();
+  const db = await getWritableDb();
   const data = await getMap(db, input.mapId);
   if (!data || data.scrim.id !== input.scrimId) throw new Error("map not found");
   await setMapBans(db, input.mapId, input.side, input.heroes);
@@ -115,7 +117,7 @@ export async function setCalibrationAction(raw: unknown): Promise<{ error: strin
     objective = { x: w.px, z: w.py };
   }
   const calibration: Calibration = { pairs: input.pairs, affine, objective };
-  const ok = await setCalibration(await getDb(), input.id, JSON.stringify(calibration), { width: input.width, height: input.height });
+  const ok = await setCalibration(await getWritableDb(), input.id, JSON.stringify(calibration), { width: input.width, height: input.height });
   if (!ok) return { error: "Image not found." };
   MAPS_PATHS();
   return null;
@@ -124,14 +126,23 @@ export async function setCalibrationAction(raw: unknown): Promise<{ error: strin
 export async function clearCalibrationAction(id: number): Promise<void> {
   if (!POSITION_FEATURES_ENABLED) return;
   id = requireId(id);
-  await setCalibration(await getDb(), id, null);
+  await setCalibration(await getWritableDb(), id, null);
   MAPS_PATHS();
 }
 
 export async function deleteMapImageAction(id: number): Promise<void> {
   if (!POSITION_FEATURES_ENABLED) return;
   id = requireId(id);
-  const row = await deleteMapImage(await getDb(), id);
+  const row = await deleteMapImage(await getWritableDb(), id);
   if (row) await deleteImageFile(row.filename);
   MAPS_PATHS();
+}
+
+/** Drops the visitor's sandbox and clears its cookie; the next write starts a fresh one from the current snapshot. */
+export async function resetSandboxAction(): Promise<void> {
+  const { dropSandbox, hasLiveSandbox } = await import("@/lib/db/sandbox"); // loads `pg`; only this action needs it
+  const id = await requestSandboxId();
+  if (id && hasLiveSandbox(id)) await dropSandbox(id);
+  (await cookies()).delete(SANDBOX_COOKIE);
+  redirect("/");
 }
