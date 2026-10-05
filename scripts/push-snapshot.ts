@@ -52,7 +52,7 @@ async function loadAliasMap(): Promise<AliasMap> {
 }
 
 function drizzleHash(): string {
-  const out = execFileSync("bash", ["-c", "find drizzle -type f | sort | xargs shasum -a 256 | shasum -a 256"], { cwd: ROOT, encoding: "utf8" });
+  const out = execFileSync("bash", ["-c", "set -o pipefail; find drizzle -type f | sort | xargs shasum -a 256 | shasum -a 256"], { cwd: ROOT, encoding: "utf8" });
   return out.split(" ")[0] ?? "";
 }
 
@@ -81,7 +81,7 @@ async function main() {
   }
   const lowerSeen = new Map<string, string[]>();
   for (const n of all) lowerSeen.set(n.toLowerCase(), [...(lowerSeen.get(n.toLowerCase()) ?? []), n]);
-  for (const variants of lowerSeen.values()) if (variants.length > 1) console.warn(`case variants of one name will get separate pseudonyms: ${variants.join(", ")}`);
+  for (const variants of lowerSeen.values()) if (variants.length > 1) console.warn(`case variants of one name: ${variants.join(", ")}: merge them locally before pushing, or they will get separate pseudonyms`);
 
   const { added } = extendAliasMap(map, all);
   console.log(`names: ${all.size} total, ${Object.keys(added).length} new`);
