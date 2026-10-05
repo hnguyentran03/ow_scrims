@@ -4,7 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { createTestDb, type Db } from "@/lib/db";
 import { createScrim } from "@/lib/db/queries";
 import { healing, maps, playerStat, scrims } from "@/lib/db/schema";
-import { handleUpload } from "@/lib/upload";
+import { handleUpload, parseUpload } from "@/lib/upload";
 import { extendAliasMap, type AliasMap } from "@/lib/anonymise";
 import { applyAliases, clearRawLogPaths, collectNames, verifyAnonymised } from "@/lib/anonymise-db";
 import { mkdtempSync } from "node:fs";
@@ -19,7 +19,7 @@ beforeAll(async () => {
   const logDir = mkdtempSync(path.join(tmpdir(), "ow-anon-"));
   const scrimId = await createScrim(db, { name: "vs Team Rocket", date: "2026-09-17", opponentName: "Team Rocket" });
   const text = readFileSync("test/samples/Log-2026-04-15-21-12-58.txt", "utf8");
-  await handleUpload(db, { scrimId, file: new File([text], "a.txt"), ourSide: 1, logDir });
+  await handleUpload(db, { scrimId, upload: await parseUpload(new File([text], "a.txt")), ourSide: 1, logDir });
   realPlayers = (await db.selectDistinct({ n: playerStat.playerName }).from(playerStat)).map((r) => r.n);
   // This sample log has no healing events, so there is no existing row to clone. Insert one by
   // hand: a health-pack row carrying the "0" sentinel as the healer, with a real healee name so

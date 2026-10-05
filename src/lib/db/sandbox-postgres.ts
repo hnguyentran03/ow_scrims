@@ -21,21 +21,40 @@ export function databaseUrl(adminUrl: string, dbName: string): string {
   return u.toString();
 }
 
-const SANDBOX_POOL_MAX = 4;
+/**
+ * Two connections per sandbox: with SANDBOX_MAX at 20 that is 40, plus the public
+ * copy's 4 and the admin pool's 1 — 45 against the box's max_connections of 50.
+ */
+const SANDBOX_POOL_MAX = 2;
 const TEMPLATE_RETRY_MS = 1000;
 const INVALID_CATALOG_NAME = "3D000";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** `pg` reads `options` off the connection string's query and passes it to the backend. */
+function readOnlyUrl(url: string): string {
+  const u = new URL(url);
+  u.searchParams.set("options", "-c default_transaction_read_only=on");
+  return u.toString();
+}
+
+/** An idle-client error (a killed backend, a dropped database) must not reach the process as an uncaught 'error' event. */
+function logPoolErrors(pool: Pool, dbName: string): Pool {
+  pool.on("error", (err) => console.error("pg pool error", dbName, err));
+  return pool;
+}
+
 export class PostgresSandboxBackend implements SandboxBackend {
   private readonly admin: Pool;
 
   constructor(private readonly cfg: PostgresSandboxConfig) {
-    this.admin = new Pool({ connectionString: cfg.adminUrl, max: 1 });
+    this.admin = logPoolErrors(new Pool({ connectionString: cfg.adminUrl, max: 1 }), "postgres");
   }
 
-  open(dbName: string, max = SANDBOX_POOL_MAX): SandboxHandle {
-    const pool = new Pool({ connectionString: databaseUrl(this.cfg.adminUrl, dbName), max, idleTimeoutMillis: 30_000 });
+  /** Opens a pool to an existing database. `readOnly` forces every transaction on it read-only — the public copy's guard. */
+  open(dbName: string, max = SANDBOX_POOL_MAX, opts: { readOnly?: boolean } = {}): SandboxHandle {
+    const url = databaseUrl(this.cfg.adminUrl, dbName);
+    const pool = logPoolErrors(new Pool({ connectionString: opts.readOnly ? readOnlyUrl(url) : url, max, idleTimeoutMillis: 30_000 }), dbName);
     const db = drizzle({ client: pool, schema }) as unknown as Db;
     return { db, close: () => pool.end() };
   }

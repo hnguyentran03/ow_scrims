@@ -2,5 +2,5 @@
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
   const { startSandboxMaintenance } = await import("@/lib/db/sandbox");
-  startSandboxMaintenance();
+  await startSandboxMaintenance();
 }

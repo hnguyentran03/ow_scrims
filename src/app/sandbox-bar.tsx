@@ -1,11 +1,14 @@
 import { Button } from "@/components/button";
 import { requestSandboxId } from "@/lib/db";
-import { hasLiveSandbox, sandboxMode } from "@/lib/db/sandbox";
+import { sandboxMode } from "@/lib/db/sandbox-env";
 import { resetSandboxAction } from "./actions";
 
 /** Tells a visitor whether they are on the shared snapshot or in their own sandbox. Renders nothing outside sandbox mode. */
 export async function SandboxBar() {
   if (!sandboxMode()) return null;
+  // Imported here rather than at the top: this bar renders on every page, and
+  // @/lib/db/sandbox loads `pg`, which local PGlite dev has no use for.
+  const { hasLiveSandbox } = await import("@/lib/db/sandbox");
   const id = await requestSandboxId();
   const live = id !== null && hasLiveSandbox(id);
   return (

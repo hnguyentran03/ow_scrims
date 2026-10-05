@@ -1,45 +1,27 @@
 import { readdir, rm } from "node:fs/promises";
 import path from "node:path";
 import type { Db } from "./index";
-import { isSandboxId } from "./sandbox-id";
+import { RateWindow } from "./rate-window";
+import { isSandboxId, SANDBOX_DB_PREFIX } from "./sandbox-id";
+import { sandboxEnv, type SandboxEnv } from "./sandbox-env";
 import { PostgresSandboxBackend } from "./sandbox-postgres";
 import { SandboxRegistry, type SandboxHandle } from "./sandbox-registry";
 
-export interface SandboxEnv {
-  adminUrl: string;
-  templateDb: string;
-  publicDb: string;
-  uploadRoot: string;
-  idleMs: number;
-  max: number;
-}
+// Re-exported so callers that only need the configuration can import "./sandbox-env"
+// (no `pg`), while the existing import sites keep working.
+export { sandboxEnv, sandboxMaxMaps, sandboxMode, type SandboxEnv } from "./sandbox-env";
 
-const DEFAULT_IDLE_MINUTES = 120;
-const DEFAULT_MAX = 20;
+/** The shared read copy serves every visitor without a sandbox, so it keeps its own, larger pool. */
+const PUBLIC_POOL_MAX = 4;
 const REAP_INTERVAL_MS = 5 * 60_000;
+const CREATE_WINDOW_MS = 60_000;
 
-function positiveInt(raw: string | undefined, fallback: number): number {
-  const n = Number(raw);
-  return Number.isInteger(n) && n > 0 ? n : fallback;
-}
-
-/** Sandbox mode needs a Postgres URL and a template name; anything else is today's single-database behaviour. */
-export function sandboxEnv(env: Partial<NodeJS.ProcessEnv> = process.env): SandboxEnv | null {
-  const url = env.DATABASE_URL ?? "";
-  const templateDb = env.SANDBOX_TEMPLATE_DB;
-  if (!templateDb || !(url.startsWith("postgres://") || url.startsWith("postgresql://"))) return null;
-  return {
-    adminUrl: url,
-    templateDb,
-    publicDb: env.SANDBOX_PUBLIC_DB ?? "ow_public",
-    uploadRoot: env.SANDBOX_UPLOAD_ROOT ?? "/var/lib/ow-scrims/sandboxes",
-    idleMs: positiveInt(env.SANDBOX_IDLE_MINUTES, DEFAULT_IDLE_MINUTES) * 60_000,
-    max: positiveInt(env.SANDBOX_MAX, DEFAULT_MAX),
-  };
-}
-
-export function sandboxMode(): boolean {
-  return sandboxEnv() !== null;
+/** Thrown when the per-minute clone budget is spent. The caller should ask the visitor to retry. */
+export class SandboxBusyError extends Error {
+  constructor() {
+    super("too many new sandboxes right now, try again in a minute");
+    this.name = "SandboxBusyError";
+  }
 }
 
 interface Runtime {
@@ -47,6 +29,7 @@ interface Runtime {
   backend: PostgresSandboxBackend;
   registry: SandboxRegistry;
   publicHandle: SandboxHandle;
+  creates: RateWindow;
 }
 
 // One runtime per process, on globalThis so dev hot-reloads reuse it.
@@ -61,7 +44,8 @@ function runtime(): Runtime | null {
       env,
       backend,
       registry: new SandboxRegistry(backend, { idleMs: env.idleMs, max: env.max }),
-      publicHandle: backend.open(env.publicDb),
+      publicHandle: backend.open(env.publicDb, PUBLIC_POOL_MAX, { readOnly: true }),
+      creates: new RateWindow(env.createsPerMinute, CREATE_WINDOW_MS),
     };
   }
   return g.__owSandbox;
@@ -90,35 +74,54 @@ export async function liveSandboxDb(id: string): Promise<Db | null> {
   return must().registry.get(id);
 }
 
+/** Clones the template for this id. Throws SandboxBusyError when this minute's clone budget is spent. */
 export async function createSandbox(id: string): Promise<Db> {
-  return must().registry.create(id);
+  const rt = must();
+  // Checked before the registry hears about the id, so a throttled create leaves nothing behind.
+  if (!rt.creates.tryTake()) throw new SandboxBusyError();
+  return rt.registry.create(id);
 }
 
 export async function dropSandbox(id: string): Promise<void> {
   await must().registry.drop(id);
 }
 
-/** Drops every sandbox database and upload directory left behind by a previous process. Run once at startup, when the registry is empty. */
+/**
+ * Drops the sandbox databases and upload directories left behind by a previous process.
+ * Anything this process has registered is skipped, and only names that are sandbox ids
+ * are touched, so a sibling directory under the upload root is never removed.
+ */
 export async function sweepOrphans(): Promise<void> {
   const rt = must();
-  for (const name of await rt.backend.listSandboxDatabases()) await rt.backend.dropDatabase(name);
+  for (const name of await rt.backend.listSandboxDatabases()) {
+    const id = name.slice(SANDBOX_DB_PREFIX.length);
+    if (!rt.registry.has(id)) await rt.backend.dropDatabase(name);
+  }
   let dirs: string[] = [];
   try {
     dirs = await readdir(rt.env.uploadRoot);
   } catch {
     return; // no uploads yet
   }
-  for (const d of dirs) if (!rt.registry.has(d)) await rm(path.join(rt.env.uploadRoot, d), { recursive: true, force: true });
+  for (const d of dirs) if (isSandboxId(d) && !rt.registry.has(d)) await rm(path.join(rt.env.uploadRoot, d), { recursive: true, force: true });
 }
 
 export async function reapSandboxes(): Promise<string[]> {
   return must().registry.reapIdle();
 }
 
-/** Called from instrumentation.ts in the Node runtime. No-op outside sandbox mode. */
-export function startSandboxMaintenance(): void {
+/**
+ * Called from instrumentation.ts in the Node runtime, which awaits it: the sweep must
+ * finish before the first request can register a sandbox the sweep would then drop.
+ * No-op outside sandbox mode.
+ */
+export async function startSandboxMaintenance(): Promise<void> {
   if (!runtime()) return;
-  sweepOrphans().catch((err) => console.error("sandbox sweep failed", err));
+  try {
+    await sweepOrphans();
+  } catch (err) {
+    console.error("sandbox sweep failed", err);
+  }
   const timer = setInterval(() => {
     reapSandboxes().catch((err) => console.error("sandbox reap failed", err));
   }, REAP_INTERVAL_MS);

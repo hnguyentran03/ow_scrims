@@ -4,7 +4,6 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb, getWritableDb, requestSandboxId } from "@/lib/db";
-import { dropSandbox, hasLiveSandbox } from "@/lib/db/sandbox";
 import { SANDBOX_COOKIE } from "@/lib/db/sandbox-id";
 import { createScrim, deleteMap, deleteMapImage, deleteScrim, getMap, getReplayRows, setCalibration, setMapBans, setMapWinner } from "@/lib/db/queries";
 import { parseBanInput } from "@/lib/bans";
@@ -141,6 +140,7 @@ export async function deleteMapImageAction(id: number): Promise<void> {
 
 /** Drops the visitor's sandbox and clears its cookie; the next write starts a fresh one from the current snapshot. */
 export async function resetSandboxAction(): Promise<void> {
+  const { dropSandbox, hasLiveSandbox } = await import("@/lib/db/sandbox"); // loads `pg`; only this action needs it
   const id = await requestSandboxId();
   if (id && hasLiveSandbox(id)) await dropSandbox(id);
   (await cookies()).delete(SANDBOX_COOKIE);

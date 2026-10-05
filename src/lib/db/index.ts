@@ -3,7 +3,9 @@ import path from "node:path";
 import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 import * as schema from "./schema";
 import { isSandboxId, newSandboxId, SANDBOX_COOKIE } from "./sandbox-id";
-import { createSandbox, liveSandboxDb, publicDb, sandboxMode } from "./sandbox";
+// ./sandbox pulls in `pg`; it is imported dynamically below so PGlite-only local dev
+// and the unit tests never load the Postgres driver. Only the env check is static.
+import { sandboxMode } from "./sandbox-env";
 
 export type Db = PgDatabase<PgQueryResultHKT, typeof schema>;
 
@@ -58,6 +60,7 @@ export async function requestSandboxId(): Promise<string | null> {
  */
 export async function getDb(): Promise<Db> {
   if (!sandboxMode()) return singleDb();
+  const { liveSandboxDb, publicDb } = await import("./sandbox");
   const id = await requestSandboxId();
   if (id) {
     const db = await liveSandboxDb(id);
@@ -73,6 +76,7 @@ export async function getDb(): Promise<Db> {
  */
 export async function getWritableSandbox(): Promise<{ db: Db; sandboxId: string | null }> {
   if (!sandboxMode()) return { db: await singleDb(), sandboxId: null };
+  const { createSandbox, liveSandboxDb } = await import("./sandbox");
   const { cookies } = await import("next/headers");
   const store = await cookies();
   const current = store.get(SANDBOX_COOKIE)?.value;
